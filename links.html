@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Links · Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
+
+<style>
+/* ===== Shared design tokens (same as the rest of the dashboard) ===== */
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --danger:  #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body {
+  min-height: 100vh; position: relative; overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.10), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(200,200,200,0.06), transparent 50%);
+  filter: blur(40px); pointer-events: none; z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px; pointer-events: none; z-index: -1;
+}
+@keyframes drift { 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-22px,14px,0)} }
+
+.page { max-width: 900px; margin: 0 auto; }
+.dash-title {
+  margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.links-topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+
+/* ===== Add-link card ===== */
+.gm-card {
+  position: relative; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 18px;
+  margin-bottom: 18px; backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2); box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+}
+.add-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.gm-input {
+  flex: 1; min-width: 160px; padding: 11px 14px;
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: rgba(0,0,0,0.28);
+  color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gm-input::placeholder { color: var(--text-tertiary); }
+.gm-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.cat-select {
+  padding: 11px 12px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  background: rgba(0,0,0,0.28); color: var(--text-secondary); font-family: inherit;
+  font-size: 13px; outline: none; cursor: pointer;
+}
+.gm-add {
+  padding: 11px 22px; border: 0; border-radius: 12px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); color: #0A0A0B;
+  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 22px rgba(0,0,0,0.25);
+  transition: transform 0.1s, filter 0.15s;
+}
+.gm-add:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.gm-add:active { transform: translateY(0); }
+.add-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 9px; }
+
+/* ===== Search + category chips ===== */
+.links-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 20px; }
+.links-search {
+  flex: 1; min-width: 180px; padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 11px; background: rgba(255,255,255,0.03);
+  color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none;
+  transition: border-color 0.2s;
+}
+.links-search::placeholder { color: var(--text-tertiary); }
+.links-search:focus { border-color: rgba(255,255,255,0.24); }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px;
+  border-radius: 999px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.03);
+  color: var(--text-tertiary); font-size: 11.5px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.chip:hover { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
+.chip.on { background: rgba(255,255,255,0.12); color: var(--text-primary); border-color: rgba(255,255,255,0.22); }
+.chip .n { font-family: var(--font-mono); opacity: 0.7; }
+
+/* ===== Category sections ===== */
+.section { margin-top: 6px; }
+.section-title {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-tertiary); display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.section-title .emoji { font-size: 13px; }
+.section-title .cnt { font-family: var(--font-mono); color: var(--text-tertiary); }
+.section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.10), transparent); }
+
+.link-row {
+  display: flex; align-items: center; gap: 12px; padding: 11px 12px;
+  margin-bottom: 6px; background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; text-decoration: none; transition: background 0.15s, border-color 0.15s;
+}
+.link-row:hover { background: rgba(255,255,255,0.065); border-color: rgba(255,255,255,0.12); }
+.link-favicon {
+  width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; object-fit: cover;
+  background: rgba(255,255,255,0.06);
+}
+.link-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.link-title {
+  font-size: 13.5px; font-weight: 600; color: var(--text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.link-host { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.link-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.link-cat-select {
+  padding: 5px 8px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+  background: rgba(0,0,0,0.28); color: var(--text-tertiary); font-family: inherit;
+  font-size: 10.5px; outline: none; cursor: pointer; opacity: 0; transition: opacity 0.15s;
+}
+.link-row:hover .link-cat-select, .link-cat-select:focus { opacity: 1; }
+.link-del {
+  border: 0; background: transparent; color: var(--text-tertiary); font-size: 16px;
+  cursor: pointer; padding: 2px 6px; opacity: 0; transition: opacity 0.15s, color 0.15s;
+}
+.link-row:hover .link-del { opacity: 0.6; }
+.link-del:hover { opacity: 1; color: var(--danger); }
+
+.empty-state { text-align: center; font-size: 12.5px; font-style: italic; color: var(--text-tertiary); padding: 40px 0; }
+
+@media (max-width: 480px) {
+  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
+  .gm-card { padding: 14px; }
+  .link-cat-select, .link-del { opacity: 1; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="links-topbar">
+    <h1 class="dash-title" style="flex:1">Links</h1>
+  </div>
+
+  <div class="gm-card">
+    <div class="add-row">
+      <input class="gm-input" id="urlInput" type="url" placeholder="Paste a link…" autocomplete="off" inputmode="url">
+      <input class="gm-input" id="titleInput" type="text" placeholder="Title (optional)" autocomplete="off" style="flex:0.7; min-width:120px">
+      <select class="cat-select" id="catOverride">
+        <option value="">Auto category</option>
+      </select>
+      <button class="gm-add" id="addBtn" type="button">Add</button>
+    </div>
+    <div class="add-hint">Paste any URL — it's sorted into a category automatically. You can re-tag or delete anytime.</div>
+  </div>
+
+  <div class="links-controls">
+    <input class="links-search" id="searchInput" type="text" placeholder="Search links…" autocomplete="off">
+  </div>
+  <div class="chip-row" id="chipRow" style="margin-bottom:22px"></div>
+
+  <div id="sections"></div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const STORE_KEY = 'links:items';
+
+  const CATEGORIES = [
+    { id: 'video',    label: 'Video',      emoji: '🎥', test: h => /(^|\.)(youtube\.com|youtu\.be|vimeo\.com|twitch\.tv|netflix\.com)$/.test(h) },
+    { id: 'social',   label: 'Social',     emoji: '💬', test: h => /(^|\.)(twitter\.com|x\.com|instagram\.com|facebook\.com|threads\.net|linkedin\.com|reddit\.com|tiktok\.com|mastodon\.social)$/.test(h) },
+    { id: 'code',     label: 'Code',       emoji: '💻', test: h => /(^|\.)(github\.com|gitlab\.com|bitbucket\.org|stackoverflow\.com|npmjs\.com|developer\.mozilla\.org|codepen\.io|vercel\.com|codesandbox\.io)$/.test(h) },
+    { id: 'docs',     label: 'Docs & Notes', emoji: '📄', test: h => /(^|\.)(notion\.so|docs\.google\.com|drive\.google\.com|dropbox\.com|evernote\.com|onedrive\.live\.com|coda\.io)$/.test(h) },
+    { id: 'shopping', label: 'Shopping',   emoji: '🛍️', test: h => /(^|\.)(amazon\.[a-z.]+|ebay\.com|etsy\.com|aliexpress\.com|target\.com|walmart\.com)$/.test(h) },
+    { id: 'music',    label: 'Music',      emoji: '🎵', test: h => /(^|\.)(spotify\.com|soundcloud\.com|music\.apple\.com|bandcamp\.com)$/.test(h) },
+    { id: 'reading',  label: 'Reading & News', emoji: '📰', test: h => /(^|\.)(medium\.com|substack\.com|nytimes\.com|wikipedia\.org|bbc\.com|theverge\.com|wsj\.com|news\.ycombinator\.com)$/.test(h) },
+    { id: 'design',   label: 'Design',     emoji: '🎨', test: h => /(^|\.)(figma\.com|dribbble\.com|behance\.net|canva\.com)$/.test(h) },
+    { id: 'ai',       label: 'AI Tools',   emoji: '🤖', test: h => /(^|\.)(openai\.com|anthropic\.com|claude\.ai|chatgpt\.com|huggingface\.co|perplexity\.ai)$/.test(h) },
+    { id: 'other',    label: 'Other',      emoji: '🔗', test: () => true },
+  ];
+  const CAT_BY_ID = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+
+  function categorize(hostname) {
+    const h = (hostname || '').toLowerCase().replace(/^www\./, '');
+    for (const c of CATEGORIES) if (c.id !== 'other' && c.test(h)) return c.id;
+    return 'other';
+  }
+
+  function loadJSON(k, f) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; } catch (e) { return f; } }
+  function save(items) { localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+  function load() { return loadJSON(STORE_KEY, []); }
+  function newId() { return 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function normalizeUrl(raw) {
+    let u = raw.trim();
+    if (!u) return null;
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(u)) u = 'https://' + u;
+    try { return new URL(u).href; } catch (e) { return null; }
+  }
+  function hostnameOf(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return url; }
+  }
+  function faviconFor(hostname) {
+    return 'https://www.google.com/s2/favicons?sz=64&domain=' + encodeURIComponent(hostname);
+  }
+  function prettyTitleFrom(hostname) {
+    const base = hostname.split('.')[0];
+    return base.charAt(0).toUpperCase() + base.slice(1);
+  }
+
+  let activeChip = 'all';
+
+  function populateCatSelect(sel, selected) {
+    sel.innerHTML = '';
+    if (sel.id === 'catOverride') {
+      const opt = document.createElement('option');
+      opt.value = ''; opt.textContent = 'Auto category';
+      sel.appendChild(opt);
+    }
+    CATEGORIES.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.emoji + ' ' + c.label;
+      if (c.id === selected) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  function renderChips(items) {
+    const counts = {};
+    items.forEach(it => { counts[it.category] = (counts[it.category] || 0) + 1; });
+    const row = $('chipRow');
+    row.innerHTML = '';
+    const allChip = document.createElement('button');
+    allChip.type = 'button';
+    allChip.className = 'chip' + (activeChip === 'all' ? ' on' : '');
+    allChip.innerHTML = 'All <span class="n">' + items.length + '</span>';
+    allChip.addEventListener('click', () => { activeChip = 'all'; render(); });
+    row.appendChild(allChip);
+    CATEGORIES.forEach(c => {
+      const n = counts[c.id] || 0;
+      if (n === 0) return;
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (activeChip === c.id ? ' on' : '');
+      chip.innerHTML = c.emoji + ' ' + c.label + ' <span class="n">' + n + '</span>';
+      chip.addEventListener('click', () => { activeChip = activeChip === c.id ? 'all' : c.id; render(); });
+      row.appendChild(chip);
+    });
+  }
+
+  function render() {
+    const items = load();
+    renderChips(items);
+
+    const q = $('searchInput').value.trim().toLowerCase();
+    let filtered = items;
+    if (activeChip !== 'all') filtered = filtered.filter(it => it.category === activeChip);
+    if (q) filtered = filtered.filter(it =>
+      (it.title || '').toLowerCase().includes(q) ||
+      (it.host || '').toLowerCase().includes(q) ||
+      (it.url || '').toLowerCase().includes(q)
+    );
+
+    const container = $('sections');
+    container.innerHTML = '';
+
+    if (items.length === 0) {
+      container.innerHTML = '<div class="empty-state">No links yet — paste one above to get started.</div>';
+      return;
+    }
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-state">Nothing matches.</div>';
+      return;
+    }
+
+    CATEGORIES.forEach(c => {
+      const list = filtered.filter(it => it.category === c.id).sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+      if (list.length === 0) return;
+
+      const section = document.createElement('div');
+      section.className = 'section';
+      const title = document.createElement('div');
+      title.className = 'section-title';
+      title.innerHTML = '<span class="emoji">' + c.emoji + '</span><span>' + c.label + '</span><span class="cnt">' + list.length + '</span>';
+      section.appendChild(title);
+
+      list.forEach(it => {
+        const row = document.createElement('a');
+        row.className = 'link-row';
+        row.href = it.url;
+        row.target = '_blank';
+        row.rel = 'noopener noreferrer';
+
+        const fav = document.createElement('img');
+        fav.className = 'link-favicon';
+        fav.src = it.favicon || faviconFor(it.host);
+        fav.alt = '';
+        fav.loading = 'lazy';
+
+        const main = document.createElement('div');
+        main.className = 'link-main';
+        const t = document.createElement('div');
+        t.className = 'link-title';
+        t.textContent = it.title || it.host;
+        const h = document.createElement('div');
+        h.className = 'link-host';
+        h.textContent = it.host;
+        main.append(t, h);
+
+        const actions = document.createElement('div');
+        actions.className = 'link-actions';
+
+        const catSel = document.createElement('select');
+        catSel.className = 'link-cat-select';
+        populateCatSelect(catSel, it.category);
+        catSel.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); });
+        catSel.addEventListener('change', e => {
+          e.preventDefault();
+          const all = load();
+          const entry = all.find(x => x.id === it.id);
+          if (entry) { entry.category = catSel.value; save(all); render(); }
+        });
+
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'link-del';
+        del.textContent = '×';
+        del.addEventListener('click', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          save(load().filter(x => x.id !== it.id));
+          render();
+        });
+
+        actions.append(catSel, del);
+        row.append(fav, main, actions);
+        section.appendChild(row);
+      });
+
+      container.appendChild(section);
+    });
+  }
+
+  function addLink() {
+    const raw = $('urlInput').value;
+    const url = normalizeUrl(raw);
+    if (!url) { $('urlInput').focus(); return; }
+    const host = hostnameOf(url);
+    const override = $('catOverride').value;
+    const item = {
+      id: newId(),
+      url,
+      host,
+      title: $('titleInput').value.trim() || prettyTitleFrom(host),
+      category: override || categorize(host),
+      favicon: faviconFor(host),
+      addedAt: Date.now(),
+    };
+    const items = load();
+    items.unshift(item);
+    save(items);
+    $('urlInput').value = '';
+    $('titleInput').value = '';
+    $('catOverride').value = '';
+    render();
+  }
+
+  populateCatSelect($('catOverride'), '');
+  $('addBtn').addEventListener('click', addLink);
+  $('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') addLink(); });
+  $('titleInput').addEventListener('keydown', e => { if (e.key === 'Enter') addLink(); });
+  $('searchInput').addEventListener('input', render);
+
+  render();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof initCloudSync !== 'function') return;
+    initCloudSync({
+      appKey: 'links',
+      syncedKeys: [STORE_KEY],
+      onApplied: render,
+    });
+  });
+})();
+</script>
+</body>
+</html>
