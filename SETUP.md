@@ -135,6 +135,113 @@ Redeploy after adding the env vars, then open the **Bank Accounts** tile → **C
 
 ---
 
+## 5. Iron Condor Bot (Tastytrade) — optional, real money, use at your own risk
+
+Fully-automated 0DTE SPY iron condor bot. This is the highest-stakes optional feature in the
+repo — it can place real multi-leg options orders. Read this whole section before enabling it.
+
+**It was built without any Tastytrade account to test against.** The auth flow, option-chain
+parsing, and strike selection follow Tastytrade's public API shape as documented, but the live
+quote-fetching endpoint in particular (`/market-data/quotes`) has not been verified against a
+real account. If it can't get a clean quote, the bot skips the trade rather than guess — but
+you should still test extensively in **Sandbox** with **mode: paper** for a while, then
+**Sandbox + mode: live** against a Tastytrade certification account, before ever pointing this
+at a real brokerage account.
+
+**Safety rails built in, all defaulting to the safe side:**
+- `enabled` (master kill switch) defaults to **off**.
+- `mode` defaults to **paper** (simulates and logs a trade, places no real order).
+- `max_risk_per_trade` is checked against the **worst-case loss** (wing width, assuming $0
+  credit) — not the estimated credit — so the cap can't be exceeded even if the credit estimate
+  is wrong.
+- `daily_loss_limit` is a circuit breaker: if today's logged losses reach it, the bot stops
+  trading for the rest of the day.
+- Only ever enters once per day, only inside the configured entry-window (ET), only on weekdays.
+- Because it's a defined-risk iron condor (long wings on both sides), max loss per trade is
+  capped at trade entry regardless of what SPY does afterward — there's no active stop-loss
+  logic, which is deliberate, not an oversight.
+
+### 5.1 Get Tastytrade API access
+Tastytrade's API is at `api.tastyworks.com` (production) / `api.cert.tastyworks.com`
+(sandbox/certification). Log in with your normal Tastytrade username/password — there's no
+separate developer signup for personal use, but **use a certification/sandbox account to test**,
+never your real account, until you've watched the bot run correctly in paper mode for a while.
+
+### 5.2 SQL #4 — `tt_session`, `tt_settings`, `tt_trades` (locked down, same pattern as Plaid)
+```sql
+create table if not exists public.tt_session (
+  id              bigint primary key,
+  username        text,
+  session_token   text,
+  remember_token  text,
+  environment     text,
+  account_number  text,
+  expires_at      timestamptz,
+  updated_at      timestamptz not null default now()
+);
+alter table public.tt_session enable row level security;
+-- No policies: zero anon/public access, service_role only.
+
+create table if not exists public.tt_settings (
+  id                    bigint primary key,
+  enabled               boolean not null default false,
+  mode                  text not null default 'paper',
+  symbol                text not null default 'SPY',
+  short_otm_pct         numeric not null default 0.6,
+  wing_width            numeric not null default 2,
+  contracts             integer not null default 1,
+  max_risk_per_trade    numeric not null default 200,
+  daily_loss_limit      numeric not null default 400,
+  entry_window_start    text not null default '09:45',
+  entry_window_end      text not null default '10:15',
+  updated_at            timestamptz not null default now()
+);
+alter table public.tt_settings enable row level security;
+-- No policies here either — settings are only ever read/written via api/tt-settings.js.
+
+create table if not exists public.tt_trades (
+  id                 bigint generated always as identity primary key,
+  opened_at          timestamptz not null default now(),
+  symbol             text,
+  expiration         text,
+  short_call_strike  numeric,
+  long_call_strike   numeric,
+  short_put_strike   numeric,
+  long_put_strike    numeric,
+  credit             numeric,
+  max_loss           numeric,
+  realized_pnl       numeric,
+  contracts          integer,
+  mode               text,
+  status             text,
+  order_id           text,
+  note               text
+);
+alter table public.tt_trades enable row level security;
+-- No policies: only api/tt-trades.js (service role) can read this.
+```
+
+### 5.3 Vercel env vars
+| Variable | Value |
+|---|---|
+| `CRON_SECRET` | any random string you generate — protects `/api/iron-condor-run` so only Vercel's own cron can trigger it |
+
+`SUPABASE_SERVICE_ROLE_KEY` from §4.3 is reused here — no separate Tastytrade secret is needed
+in env vars; the session itself is created by logging in from the **Iron Condor Bot** tile.
+
+### 5.4 Scheduling
+`vercel.json` already defines a cron hitting `/api/iron-condor-run` every 15 minutes, 13:00–21:59
+UTC, Monday–Friday (covers US market hours across both EST/EDT with margin — the function itself
+checks the precise ET entry window from your settings). Check your current Vercel plan's cron
+limits; if your plan restricts frequency, an external scheduler (e.g. cron-job.org) hitting the
+same URL with `Authorization: Bearer <CRON_SECRET>` works identically.
+
+> ⚠️ There is deliberately no "run now" button in the UI — the bot only ever fires on the cron
+> schedule, to keep entry timing consistent and to avoid the temptation to bypass the entry-window
+> check while testing.
+
+---
+
 ## TL;DR
 1. Fork → import to Vercel → deploy.
 2. New Supabase → run the **SQL** above → paste your **URL + anon key** into `sync.js`,
