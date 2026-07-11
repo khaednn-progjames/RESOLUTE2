@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>USPS Tracking · Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
+
+<style>
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger:  #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body {
+  min-height: 100vh; position: relative; overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.10), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(200,200,200,0.06), transparent 50%);
+  filter: blur(40px); pointer-events: none; z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px; pointer-events: none; z-index: -1;
+}
+@keyframes drift { 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-22px,14px,0)} }
+
+.page { max-width: 720px; margin: 0 auto; }
+.dash-title {
+  margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.up-topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+
+.gm-card {
+  position: relative; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 18px;
+  margin-bottom: 16px; backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2); box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+}
+.add-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.gm-input {
+  flex: 1; min-width: 160px; padding: 11px 14px;
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: rgba(0,0,0,0.28);
+  color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gm-input::placeholder { color: var(--text-tertiary); }
+.gm-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.gm-add {
+  padding: 11px 22px; border: 0; border-radius: 12px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); color: #0A0A0B;
+  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 22px rgba(0,0,0,0.25);
+  transition: transform 0.1s, filter 0.15s;
+}
+.gm-add:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.gm-add:active { transform: translateY(0); }
+.add-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 9px; }
+
+.empty-state { text-align: center; font-size: 12.5px; font-style: italic; color: var(--text-tertiary); padding: 30px 0; }
+
+/* ---- package cards ---- */
+.pkg-card {
+  padding: 14px 16px; margin-bottom: 10px; background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 14px;
+}
+.pkg-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.pkg-main { min-width: 0; }
+.pkg-label { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.pkg-num { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); margin-top: 2px; }
+.pkg-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.icon-btn {
+  width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.03);
+  color: var(--text-tertiary); cursor: pointer; font-size: 14px; transition: background 0.15s, color 0.15s;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.icon-btn.danger:hover { color: var(--danger); background: rgba(255,107,107,0.10); }
+
+.pkg-status-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.status-badge {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); color: var(--text-secondary);
+}
+.status-badge.delivered { color: var(--success); border-color: rgba(107,227,164,0.4); background: rgba(107,227,164,0.08); }
+.status-badge.transit   { color: var(--warning); border-color: rgba(242,192,99,0.4); background: rgba(242,192,99,0.08); }
+.status-badge.error     { color: var(--danger); border-color: rgba(255,107,107,0.4); background: rgba(255,107,107,0.08); }
+.pkg-eta { font-size: 11.5px; color: var(--text-tertiary); }
+.pkg-last-event { font-size: 12.5px; color: var(--text-secondary); margin-top: 8px; line-height: 1.5; }
+.pkg-last-event .loc { color: var(--text-tertiary); font-family: var(--font-mono); font-size: 11px; }
+.pkg-loading { font-size: 12px; color: var(--text-tertiary); margin-top: 8px; }
+
+@media (max-width: 480px) {
+  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
+  .gm-card { padding: 14px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="up-topbar">
+    <h1 class="dash-title" style="flex:1">USPS Tracking</h1>
+  </div>
+
+  <div class="gm-card">
+    <div class="add-row">
+      <input class="gm-input" id="trackInput" type="text" placeholder="Tracking number…" autocomplete="off" inputmode="numeric">
+      <input class="gm-input" id="labelInput" type="text" placeholder="Label (optional)" autocomplete="off" style="flex:0.7; min-width:120px">
+      <button class="gm-add" id="addBtn" type="button">Track</button>
+    </div>
+    <div class="add-hint">Add a USPS tracking number to watch it here. Refreshes pull live status from USPS.</div>
+  </div>
+
+  <div id="pkgList"></div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const STORE_KEY = 'usps:packages';
+
+  function loadJSON(k, f) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; } catch (e) { return f; } }
+  function save(items) { localStorage.setItem(STORE_KEY, JSON.stringify(items)); }
+  function load() { return loadJSON(STORE_KEY, []); }
+  function newId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  function statusClass(status) {
+    const s = (status || '').toLowerCase();
+    if (s.includes('delivered')) return 'delivered';
+    if (s.includes('error') || s.includes('not found') || s.includes('could not')) return 'error';
+    return 'transit';
+  }
+
+  function render() {
+    const items = load();
+    const list = $('pkgList');
+    if (items.length === 0) {
+      list.innerHTML = '<div class="gm-card"><div class="empty-state">No packages tracked yet — add one above.</div></div>';
+      return;
+    }
+    list.innerHTML = items.map(it => {
+      const cached = it.cached || {};
+      const cls = statusClass(cached.status);
+      const lastEvent = (cached.events && cached.events[0]) || null;
+      return '<div class="pkg-card" data-id="' + it.id + '">' +
+        '<div class="pkg-head"><div class="pkg-main">' +
+          '<div class="pkg-label">' + esc(it.label || 'Package') + '</div>' +
+          '<div class="pkg-num">' + esc(it.trackingNumber) + '</div>' +
+        '</div><div class="pkg-actions">' +
+          '<button class="icon-btn refresh-btn" type="button" aria-label="Refresh">⟳</button>' +
+          '<button class="icon-btn danger del-btn" type="button" aria-label="Remove">×</button>' +
+        '</div></div>' +
+        '<div class="pkg-status-row">' +
+          '<span class="status-badge ' + cls + '">' + esc(cached.status || 'Not checked yet') + '</span>' +
+          (cached.expectedDelivery ? '<span class="pkg-eta">Expected ' + esc(cached.expectedDelivery) + '</span>' : '') +
+        '</div>' +
+        (lastEvent ? '<div class="pkg-last-event">' + esc(lastEvent.description || '') +
+          '<div class="loc">' + [lastEvent.city, lastEvent.state, lastEvent.date].filter(Boolean).map(esc).join(' · ') + '</div></div>' : '') +
+        '<div class="pkg-loading" style="display:none">Checking…</div>' +
+      '</div>';
+    }).join('');
+
+    list.querySelectorAll('.pkg-card').forEach(card => {
+      const id = card.dataset.id;
+      card.querySelector('.refresh-btn').addEventListener('click', () => refreshOne(id, card));
+      card.querySelector('.del-btn').addEventListener('click', () => {
+        save(load().filter(x => x.id !== id));
+        render();
+      });
+    });
+  }
+
+  async function refreshOne(id, card) {
+    const items = load();
+    const item = items.find(x => x.id === id);
+    if (!item) return;
+    const loadingEl = card.querySelector('.pkg-loading');
+    loadingEl.style.display = '';
+    try {
+      const res = await fetch('/api/usps-track?trackingNumber=' + encodeURIComponent(item.trackingNumber));
+      const json = await res.json();
+      if (json.error) {
+        item.cached = { status: 'Error: ' + json.error, events: [] };
+      } else {
+        item.cached = { status: json.status, expectedDelivery: json.expectedDelivery, events: json.events || [] };
+      }
+    } catch (e) {
+      item.cached = { status: 'Could not reach the server', events: [] };
+    }
+    item.lastChecked = Date.now();
+    save(items);
+    render();
+  }
+
+  async function refreshAll() {
+    const items = load();
+    for (const it of items) {
+      await refreshOne(it.id, document.querySelector('.pkg-card[data-id="' + it.id + '"]') || document.createElement('div'));
+    }
+  }
+
+  function addPackage() {
+    const trackingNumber = $('trackInput').value.trim();
+    if (!trackingNumber) return;
+    const items = load();
+    items.unshift({ id: newId(), trackingNumber, label: $('labelInput').value.trim() || '', addedAt: Date.now(), cached: null });
+    save(items);
+    $('trackInput').value = '';
+    $('labelInput').value = '';
+    render();
+    const newCard = document.querySelector('.pkg-card');
+    if (newCard) refreshOne(items[0].id, newCard);
+  }
+
+  $('addBtn').addEventListener('click', addPackage);
+  $('trackInput').addEventListener('keydown', e => { if (e.key === 'Enter') addPackage(); });
+  $('labelInput').addEventListener('keydown', e => { if (e.key === 'Enter') addPackage(); });
+
+  render();
+  refreshAll();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof initCloudSync !== 'function') return;
+    initCloudSync({
+      appKey: 'usps',
+      syncedKeys: [STORE_KEY],
+      onApplied: render,
+    });
+  });
+})();
+</script>
+</body>
+</html>

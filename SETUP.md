@@ -242,6 +242,32 @@ same URL with `Authorization: Bearer <CRON_SECRET>` works identically.
 
 ---
 
+## 6. USPS Tracking — optional
+
+Live package status via USPS's official **Tracking API**. Much lower stakes than the sections
+above — no money involved, just package status — so no locked-down Supabase table is needed;
+it's a single app-level API credential kept as a Vercel env var, same as the Anthropic-key-free
+sections.
+
+### 6.1 Get USPS API keys
+1. Register an app at **developer.usps.com** → note your **Consumer Key** and **Consumer Secret**.
+2. That's it — the app requests a fresh OAuth2 token per lookup, no token storage needed.
+
+### 6.2 Vercel env vars
+| Variable | Value |
+|---|---|
+| `USPS_CONSUMER_KEY` | your USPS API Consumer Key |
+| `USPS_CONSUMER_SECRET` | your USPS API Consumer Secret |
+
+Redeploy, then open **Miscellaneous → USPS Tracking** and add a tracking number.
+
+> Note: the response parsing in `api/usps-track.js` follows USPS's documented Tracking API shape
+> but hasn't been verified against a live account — if a field name is off, the page falls back
+> to showing whatever status text it can find rather than crashing. Worth a quick real test once
+> your keys are in.
+
+---
+
 ## TL;DR
 1. Fork → import to Vercel → deploy.
 2. New Supabase → run the **SQL** above → paste your **URL + anon key** into `sync.js`,
