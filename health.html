@@ -33,8 +33,8 @@
   --accent-glow: rgba(29, 158, 117, 0.35);
   --warning: #FF8A4D;
   --warning-bg: rgba(163, 45, 45, 0.10);
-  --tag-stack: #D8AB30;
-  --tag-stack-bg: rgba(216, 171, 48, 0.15);
+  --tag-stack: #D8D6D0;
+  --tag-stack-bg: rgba(255, 255, 255, 0.08);
 
   --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -55,8 +55,8 @@ body { min-height: 100vh; position: relative; overflow-x: hidden; }
 body::before {
   content: ''; position: fixed; inset: 0;
   background:
-    radial-gradient(60% 50% at 82% 14%, rgba(224, 118, 88, 0.16) 0%, transparent 60%),
-    radial-gradient(50% 40% at 18% 90%, rgba(180, 180, 200, 0.06) 0%, transparent 60%);
+    radial-gradient(60% 50% at 82% 14%, rgba(255, 255, 255, 0.10) 0%, transparent 60%),
+    radial-gradient(50% 40% at 18% 90%, rgba(200, 200, 200, 0.06) 0%, transparent 60%);
   filter: blur(40px);
   pointer-events: none; z-index: 0;
   animation: drift 36s ease-in-out infinite alternate;
@@ -90,15 +90,15 @@ main {
   display: flex; align-items: center; gap: 14px;
   margin: 0 0 24px;
   padding: 16px 18px;
-  background: linear-gradient(135deg, rgba(125, 211, 252, 0.10), rgba(168, 162, 255, 0.08));
-  border: 1px solid rgba(168, 162, 255, 0.18);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.06));
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 16px;
   text-decoration: none; color: var(--text-primary);
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, transform 0.10s;
 }
 .sleep-open-btn:hover {
-  background: linear-gradient(135deg, rgba(125, 211, 252, 0.16), rgba(168, 162, 255, 0.14));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.12));
 }
 .sleep-open-btn:active { transform: scale(0.985); }
 .sleep-open-icon {
@@ -498,7 +498,7 @@ main {
   .stack-search-results { width: 100%; }
 }
 
-::selection { background: rgba(224, 118, 88, 0.3); color: var(--text-primary); }
+::selection { background: rgba(255, 255, 255, 0.25); color: var(--text-primary); }
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 999px; }

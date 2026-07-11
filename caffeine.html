@@ -20,8 +20,8 @@
   --success: #6BE3A4;
   --warning: #F2C063;
   --danger:  #FF6B6B;
-  --caf: #C9A36B;
-  --energy: #6BE3A4;
+  --caf: #D8D6D0;
+  --energy: #D8D6D0;
   --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
@@ -38,8 +38,8 @@ body {
 body::before {
   content: ''; position: fixed; inset: 0;
   background:
-    radial-gradient(circle at 82% 14%, rgba(107,227,164,0.12), transparent 45%),
-    radial-gradient(circle at 18% 90%, rgba(201,163,107,0.07), transparent 50%);
+    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.10), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(255,255,255,0.05), transparent 50%);
   filter: blur(40px); pointer-events: none; z-index: -2;
   animation: drift 36s ease-in-out infinite alternate;
 }
@@ -94,7 +94,7 @@ body::after {
   font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.10em;
   padding: 8px 14px; cursor: pointer; transition: background 0.15s, color 0.15s;
 }
-.seg-toggle button.on { background: rgba(107,227,164,0.15); color: var(--energy); }
+.seg-toggle button.on { background: rgba(255,255,255,0.14); color: var(--energy); }
 
 .curve-wrap { position: relative; width: 100%; margin-top: 14px; touch-action: pan-y; }
 .curve-wrap svg { width: 100%; height: 230px; display: block; overflow: visible; }
@@ -114,7 +114,7 @@ body::after {
 .mini .k { font-size: 9.5px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); }
 .mini .v { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-top: 7px; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .mini .s { font-size: 11.5px; color: var(--text-tertiary); margin-top: 5px; line-height: 1.4; }
-.mini.peak .v { color: var(--success); } .mini.crash .v { color: var(--warning); } .mini.cutoff .v { color: #7DD3FC; }
+.mini.peak .v { color: var(--success); } .mini.crash .v { color: var(--warning); } .mini.cutoff .v { color: #D8D6D0; }
 .tips { list-style: none; margin: 14px 0 0; padding: 0; }
 .tip { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); }
 .tip:first-child { border-top: 0; }
@@ -139,15 +139,15 @@ body::after {
   transition: border-color 0.2s, background 0.2s;
 }
 .gm-input::placeholder { color: var(--text-tertiary); }
-.gm-input:focus { border-color: rgba(201,163,107,0.45); background: rgba(0,0,0,0.36); }
+.gm-input:focus { border-color: rgba(255,255,255,0.35); background: rgba(0,0,0,0.36); }
 .results { list-style: none; margin: 12px 0 0; padding: 0; max-height: 320px; overflow-y: auto; }
 .result { display: flex; align-items: center; gap: 12px; padding: 11px 12px; margin-bottom: 6px;
   background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
-.result:hover { background: rgba(201,163,107,0.10); border-color: rgba(201,163,107,0.30); }
+.result:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); }
 .result-emoji { font-size: 20px; flex-shrink: 0; width: 24px; text-align: center; }
 .result-name { flex: 1; font-size: 14px; color: var(--text-primary); }
 .result-cat { font-size: 11px; color: var(--text-tertiary); }
-.result-mg { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: #E7C690; font-variant-numeric: tabular-nums; }
+.result-mg { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: #D8D6D0; font-variant-numeric: tabular-nums; }
 .result-mg small { color: var(--text-tertiary); font-weight: 600; }
 .results-empty { font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 10px 2px; }
 .custom-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); }
@@ -167,7 +167,7 @@ body::after {
 .log-emoji { font-size: 20px; flex-shrink: 0; }
 .log-main { flex: 1; min-width: 0; }
 .log-name { font-size: 14px; color: var(--text-primary); font-weight: 600; }
-.log-name b { font-family: var(--font-mono); color: #E7C690; font-weight: 700; margin-left: 6px; }
+.log-name b { font-family: var(--font-mono); color: #D8D6D0; font-weight: 700; margin-left: 6px; }
 .log-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); margin-top: 3px; line-height: 1.5; }
 .log-meta .sep { opacity: 0.4; margin: 0 5px; }
 .log-time { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; flex-shrink: 0; }
@@ -222,7 +222,7 @@ body::after {
       <div class="plan-band" id="planBand">
         <div class="plan-item"><span class="k">Peak focus</span><span class="v green" id="peakVal">—</span></div>
         <div class="plan-item"><span class="k">Predicted crash</span><span class="v amber" id="crashVal">—</span></div>
-        <div class="plan-item"><span class="k">Last coffee by</span><span class="v" id="cutoffVal" style="color:#7DD3FC">—</span></div>
+        <div class="plan-item"><span class="k">Last coffee by</span><span class="v" id="cutoffVal" style="color:#D8D6D0">—</span></div>
       </div>
     </div>
   </div>
@@ -473,8 +473,8 @@ body::after {
     // gridlines
     for(let g=25;g<=100;g+=25){ const y=Y(g).toFixed(1); parts.push('<line x1="0" y1="'+y+'" x2="'+W+'" y2="'+y+'" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>'); }
 
-    parts.push('<defs><linearGradient id="eg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(107,227,164,0.42)"/><stop offset="100%" stop-color="rgba(107,227,164,0)"/></linearGradient>'
-      + '<linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(201,163,107,0.45)"/><stop offset="100%" stop-color="rgba(201,163,107,0.05)"/></linearGradient></defs>');
+    parts.push('<defs><linearGradient id="eg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,0.30)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></linearGradient>'
+      + '<linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,0.26)"/><stop offset="100%" stop-color="rgba(255,255,255,0.04)"/></linearGradient></defs>');
 
     if(chartMode==='bars'){
       for(let hh=0;hh<24;hh++){
@@ -496,14 +496,14 @@ body::after {
       for(let i=base.length-1;i>=0;i--){ band+=' L '+X(base[i][0]).toFixed(1)+' '+Y(base[i][1]).toFixed(1); }
       band+=' Z';
       parts.push('<path d="'+band+'" fill="url(#cg)"/>');
-      parts.push('<path d="'+top+'" fill="none" stroke="#6BE3A4" stroke-width="2.5" stroke-linejoin="round"/>');
+      parts.push('<path d="'+top+'" fill="none" stroke="#FAFAFA" stroke-width="2.5" stroke-linejoin="round"/>');
     } else {
       // LINE (default) — smooth glowing curve + area
       let line='M '+X(pts[0][0]).toFixed(1)+' '+Y(pts[0][1]).toFixed(1);
       pts.forEach((p,i)=>{ if(i) line+=' L '+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1); });
       const area=line+' L '+W+' '+(H-padB)+' L 0 '+(H-padB)+' Z';
       parts.push('<path d="'+area+'" fill="url(#eg)"/>');
-      parts.push('<path d="'+line+'" fill="none" stroke="#6BE3A4" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 6px rgba(107,227,164,0.55))"/>');
+      parts.push('<path d="'+line+'" fill="none" stroke="#FAFAFA" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 6px rgba(255,255,255,0.45))"/>');
     }
 
     // markers: now + scrub
@@ -512,8 +512,8 @@ body::after {
     parts.push('<circle cx="'+xNow+'" cy="'+Y(energyAt(now,true)).toFixed(1)+'" r="4" fill="#fff"/>');
     if(scrubT!=null){
       const xs=X(scrubT).toFixed(1), ys=Y(energyAt(scrubT,true)).toFixed(1);
-      parts.push('<line x1="'+xs+'" y1="0" x2="'+xs+'" y2="'+H+'" stroke="rgba(107,227,164,0.7)" stroke-width="1.5" stroke-dasharray="3 3"/>');
-      parts.push('<circle cx="'+xs+'" cy="'+ys+'" r="6" fill="#0e0e10" stroke="#6BE3A4" stroke-width="2.5"/>');
+      parts.push('<line x1="'+xs+'" y1="0" x2="'+xs+'" y2="'+H+'" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-dasharray="3 3"/>');
+      parts.push('<circle cx="'+xs+'" cy="'+ys+'" r="6" fill="#0e0e10" stroke="#FAFAFA" stroke-width="2.5"/>');
     }
     svg.innerHTML=parts.join('');
   }

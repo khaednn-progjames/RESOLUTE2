@@ -38,8 +38,8 @@ body {
 body::before {
   content: ''; position: fixed; inset: 0;
   background:
-    radial-gradient(circle at 82% 14%, rgba(224,118,88,0.16), transparent 45%),
-    radial-gradient(circle at 18% 90%, rgba(180,180,200,0.06), transparent 50%);
+    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.10), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(200,200,200,0.06), transparent 50%);
   filter: blur(40px); pointer-events: none; z-index: -2;
   animation: drift 36s ease-in-out infinite alternate;
 }
@@ -68,7 +68,7 @@ body::after {
   gap: 14px;
 }
 .tile {
-  --accent: #6BE3A4;                 /* each tile overrides this */
+  --accent: #FFFFFF;                 /* each tile overrides this */
   position: relative; overflow: hidden;
   display: flex; flex-direction: column;
   padding: 20px;
@@ -222,7 +222,7 @@ body::after {
   <div class="bento">
 
     <!-- Big tile -->
-    <a class="tile big" href="main.html" style="--accent:#6BE3A4">
+    <a class="tile big" href="main.html" style="--accent:#FFFFFF">
       <div class="tile-top">
         <span class="tile-num">·01</span>
         <span class="tile-emoji">🏠</span>
@@ -236,7 +236,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="po-water.html" style="--accent:#60A5FA">
+    <a class="tile" href="po-water.html" style="--accent:#FFFFFF">
       <div class="tile-top">
         <span class="tile-num">·02</span>
         <span class="tile-emoji">💧</span>
@@ -250,7 +250,7 @@ body::after {
     </a>
 
     <!-- Wide tile -->
-    <a class="tile wide" href="finance.html" style="--accent:#F2C063">
+    <a class="tile wide" href="finance.html" style="--accent:#FFFFFF">
       <div class="tile-top">
         <span class="tile-num">·03</span>
         <span class="tile-emoji">📊</span>
@@ -264,7 +264,7 @@ body::after {
     </a>
 
     <!-- Wide tile -->
-    <a class="tile wide" href="nova-lite.html" style="--accent:#A78BFA">
+    <a class="tile wide" href="nova-lite.html" style="--accent:#FFFFFF">
       <div class="tile-top">
         <span class="tile-num">·04</span>
         <span class="tile-emoji">🧠</span>
@@ -278,7 +278,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="notes.html" style="--accent:#F0ABFC">
+    <a class="tile" href="notes.html" style="--accent:#FFFFFF">
       <div class="tile-top">
         <span class="tile-num">·05</span>
         <span class="tile-emoji">📝</span>

@@ -42,8 +42,8 @@ body::before {
   content: '';
   position: fixed; inset: 0;
   background:
-    radial-gradient(circle at 82% 14%, rgba(224, 118, 88, 0.16), transparent 45%),
-    radial-gradient(circle at 18% 90%, rgba(180, 180, 200, 0.06), transparent 50%);
+    radial-gradient(circle at 82% 14%, rgba(255, 255, 255, 0.10), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(200, 200, 200, 0.06), transparent 50%);
   filter: blur(40px);
   pointer-events: none;
   z-index: -2;
@@ -113,8 +113,8 @@ body::after {
 .goal-ticker-led { display: inline-flex; align-items: center; }
 .goal-ticker-led-dot {
   width: 7px; height: 7px; border-radius: 50%;
-  background: #6BE3A4;
-  box-shadow: 0 0 8px rgba(107,227,164,0.7);
+  background: #FAFAFA;
+  box-shadow: 0 0 8px rgba(250,250,250,0.7);
   animation: led-pulse 1.6s ease-in-out infinite;
 }
 @keyframes led-pulse {
@@ -319,8 +319,8 @@ body::after {
 }
 .lifegoal-bar-fill {
   position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: 999px;
-  background: linear-gradient(90deg,#6BE3A4,#7DD3FC);
-  box-shadow: 0 0 12px rgba(107,227,164,0.5); transition: width 0.4s ease;
+  background: linear-gradient(90deg,#B8B6B0,#FAFAFA);
+  box-shadow: 0 0 12px rgba(250,250,250,0.4); transition: width 0.4s ease;
 }
 .lifegoal-foot {
   display: flex; justify-content: space-between; margin-top: 9px;
@@ -441,7 +441,7 @@ body::after {
   box-shadow: inset 3px 0 0 0 #F2C063;
 }
 .gm-row.gm-row-queued .gm-text { color: #FFE2A8; }
-.gm-row.is-drag-over { border-top: 2px solid #6BE3A4; }
+.gm-row.is-drag-over { border-top: 2px solid #FAFAFA; }
 .gm-row.is-queue-flashing { animation: gm-queue-flash 0.48s ease-out; }
 @keyframes gm-queue-flash {
   0%   { background: rgba(255,255,255,0.035); transform: scale(1); }
@@ -950,15 +950,11 @@ body::after {
 
   // ---------- Day Ring ----------
   const PALETTE = [
-    [0,    [255, 216, 158]],
-    [12.5, [255, 205, 121]],
-    [25,   [255, 227, 143]],
-    [37.5, [255, 183, 106]],
-    [50,   [255, 149,  89]],
-    [62.5, [243, 111,  79]],
-    [75,   [226,  93, 122]],
-    [87.5, [123,  91, 176]],
-    [100,  [ 47,  58, 102]]
+    [0,    [120, 118, 112]],
+    [25,   [170, 168, 162]],
+    [50,   [210, 208, 202]],
+    [75,   [235, 233, 227]],
+    [100,  [250, 250, 250]]
   ];
   function lerp(a, b, t) { return a + (b - a) * t; }
   function paletteAt(p) {
@@ -1008,7 +1004,7 @@ body::after {
 
     if (hours < WAKE_HOUR) {
       fillEl.setAttribute('stroke-dashoffset', C);
-      fillEl.style.stroke = '#4D4B47';
+      fillEl.style.stroke = '#57554F';
       percentEl.textContent = '—';
       phaseEl.textContent   = 'SLEEPING';
       statusEl.textContent  = '😴 Still sleeping';
@@ -1019,7 +1015,7 @@ body::after {
 
     if (hours >= SLEEP_HOUR) {
       fillEl.setAttribute('stroke-dashoffset', 0);
-      fillEl.style.stroke = '#E25D7A';
+      fillEl.style.stroke = '#FF6B6B';
       percentEl.textContent = '100%';
       phaseEl.textContent   = 'PAST BEDTIME';
       statusEl.textContent  = '⚠️ Past bedtime';

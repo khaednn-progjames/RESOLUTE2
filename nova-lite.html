@@ -21,7 +21,7 @@
  * ============================================================ -->
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-:root { --accent: #6EE7B7; --accent-2: #67E8F9; --bg: #05060c; --fg: #e9ecf5; --muted: rgba(233,236,245,.55); --line: rgba(255,255,255,.1); }
+:root { --accent: #FAFAFA; --accent-2: #B8B6B0; --orb-glow: #6EE7B7; --bg: #05060c; --fg: #e9ecf5; --muted: rgba(233,236,245,.55); --line: rgba(255,255,255,.1); }
 html, body { background: var(--bg); }
 body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: var(--fg); min-height: 100vh; }
 
@@ -35,8 +35,8 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
 
 /* ---- flat CSS orb avatar (lightweight, no Three.js) ---- */
 .orb { width: 60px; height: 60px; border-radius: 50%; position: relative; flex-shrink: 0;
-  background: radial-gradient(circle at 32% 28%, #eafff6, var(--accent) 42%, #1f8f66 100%);
-  box-shadow: 0 0 22px -2px var(--accent), inset 0 -6px 14px rgba(0,0,0,.25);
+  background: radial-gradient(circle at 32% 28%, #eafff6, var(--orb-glow) 42%, #1f8f66 100%);
+  box-shadow: 0 0 22px -2px var(--orb-glow), inset 0 -6px 14px rgba(0,0,0,.25);
   animation: orbFloat 4s ease-in-out infinite; }
 .orb::before, .orb::after { content: ''; position: absolute; top: 38%; width: 9px; height: 9px; border-radius: 50%;
   background: #06281d; box-shadow: 0 0 6px rgba(0,0,0,.4); transition: height .15s; }
@@ -44,7 +44,7 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
 .orb.think { animation: orbFloat 1.1s ease-in-out infinite, orbPulse 1.1s ease-in-out infinite; }
 .orb.happy::before, .orb.happy::after { height: 4px; border-radius: 0 0 9px 9px; }
 @keyframes orbFloat { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
-@keyframes orbPulse { 0%,100% { box-shadow: 0 0 22px -2px var(--accent) } 50% { box-shadow: 0 0 34px 2px var(--accent) } }
+@keyframes orbPulse { 0%,100% { box-shadow: 0 0 22px -2px var(--orb-glow) } 50% { box-shadow: 0 0 34px 2px var(--orb-glow) } }
 
 .title h1 { font-family: 'Times New Roman', Georgia, serif; font-style: italic; font-size: 26px; font-weight: 500;
   background: linear-gradient(90deg, var(--accent-2), var(--accent)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
