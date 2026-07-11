@@ -100,11 +100,7 @@ body::after {
 .tile.wide { grid-column: span 2; }
 
 /* Tile contents */
-.tile-top { display: flex; align-items: flex-start; justify-content: space-between; }
-.tile-num {
-  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
-  letter-spacing: 0.08em; color: var(--text-tertiary);
-}
+.tile-top { display: flex; align-items: flex-start; justify-content: flex-end; }
 .tile-emoji {
   font-size: 26px; line-height: 1;
   filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 60%, transparent));
@@ -212,7 +208,6 @@ body::after {
     <!-- Big tile -->
     <a class="tile big" href="main.html" style="--accent:#FFFFFF">
       <div class="tile-top">
-        <span class="tile-num">·01</span>
         <span class="tile-emoji">🏠</span>
       </div>
       <div class="tile-spacer"></div>
@@ -226,7 +221,6 @@ body::after {
     <!-- Small tile -->
     <a class="tile" href="po-water.html" style="--accent:#FFFFFF">
       <div class="tile-top">
-        <span class="tile-num">·02</span>
         <span class="tile-emoji">💧</span>
       </div>
       <div class="tile-spacer"></div>
@@ -240,7 +234,6 @@ body::after {
     <!-- Wide tile -->
     <a class="tile wide" href="finance.html" style="--accent:#FFFFFF">
       <div class="tile-top">
-        <span class="tile-num">·03</span>
         <span class="tile-emoji">📊</span>
       </div>
       <div class="tile-spacer"></div>
@@ -254,7 +247,6 @@ body::after {
     <!-- Wide tile -->
     <a class="tile wide" href="nova-lite.html" style="--accent:#FFFFFF">
       <div class="tile-top">
-        <span class="tile-num">·04</span>
         <span class="tile-emoji">🧠</span>
       </div>
       <div class="tile-spacer"></div>
@@ -268,7 +260,6 @@ body::after {
     <!-- Small tile -->
     <a class="tile" href="notes.html" style="--accent:#FFFFFF">
       <div class="tile-top">
-        <span class="tile-num">·05</span>
         <span class="tile-emoji">📝</span>
       </div>
       <div class="tile-spacer"></div>
@@ -282,7 +273,6 @@ body::after {
     <!-- Small tile -->
     <a class="tile" href="links.html" style="--accent:#FFFFFF">
       <div class="tile-top">
-        <span class="tile-num">·06</span>
         <span class="tile-emoji">🔗</span>
       </div>
       <div class="tile-spacer"></div>
@@ -296,7 +286,6 @@ body::after {
     <!-- Small tile -->
     <a class="tile" href="ideas.html" style="--accent:#FFFFFF">
       <div class="tile-top">
-        <span class="tile-num">·07</span>
         <span class="tile-emoji">💡</span>
       </div>
       <div class="tile-spacer"></div>
@@ -310,7 +299,6 @@ body::after {
     <!-- Small tile -->
     <a class="tile" href="misc.html" style="--accent:#FFFFFF">
       <div class="tile-top">
-        <span class="tile-num">·08</span>
         <span class="tile-emoji">📦</span>
       </div>
       <div class="tile-spacer"></div>

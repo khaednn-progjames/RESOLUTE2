@@ -94,11 +94,7 @@ body::after {
 .tile:hover::before { opacity: 1; }
 .tile.big  { grid-column: span 2; grid-row: span 2; }
 .tile.wide { grid-column: span 2; }
-.tile-top { display: flex; align-items: flex-start; justify-content: space-between; }
-.tile-num {
-  font-family: var(--font-mono); font-size: 12px; font-weight: 600;
-  letter-spacing: 0.08em; color: var(--text-tertiary);
-}
+.tile-top { display: flex; align-items: flex-start; justify-content: flex-end; }
 .tile-emoji {
   font-size: 26px; line-height: 1;
   filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 60%, transparent));
@@ -140,7 +136,7 @@ body::after {
   <h1 class="dash-title">Miscellaneous</h1>
 
   <div class="bento">
-    <!-- New tiles go here, using the same tile markup as index.html — bump tile-num and pick an emoji + href. -->
+    <!-- New tiles go here, using the same tile markup as index.html — pick an emoji + href. -->
     <div class="empty-state">Nothing here yet — new tiles will land in this space when you say so.</div>
   </div>
 
