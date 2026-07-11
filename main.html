@@ -285,7 +285,52 @@ body::after {
   margin-bottom: 14px;
   position: relative;
 }
-.gm-header-left { display: flex; flex-direction: column; }
+.gm-header-left { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.lifegoal-title {
+  width: 100%; background: transparent; border: 0; outline: 0;
+  color: var(--text-primary); font-family: var(--font);
+  font-size: 19px; font-weight: 700; letter-spacing: -0.01em;
+  padding: 2px 0 0; margin-top: 2px;
+}
+.lifegoal-title::placeholder { color: var(--text-tertiary); font-weight: 600; }
+.lifegoal-reset {
+  flex-shrink: 0; white-space: nowrap; font-size: 12px; font-weight: 600;
+  padding: 9px 14px; border: 1px solid rgba(255,255,255,0.10); border-radius: 11px;
+  background: rgba(255,255,255,0.04); color: var(--text-secondary);
+  font-family: inherit; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.lifegoal-reset:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.lifegoal-count-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin: 4px 0 14px; }
+.lifegoal-unit {
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; padding: 14px 8px; text-align: center;
+}
+.lifegoal-num {
+  display: block; font-family: var(--font-mono); font-size: 26px; font-weight: 700;
+  color: var(--text-primary); font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+}
+.lifegoal-label {
+  display: block; margin-top: 4px; font-size: 9.5px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.lifegoal-bar {
+  position: relative; height: 8px; border-radius: 999px;
+  background: rgba(255,255,255,0.06); overflow: hidden;
+}
+.lifegoal-bar-fill {
+  position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: 999px;
+  background: linear-gradient(90deg,#6BE3A4,#7DD3FC);
+  box-shadow: 0 0 12px rgba(107,227,164,0.5); transition: width 0.4s ease;
+}
+.lifegoal-foot {
+  display: flex; justify-content: space-between; margin-top: 9px;
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary);
+}
+@media (max-width: 480px) {
+  .lifegoal-count-row { gap: 7px; }
+  .lifegoal-num { font-size: 20px; }
+  .lifegoal-title { font-size: 17px; }
+}
 .gm-eyebrow {
   font-size: 10.5px; font-weight: 700;
   letter-spacing: 0.18em; text-transform: uppercase;
@@ -638,6 +683,33 @@ body::after {
       <div class="day-ring-status"    id="dayRingStatus">Loading…</div>
       <div class="day-ring-remaining" id="dayRingRemaining">—</div>
       <div class="day-ring-hours">8:00 AM – 12:00 AM</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Life Goal</div>
+    <div class="gm-card" id="lifeGoalCard">
+      <div class="gm-header">
+        <div class="gm-header-left">
+          <div class="gm-eyebrow">1-Year Countdown</div>
+          <input class="lifegoal-title" id="lifeGoalTitle" type="text" placeholder="What's your one-year goal?" autocomplete="off">
+        </div>
+        <button type="button" class="lifegoal-reset" id="lifeGoalReset">Restart 1yr</button>
+      </div>
+
+      <div class="lifegoal-count-row">
+        <div class="lifegoal-unit"><span class="lifegoal-num" id="lgDays">—</span><span class="lifegoal-label">Days</span></div>
+        <div class="lifegoal-unit"><span class="lifegoal-num" id="lgHours">—</span><span class="lifegoal-label">Hrs</span></div>
+        <div class="lifegoal-unit"><span class="lifegoal-num" id="lgMins">—</span><span class="lifegoal-label">Min</span></div>
+        <div class="lifegoal-unit"><span class="lifegoal-num" id="lgSecs">—</span><span class="lifegoal-label">Sec</span></div>
+      </div>
+
+      <div class="lifegoal-bar"><div class="lifegoal-bar-fill" id="lifeGoalBarFill"></div></div>
+      <div class="lifegoal-foot">
+        <span id="lifeGoalStartLabel">Started —</span>
+        <span id="lifeGoalPct">0% elapsed</span>
+        <span id="lifeGoalEndLabel">Target —</span>
+      </div>
     </div>
   </div>
 
@@ -1313,14 +1385,92 @@ body::after {
 </script>
 
 <script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const KEY = 'lifegoal:v1';
+  const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; }
+  }
+  function save(v) { localStorage.setItem(KEY, JSON.stringify(v)); }
+
+  function ensure() {
+    let s = load();
+    if (!s || !s.start || !s.end) {
+      const start = Date.now();
+      s = { goal: '', start, end: start + YEAR_MS };
+      save(s);
+    }
+    return s;
+  }
+
+  function fmtDate(ts) {
+    return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function render() {
+    const s = ensure();
+    if (document.activeElement !== $('lifeGoalTitle')) $('lifeGoalTitle').value = s.goal || '';
+    const now = Date.now();
+    let remaining = s.end - now;
+    if (remaining < 0) remaining = 0;
+    const totalSec = Math.floor(remaining / 1000);
+    const days = Math.floor(totalSec / 86400);
+    const hours = Math.floor((totalSec % 86400) / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = totalSec % 60;
+    $('lgDays').textContent = String(days);
+    $('lgHours').textContent = String(hours).padStart(2, '0');
+    $('lgMins').textContent = String(mins).padStart(2, '0');
+    $('lgSecs').textContent = String(secs).padStart(2, '0');
+
+    const span = Math.max(1, s.end - s.start);
+    const elapsed = Math.min(1, Math.max(0, (now - s.start) / span));
+    $('lifeGoalBarFill').style.width = (elapsed * 100).toFixed(2) + '%';
+    $('lifeGoalPct').textContent = Math.round(elapsed * 100) + '% elapsed';
+    $('lifeGoalStartLabel').textContent = 'Started ' + fmtDate(s.start);
+    $('lifeGoalEndLabel').textContent = remaining > 0 ? 'Target ' + fmtDate(s.end) : 'Goal date reached 🎉';
+  }
+
+  let titleTimer = null;
+  $('lifeGoalTitle').addEventListener('input', function () {
+    clearTimeout(titleTimer);
+    titleTimer = setTimeout(function () {
+      const s = ensure();
+      s.goal = $('lifeGoalTitle').value.trim();
+      save(s);
+    }, 350);
+  });
+
+  $('lifeGoalReset').addEventListener('click', function () {
+    if (!confirm('Restart the countdown for a fresh 1-year goal from today?')) return;
+    const s = ensure();
+    const start = Date.now();
+    save({ goal: s.goal || '', start, end: start + YEAR_MS });
+    render();
+  });
+
+  render();
+  setInterval(render, 1000);
+  window.addEventListener('storage', render);
+
+  window.__lifeGoalRender = render;
+})();
+</script>
+
+<script>
 document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'goals',
     syncedPrefixes: ['goals:'],
+    syncedKeys: ['lifegoal:v1'],
     onApplied: function () {
       window.dispatchEvent(new CustomEvent('goals-changed'));
       window.dispatchEvent(new Event('storage'));
+      if (typeof window.__lifeGoalRender === 'function') window.__lifeGoalRender();
     }
   });
 });
