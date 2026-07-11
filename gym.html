@@ -3525,7 +3525,7 @@ img, video, canvas, svg { max-width: 100%; }
 })();
 </script>
 
-<!-- ===== Nova gym coach (top-right avatar, bring-your-own Anthropic key) ===== -->
+<!-- ===== Sirius gym coach (top-right avatar, bring-your-own Anthropic key) ===== -->
 <style>
   /* Anchor the avatar to the top-right of the page content, not the far corner. */
   .po-shell { position: relative; }
@@ -3583,11 +3583,11 @@ img, video, canvas, svg { max-width: 100%; }
   .nv-dots i:nth-child(2){animation-delay:.15s} .nv-dots i:nth-child(3){animation-delay:.3s}
   @keyframes nvb { 0%,100%{opacity:.3;transform:translateY(0)} 50%{opacity:1;transform:translateY(-3px)} }
 </style>
-<button id="nvFab" type="button" aria-label="Open Nova coach"><span class="nv-online"></span></button>
-<div id="nvPanel" role="dialog" aria-label="Nova gym coach">
+<button id="nvFab" type="button" aria-label="Open Sirius coach"><span class="nv-online"></span></button>
+<div id="nvPanel" role="dialog" aria-label="Sirius gym coach">
   <div class="nv-head">
     <div class="nv-av"></div>
-    <div><div class="nv-name">Nova</div><div class="nv-sub">your gym coach</div></div>
+    <div><div class="nv-name">Sirius</div><div class="nv-sub">your gym coach</div></div>
     <button class="nv-x" id="nvClose" type="button" aria-label="Close">×</button>
   </div>
   <div class="nv-body" id="nvBody"></div>
@@ -3597,7 +3597,7 @@ img, video, canvas, svg { max-width: 100%; }
     <button class="nv-chip" data-q="Look at my recent workouts — am I progressing and what should I push next?">💪 Lifts</button>
   </div>
   <div class="nv-foot">
-    <input class="nv-input" id="nvInput" type="text" placeholder="Ask Nova…" autocomplete="off">
+    <input class="nv-input" id="nvInput" type="text" placeholder="Ask Sirius…" autocomplete="off">
     <button class="nv-send" id="nvSend" type="button">↑</button>
   </div>
 </div>
@@ -3653,7 +3653,7 @@ img, video, canvas, svg { max-width: 100%; }
     if (s.length > 80000){ ctx.workouts = '[too large — summarize from weightLog + photos]'; s = JSON.stringify(ctx); }
     return s;
   }
-  const SYS = "You are Nova, the user's personal gym coach living inside their fitness dashboard. "
+  const SYS = "You are Sirius, the user's personal gym coach living inside their fitness dashboard. "
     + "You can see their body profile, bodyweight log (entries have dateKey + weight), workout logs, and progress-photo timeline (dates + bodyweight; the actual images are not included). "
     + "Coach concisely and specifically. For an overview, cover: bodyweight trend, training consistency, standout progress, and 1-2 concrete next steps. "
     + "Use short markdown bullets, be encouraging but honest. Weights may be kg or lb per their profile. Keep replies under ~180 words. Their data as JSON: ";
@@ -3662,7 +3662,7 @@ img, video, canvas, svg { max-width: 100%; }
     text = (text||'').trim(); if (!text || busy) return;
     const key = savedKey();
     addMsg('user', md(text));
-    if (!key){ addMsg('coach', md("Paste your **Anthropic API key** on the Nova page first (the 🧠 tile on the home screen) — it's saved in this browser and I'll use it here too.")); return; }
+    if (!key){ addMsg('coach', md("Paste your **Anthropic API key** on the Sirius page first (the 🧠 tile on the home screen) — it's saved in this browser and I'll use it here too.")); return; }
     busy = true;
     const loading = addMsg('coach', '<span class="nv-dots"><i></i><i></i><i></i></span>');
     try {
@@ -3681,7 +3681,7 @@ img, video, canvas, svg { max-width: 100%; }
 
   function openPanel(){
     panel.classList.add('open');
-    if (!greeted){ greeted = true; addMsg('coach', md("Hey — I'm Nova, your coach. I can see your weight log, workouts and progress photos. Tap **Overview** or ask me anything.")); }
+    if (!greeted){ greeted = true; addMsg('coach', md("Hey — I'm Sirius, your coach. I can see your weight log, workouts and progress photos. Tap **Overview** or ask me anything.")); }
     setTimeout(()=>input.focus(), 50);
   }
   function closePanel(){ panel.classList.remove('open'); }

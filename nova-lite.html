@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Nova Lite · AI Mentor</title>
+<title>Sirius Lite · AI Mentor</title>
 <!-- ============================================================
  * NOVA LITE — a simple, drop-in AI mentor for ANY dashboard.
  * Single self-contained file. No backend, no build step.
@@ -11,7 +11,7 @@
  * HOW IT WORKS (bring-your-own-key):
  *   • The viewer pastes their OWN Anthropic API key (stored only in
  *     their browser's localStorage — never sent anywhere but Anthropic).
- *   • Nova reads whatever the dashboard saved in localStorage for context.
+ *   • Sirius reads whatever the dashboard saved in localStorage for context.
  *   • Calls the Claude API directly from the browser using the
  *     `anthropic-dangerous-direct-browser-access` header.
  *
@@ -87,7 +87,7 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
   <div class="wrap">
     <div class="top">
       <div class="orb" id="orb"></div>
-      <div class="title"><h1>Nova Lite</h1><div class="role">your mentor</div></div>
+      <div class="title"><h1>Sirius Lite</h1><div class="role">your mentor</div></div>
       <button id="keyToggle" class="key-toggle" aria-label="API key settings" title="API key">🔑</button>
     </div>
 
@@ -105,7 +105,7 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
     <div class="feed" id="feed"></div>
 
     <div class="composer">
-      <input id="chatInput" placeholder="ask Nova anything…" autocomplete="off" />
+      <input id="chatInput" placeholder="ask Sirius anything…" autocomplete="off" />
       <button id="send" aria-label="Send">→</button>
     </div>
   </div>
@@ -163,11 +163,11 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
     return html;
   }
   function addUser(t){ const e = document.createElement('div'); e.className = 'msg user'; e.innerHTML = '<div class="bubble">' + esc(t) + '</div>'; feed.appendChild(e); scroll(); }
-  function addCoach(html){ const e = document.createElement('div'); e.className = 'msg coach'; e.innerHTML = '<div class="bubble"><span class="tag">Nova</span><div>' + html + '</div></div>'; feed.appendChild(e); scroll(); return e; }
+  function addCoach(html){ const e = document.createElement('div'); e.className = 'msg coach'; e.innerHTML = '<div class="bubble"><span class="tag">Sirius</span><div>' + html + '</div></div>'; feed.appendChild(e); scroll(); return e; }
   function scroll(){ window.scrollTo(0, document.body.scrollHeight); }
 
   const SYS =
-    "You are Nova, a personal mentor living inside the user's life-tracking dashboard. " +
+    "You are Sirius, a personal mentor living inside the user's life-tracking dashboard. " +
     "You can see their saved data (food, water, gym, finance, sleep, goals, etc.). " +
     "Give honest, specific, encouraging guidance. " +
     "Answer in short bullet points starting with '- ', few words each, plain language. " +
@@ -214,7 +214,7 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
   document.getElementById('send').addEventListener('click', () => ask(input.value));
   input.addEventListener('keydown', e => { if (e.key === 'Enter') ask(input.value); });
 
-  addCoach('Hey — I am <b>Nova</b>. Paste your key above, then ask me about food, training, sleep, or where to start. I keep it short and give you <b>one thing to act on</b>.');
+  addCoach('Hey — I am <b>Sirius</b>. Paste your key above, then ask me about food, training, sleep, or where to start. I keep it short and give you <b>one thing to act on</b>.');
 })();
 </script>
 </body>

@@ -216,14 +216,6 @@ body.topbar-modal-open {
     <span class="bottombar-tab-icon">🏠</span>
     <span>Main</span>
   </a>
-  <a href="health.html" class="bottombar-tab" data-page="health">
-    <span class="bottombar-tab-icon">💊</span>
-    <span>Health</span>
-  </a>
-  <a href="gym.html" class="bottombar-tab" data-page="fitness">
-    <span class="bottombar-tab-icon">💪</span>
-    <span>Fitness</span>
-  </a>
 </nav>
 `;
 
