@@ -1396,11 +1396,16 @@ body::after {
   }
   function save(v) { localStorage.setItem(KEY, JSON.stringify(v)); }
 
+  const DEFAULT_GOAL = 'Focus on. myself';
+
   function ensure() {
     let s = load();
     if (!s || !s.start || !s.end) {
       const start = Date.now();
-      s = { goal: '', start, end: start + YEAR_MS };
+      s = { goal: DEFAULT_GOAL, start, end: start + YEAR_MS };
+      save(s);
+    } else if (!s.goal) {
+      s.goal = DEFAULT_GOAL;
       save(s);
     }
     return s;
