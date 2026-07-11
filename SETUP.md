@@ -87,6 +87,54 @@ console.anthropic.com.
 
 ---
 
+## 4. Bank Accounts (Plaid) — optional, US/Canada only
+
+Real, live bank balances via **Plaid**. Unlike the rest of the app, this one needs a proper
+backend secret — the Plaid access token must **never** reach the browser, so it can't live in
+`localStorage` or the public `app_state` table the rest of the dashboard uses.
+
+### 4.1 Get Plaid API keys
+1. Sign up at **dashboard.plaid.com** → note your **Client ID** and **Sandbox secret**.
+2. Test everything in **Sandbox** first (fake banks, fake data — safe to break). Plaid's test
+   login is `user_good` / `pass_good` for any institution.
+3. When ready for your real bank, apply for **Production** access in the Plaid dashboard
+   (there's a review step, and production usage has its own pricing — check Plaid's current
+   terms before connecting a real account).
+
+### 4.2 SQL #3 — `plaid_items` (bank access tokens — locked down)
+Run in **SQL Editor → New query → Run**. Note there's **no `anon` policy** here on purpose —
+row level security is on with zero policies, so the public anon key (the one shipped to the
+browser) gets **no access at all**. Only the `service_role` key can read/write this table, and
+that key only ever lives in Vercel env vars, used by the `api/plaid-*.js` functions.
+```sql
+create table if not exists public.plaid_items (
+  id               bigint generated always as identity primary key,
+  item_id          text unique not null,
+  access_token     text not null,
+  institution_name text,
+  created_at       timestamptz not null default now()
+);
+
+alter table public.plaid_items enable row level security;
+-- Deliberately no policies: RLS with zero policies = no anon/public access whatsoever.
+```
+
+### 4.3 Vercel env vars
+| Variable | Value |
+|---|---|
+| `PLAID_CLIENT_ID` | your Plaid Client ID |
+| `PLAID_SECRET` | your Plaid Sandbox (or Production) secret |
+| `PLAID_ENV` | `sandbox` or `production` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → **service_role** secret |
+
+> ⚠️ `SUPABASE_SERVICE_ROLE_KEY` bypasses row level security entirely. It must **only** ever be
+> a Vercel env var read by `api/plaid-*.js` (server-side). Never put it in any `.html`/`.js`
+> file that ships to the browser, and never reuse the `SUPABASE_ANON_KEY` for it.
+
+Redeploy after adding the env vars, then open the **Bank Accounts** tile → **Connect a bank**.
+
+---
+
 ## TL;DR
 1. Fork → import to Vercel → deploy.
 2. New Supabase → run the **SQL** above → paste your **URL + anon key** into `sync.js`,

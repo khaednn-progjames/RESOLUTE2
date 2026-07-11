@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Bank Accounts · Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
+<script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+
+<style>
+/* ===== Shared design tokens (same as the rest of the dashboard) ===== */
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --success: #6BE3A4;
+  --danger:  #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body {
+  min-height: 100vh; position: relative; overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.10), transparent 45%),
+    radial-gradient(circle at 18% 90%, rgba(200,200,200,0.06), transparent 50%);
+  filter: blur(40px); pointer-events: none; z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px; pointer-events: none; z-index: -1;
+}
+@keyframes drift { 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-22px,14px,0)} }
+
+.page { max-width: 720px; margin: 0 auto; }
+.dash-title {
+  margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.ba-topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+
+.gm-card {
+  position: relative; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px;
+  margin-bottom: 16px; backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2); box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+}
+.section-title {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 12px;
+}
+
+/* ---- total ---- */
+.ba-total-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.ba-total-num { font-size: 38px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.04em; color: var(--text-primary); line-height: 1; }
+.ba-total-label { font-size: 12px; color: var(--text-tertiary); font-weight: 600; }
+
+/* ---- connect state ---- */
+.ba-empty { text-align: center; padding: 26px 8px; }
+.ba-empty-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.ba-empty-sub { font-size: 12.5px; color: var(--text-tertiary); max-width: 380px; margin: 0 auto 18px; line-height: 1.55; }
+.connect-btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.85); background: linear-gradient(180deg, #FFF, #E8E5DD);
+  color: #0A0A0B; font-family: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), 0 6px 20px rgba(0,0,0,0.45); transition: transform 0.12s;
+}
+.connect-btn:hover { transform: translateY(-1px); }
+.connect-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.connect-btn-small { margin-top: 16px; padding: 10px 18px; font-size: 12.5px; }
+
+.ba-err {
+  background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.28); color: #FF8A8A;
+  padding: 12px 14px; border-radius: 10px; font-size: 12px; font-family: var(--font-mono); margin-bottom: 14px; line-height: 1.6;
+}
+.ba-err a { color: #FFB3B3; }
+
+/* ---- institution + accounts ---- */
+.inst-block { margin-bottom: 18px; }
+.inst-block:last-child { margin-bottom: 0; }
+.inst-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.inst-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.inst-name .mark { font-size: 16px; }
+.disconnect-btn {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; padding: 6px 10px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.10); background: transparent; color: var(--text-tertiary); cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.disconnect-btn:hover { background: rgba(255,107,107,0.10); color: #FF8A8A; border-color: rgba(255,107,107,0.3); }
+
+.acct-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px;
+  margin-bottom: 6px; background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
+}
+.acct-main { min-width: 0; }
+.acct-name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acct-sub { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); margin-top: 2px; }
+.acct-bal { text-align: right; flex-shrink: 0; }
+.acct-bal-num { font-size: 16px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.acct-bal-sub { font-size: 10.5px; color: var(--text-tertiary); margin-top: 2px; }
+
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #FFFFFF; border-radius: 50%; animation: ba-spin 0.7s linear infinite; }
+@keyframes ba-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 480px) {
+  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
+  .gm-card { padding: 14px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="ba-topbar">
+    <h1 class="dash-title" style="flex:1">Bank Accounts</h1>
+  </div>
+
+  <div class="gm-card">
+    <div class="section-title">Total Balance</div>
+    <div class="ba-total-row">
+      <span class="ba-total-num" id="totalNum">—</span>
+      <span class="ba-total-label" id="totalCurrency"></span>
+    </div>
+  </div>
+
+  <div class="gm-card" id="mainCard">
+    <div id="errBox"></div>
+    <div id="content">
+      <div class="ba-empty"><span class="spinner"></span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+
+  function fmtMoney(n, code) {
+    if (n == null) return '—';
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: code || 'USD' }).format(n); }
+    catch (e) { return (code || '') + ' ' + n.toFixed(2); }
+  }
+
+  function showError(msg, extra) {
+    $('errBox').innerHTML = '<div class="ba-err">' + msg + (extra || '') + '</div>';
+  }
+  function clearError() { $('errBox').innerHTML = ''; }
+
+  function renderEmpty() {
+    $('content').innerHTML =
+      '<div class="ba-empty">' +
+      '<div class="ba-empty-title">No banks connected</div>' +
+      '<div class="ba-empty-sub">Securely link a bank account with Plaid to see real, live balances here. Your login credentials go straight to your bank/Plaid — never to this app.</div>' +
+      '<button class="connect-btn" id="connectBtn" type="button">🏦 Connect a bank</button>' +
+      '</div>';
+    $('connectBtn').addEventListener('click', startLink);
+  }
+
+  function renderItems(items) {
+    let total = 0, currency = null;
+    let html = '';
+    items.forEach(it => {
+      if (it.error) {
+        html += '<div class="inst-block"><div class="inst-head"><div class="inst-name"><span class="mark">🏦</span>' + esc(it.institution_name || 'Bank') + '</div>' +
+          '<button class="disconnect-btn" data-item="' + esc(it.item_id) + '">Disconnect</button></div>' +
+          '<div class="ba-err">Couldn\'t load this bank: ' + esc(it.error) + '</div></div>';
+        return;
+      }
+      html += '<div class="inst-block"><div class="inst-head"><div class="inst-name"><span class="mark">🏦</span>' + esc(it.institution_name || 'Bank') + '</div>' +
+        '<button class="disconnect-btn" data-item="' + esc(it.item_id) + '">Disconnect</button></div>';
+      (it.accounts || []).forEach(a => {
+        const bal = a.balances || {};
+        const amt = bal.current != null ? bal.current : bal.available;
+        if (typeof amt === 'number') { total += amt; currency = bal.iso_currency_code || currency; }
+        html += '<div class="acct-row"><div class="acct-main">' +
+          '<div class="acct-name">' + esc(a.name || a.official_name || 'Account') + '</div>' +
+          '<div class="acct-sub">' + esc((a.subtype || a.type || '').toString()) + (a.mask ? ' •••• ' + esc(a.mask) : '') + '</div>' +
+          '</div><div class="acct-bal">' +
+          '<div class="acct-bal-num">' + fmtMoney(amt, bal.iso_currency_code) + '</div>' +
+          (bal.available != null && bal.current != null && bal.available !== bal.current ? '<div class="acct-bal-sub">' + fmtMoney(bal.available, bal.iso_currency_code) + ' available</div>' : '') +
+          '</div></div>';
+      });
+      html += '</div>';
+    });
+    html += '<button class="connect-btn connect-btn-small" id="connectMoreBtn" type="button">+ Connect another bank</button>';
+    $('content').innerHTML = html;
+    $('connectMoreBtn').addEventListener('click', startLink);
+    document.querySelectorAll('.disconnect-btn').forEach(btn => {
+      btn.addEventListener('click', () => disconnectItem(btn.dataset.item, btn));
+    });
+
+    $('totalNum').textContent = total ? fmtMoney(total, currency) : '$0';
+    $('totalCurrency').textContent = '';
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  async function loadBalances() {
+    clearError();
+    try {
+      const res = await fetch('/api/plaid-balances');
+      const json = await res.json();
+      if (json.error) {
+        showError(
+          'Bank connections aren\'t set up yet. ',
+          'This needs <code>PLAID_CLIENT_ID</code>, <code>PLAID_SECRET</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code> in Vercel, plus the <code>plaid_items</code> table in Supabase — see SETUP.md.<br><br>' + esc(json.error)
+        );
+        $('totalNum').textContent = '—';
+        $('content').innerHTML = '';
+        return;
+      }
+      const items = json.items || [];
+      if (items.length === 0) renderEmpty();
+      else renderItems(items);
+    } catch (e) {
+      showError('Could not reach the server. ', esc(String(e)));
+      $('content').innerHTML = '';
+    }
+  }
+
+  async function startLink() {
+    clearError();
+    const btn = event && event.target;
+    if (btn) { btn.disabled = true; btn.textContent = 'Connecting…'; }
+    try {
+      const res = await fetch('/api/plaid-link-token', { method: 'POST' });
+      const json = await res.json();
+      if (json.error) { showError('Could not start Plaid Link. ', esc(json.error)); if (btn) { btn.disabled = false; btn.textContent = '🏦 Connect a bank'; } return; }
+
+      const handler = Plaid.create({
+        token: json.link_token,
+        onSuccess: async (public_token, metadata) => {
+          $('content').innerHTML = '<div class="ba-empty"><span class="spinner"></span></div>';
+          try {
+            const exRes = await fetch('/api/plaid-exchange-token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ public_token, institution_name: metadata && metadata.institution && metadata.institution.name }),
+            });
+            const exJson = await exRes.json();
+            if (exJson.error) { showError('Could not finish connecting. ', esc(exJson.error)); }
+          } catch (e) { showError('Could not finish connecting. ', esc(String(e))); }
+          loadBalances();
+        },
+        onExit: () => { if (btn) { btn.disabled = false; btn.textContent = btn.id === 'connectMoreBtn' ? '+ Connect another bank' : '🏦 Connect a bank'; } },
+      });
+      handler.open();
+    } catch (e) {
+      showError('Could not start Plaid Link. ', esc(String(e)));
+      if (btn) { btn.disabled = false; btn.textContent = '🏦 Connect a bank'; }
+    }
+  }
+
+  async function disconnectItem(itemId, btn) {
+    if (!confirm('Disconnect this bank? You can reconnect anytime.')) return;
+    btn.disabled = true; btn.textContent = 'Removing…';
+    try {
+      await fetch('/api/plaid-remove-item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item_id: itemId }),
+      });
+    } catch (e) {}
+    loadBalances();
+  }
+
+  loadBalances();
+})();
+</script>
+</body>
+</html>
