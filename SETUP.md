@@ -230,11 +230,20 @@ alter table public.tt_trades enable row level security;
 in env vars; the session itself is created by logging in from the **Iron Condor Bot** tile.
 
 ### 5.4 Scheduling
-`vercel.json` already defines a cron hitting `/api/iron-condor-run` every 15 minutes, 13:00–21:59
-UTC, Monday–Friday (covers US market hours across both EST/EDT with margin — the function itself
-checks the precise ET entry window from your settings). Check your current Vercel plan's cron
-limits; if your plan restricts frequency, an external scheduler (e.g. cron-job.org) hitting the
-same URL with `Authorization: Bearer <CRON_SECRET>` works identically.
+**Vercel's Hobby (free) plan only allows cron jobs to run once per day** — a more frequent
+schedule can fail to deploy entirely. `vercel.json` defaults to a single daily run at 14:00 UTC
+(10:00 EDT / 9:00 EST), Monday–Friday, which lands inside the default 09:45–10:15 ET entry window
+during EDT (summer) but **misses it during EST (winter)**, since a fixed UTC time can't hit the
+same local-time window across a DST change. If your default entry window doesn't matter to you,
+just adjust `entry_window_start`/`entry_window_end` in the bot's settings to bracket whatever
+time 14:00 UTC is in your local season.
+
+For real once-per-15-minutes precision across all of market hours, either:
+- Upgrade to a Vercel plan that allows more frequent crons and change the `schedule` in
+  `vercel.json` back to something like `*/15 13-21 * * 1-5`, or
+- Use a free external scheduler (e.g. cron-job.org) hitting `/api/iron-condor-run` directly at
+  whatever frequency you want, with header `Authorization: Bearer <CRON_SECRET>` — this isn't
+  subject to Vercel's plan limits at all.
 
 > ⚠️ There is deliberately no "run now" button in the UI — the bot only ever fires on the cron
 > schedule, to keep entry timing consistent and to avoid the temptation to bypass the entry-window
