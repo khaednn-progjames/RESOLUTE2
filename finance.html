@@ -1735,6 +1735,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <div class="section-title">
     <span class="section-title-text">ACTIVE SUBSCRIPTIONS</span>
   </div>
+  <div id="subAuditPanel" style="display:none"></div>
   <div class="card" style="background:linear-gradient(135deg, rgba(83,74,183,0.07), rgba(216,90,48,0.05));border:1px solid rgba(83,74,183,0.20)">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:12px">
       <div>
@@ -1760,7 +1761,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <option value="yearly">Yearly</option>
         <option value="weekly">Weekly</option>
       </select>
-      <label class="date-field" title="Next renewal date" style="min-width:150px"><span class="date-emoji" aria-hidden="true">📅</span><input type="date" id="subRenewal" /></label>
+      <label class="date-field" title="Next renewal date (or trial end date)" style="min-width:150px"><span class="date-emoji" aria-hidden="true">📅</span><input type="date" id="subRenewal" /></label>
       <select id="subFromCat" title="Which net worth account to deduct from" style="padding:6px 10px;border:0.5px solid var(--border);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary);min-width:130px">
         <option value="">No accounts yet</option>
       </select>
@@ -1768,6 +1769,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <input type="checkbox" id="subAutoDeduct" />
         <span class="sub-auto-track"><span class="sub-auto-thumb"></span></span>
         <span class="sub-auto-label">Auto-deduct</span>
+      </label>
+      <label class="sub-auto-toggle" title="Mark as a free trial — the auditor will flag it more urgently as the renewal date nears">
+        <input type="checkbox" id="subIsTrial" />
+        <span class="sub-auto-track"><span class="sub-auto-thumb"></span></span>
+        <span class="sub-auto-label">Free trial</span>
       </label>
       <button class="quick-add-btn" id="subAddBtn" onclick="window.__addSub && window.__addSub()">+ Add</button>
     </div>
@@ -2461,6 +2467,72 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     return prefix + dateLabel;
   }
 
+  // ===== Subscription Auditor =====
+  // Flags trials ending soon, regular renewals coming up, overlapping
+  // categories (e.g. 2+ streaming services), and disproportionately priced subs.
+  const SUB_CATEGORIES = {
+    'Streaming': ['netflix', 'hulu', 'disney', 'max', 'hbo', 'paramount', 'peacock', 'apple tv', 'appletv', 'prime video', 'crunchyroll', 'youtube tv'],
+    'Music': ['spotify', 'apple music', 'tidal', 'youtube music', 'soundcloud', 'pandora'],
+    'Cloud storage': ['icloud', 'google one', 'dropbox', 'onedrive', 'google drive'],
+    'Fitness': ['peloton', 'strava', 'whoop', 'fitbit', 'myfitnesspal', 'classpass'],
+    'AI tools': ['chatgpt', 'claude', 'openai', 'copilot', 'midjourney', 'perplexity'],
+  };
+
+  function computeSubAudit(items) {
+    const flags = [];
+    if (!items.length) return flags;
+
+    items.forEach((it) => {
+      if (!it.renewal || typeof nextRenewalDate !== 'function') return;
+      const next = nextRenewalDate(it.renewal, it.period);
+      if (!next) return;
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const days = Math.round((next.getTime() - today) / 86400000);
+      if (days < 0 || days > 7) return;
+      const when = days === 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days';
+      if (it.isTrial) {
+        flags.push({ severity: 'high', html: '⚠️ <b>' + escapeHtml(it.name) + '</b> trial ends ' + when + ' — will start charging ' + fmtMoney(monthlyEquivalent(it)) + '/' + it.period + ' unless canceled.' });
+      } else {
+        flags.push({ severity: 'low', html: '🔔 <b>' + escapeHtml(it.name) + '</b> renews ' + when + ' — ' + fmtMoney(monthlyEquivalent(it)) + '.' });
+      }
+    });
+
+    Object.keys(SUB_CATEGORIES).forEach((label) => {
+      const keywords = SUB_CATEGORIES[label];
+      const matches = items.filter(it => keywords.some(k => (it.name || '').toLowerCase().includes(k)));
+      if (matches.length >= 2) {
+        flags.push({ severity: 'med', html: '👀 ' + matches.length + ' ' + label.toLowerCase() + ' subscriptions active: ' + matches.map(m => escapeHtml(m.name)).join(', ') + ' — worth trimming?' });
+      }
+    });
+
+    if (items.length >= 2) {
+      const annualized = items.map(it => ({ it, yr: monthlyEquivalent(it) * 12 }));
+      const avg = annualized.reduce((s, x) => s + x.yr, 0) / annualized.length;
+      const priciest = annualized.reduce((a, b) => (b.yr > a.yr ? b : a));
+      if (avg > 0 && priciest.yr > avg * 1.8) {
+        flags.push({ severity: 'med', html: '💸 <b>' + escapeHtml(priciest.it.name) + '</b> is your priciest subscription at ' + fmtMoney(priciest.yr) + '/yr — still worth it?' });
+      }
+    }
+
+    const order = { high: 0, med: 1, low: 2 };
+    flags.sort((a, b) => order[a.severity] - order[b.severity]);
+    return flags;
+  }
+
+  function renderSubAudit(items) {
+    const panel = document.getElementById('subAuditPanel');
+    if (!panel) return;
+    const flags = computeSubAudit(items);
+    if (!flags.length) { panel.style.display = 'none'; panel.innerHTML = ''; return; }
+    const colors = { high: '#FF6B6B', med: '#F2C063', low: 'var(--text-secondary)' };
+    panel.innerHTML = '<div class="card" style="border:1px solid rgba(255,255,255,0.08);margin-bottom:12px">' +
+      '<div style="font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:10px">🔍 Subscription Auditor</div>' +
+      flags.map(f => '<div style="font-size:12.5px;line-height:1.6;color:' + colors[f.severity] + ';margin-bottom:6px">' + f.html + '</div>').join('') +
+      '</div>';
+    panel.style.display = '';
+  }
+
   function renderSubs() {
     if (!subsList) return;
     // Auto-deduct any matured renewals before painting
@@ -2468,6 +2540,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     // Keep the From-account dropdown synced with current NW accounts
     populateSubFromSelect();
     const items = storeGet('subs') || [];
+    renderSubAudit(items);
     subsList.innerHTML = '';
     if (!items.length) {
       subsEmpty.style.display = 'flex';
@@ -2513,9 +2586,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       );
       metaLine = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">' + pills.join('') + '</div>';
 
+      const trialBadge = it.isTrial
+        ? ' <span style="font-size:9px;font-weight:700;letter-spacing:0.04em;color:#FF8A4D;background:rgba(255,138,77,0.12);border:1px solid rgba(255,138,77,0.3);border-radius:999px;padding:2px 6px;vertical-align:middle">TRIAL</span>'
+        : '';
       const left = document.createElement('div');
       left.style.cssText = 'min-width:0';
-      left.innerHTML = '<div style="font-weight:600;color:var(--text-primary);font-size:14px">' + escapeHtml(it.name) + '</div>' +
+      left.innerHTML = '<div style="font-weight:600;color:var(--text-primary);font-size:14px">' + escapeHtml(it.name) + trialBadge + '</div>' +
         '<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;text-transform:capitalize">' + it.period + '</div>' +
         renewLine +
         metaLine;
@@ -2725,6 +2801,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       const rEl = document.getElementById('subRenewal');
       const fEl = document.getElementById('subFromCat');
       const tEl = document.getElementById('subAutoDeduct');
+      const trialEl = document.getElementById('subIsTrial');
       if (!nEl || !aEl) return;
       const n = (nEl.value || '').trim();
       const aRaw = parseFloat(aEl.value);
@@ -2754,12 +2831,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         fromCat: fromCat,
         fromAccount: fromAccount,
         autoDeduct: autoDeduct,
-        lastDeductedAt: null
+        lastDeductedAt: null,
+        isTrial: !!(trialEl && trialEl.checked),
+        addedAt: Date.now()
       });
       storeSet('subs', items);
       nEl.value = ''; aEl.value = '';
       if (rEl) rEl.value = '';
       if (tEl) tEl.checked = false;
+      if (trialEl) trialEl.checked = false;
       renderSubs();
     } catch (e) { console.error('subAdd failed', e); }
   }

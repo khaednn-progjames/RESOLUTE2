@@ -472,6 +472,22 @@ body::after {
     return tiles;
   }
 
+  // Tracks every suggestion Sirius has ever shown (not just ones you added),
+  // local-only, so repeated clicks don't loop back to the same ideas.
+  const SEEN_LS = 'ideas:seenSuggestions';
+  function loadSeen() { return loadJSON(SEEN_LS, []); }
+  function rememberSeen(newOnes) {
+    const seen = loadSeen().concat(newOnes);
+    localStorage.setItem(SEEN_LS, JSON.stringify(seen.slice(-80))); // cap history
+  }
+
+  const BRAINSTORM_ANGLES = [
+    'productivity and focus', 'health and fitness tracking', 'finance and money',
+    'automation and integrations', 'fun, gamification, or personalization',
+    'data visualization and insights', 'notifications and reminders',
+    'social or shared/multi-person use', 'security and privacy', 'travel and planning',
+  ];
+
   // ---- Brainstorm new dashboard ideas ----
   async function runSiriusBrainstorm() {
     openSiriusModal('🧠 Brainstorm new ideas');
@@ -479,17 +495,23 @@ body::after {
     renderSiriusLoading();
 
     const existing = load().map(i => i.text).slice(0, 40);
+    const seen = loadSeen();
     const existingTiles = await fetchExistingTiles();
+    const angle = BRAINSTORM_ANGLES[Math.floor(Math.random() * BRAINSTORM_ANGLES.length)];
     const system = "You are Sirius, embedded in the user's personal life-tracking dashboard as a feature-idea brainstorm partner. " +
-      "Suggest fresh, concrete NEW feature ideas for this dashboard that aren't already covered by the tiles or backlog items listed below — " +
-      "avoid repeating or closely overlapping with anything already there. " +
+      "Suggest fresh, concrete NEW feature ideas for this dashboard that aren't already covered by the tiles, backlog items, or previously-suggested ideas listed below — " +
+      "avoid repeating or closely overlapping with anything already there, including your own past suggestions. " +
+      "Every time you're asked, give genuinely different ideas from last time — vary the angle, don't default to the same obvious first picks. " +
+      "For this batch, lean especially toward ideas related to " + angle + ", but don't force it if a better idea doesn't fit. " +
       "Format every suggestion as a '- ' bullet point, one short sentence each, no preamble. Give 6-8 suggestions.\n\n" +
       "Existing tiles: " + (existingTiles.length ? existingTiles.join(', ') : '(unknown)') + "\n" +
-      "Existing backlog: " + (existing.length ? existing.join(', ') : '(empty)');
+      "Existing backlog: " + (existing.length ? existing.join(', ') : '(empty)') + "\n" +
+      "Previously suggested (do not repeat): " + (seen.length ? seen.join(', ') : '(none yet)');
 
     callSirius(system, 'Give me new dashboard feature ideas.').then(reply => {
       const suggestions = bulletLines(reply);
       if (suggestions.length === 0) { renderSiriusError('Sirius didn\'t return any ideas — try again.'); return; }
+      rememberSeen(suggestions);
       $('siriusModalBody').innerHTML = suggestions.map((s, i) =>
         '<div class="sirius-idea-row"><div class="sirius-idea-text">' + siriusEsc(s) + '</div>' +
         '<button class="sirius-idea-add" data-i="' + i + '" type="button">+ Add</button></div>'
