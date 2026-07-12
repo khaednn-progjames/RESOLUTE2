@@ -136,6 +136,71 @@ body::after {
 
 .hint { font-size: 11.5px; color: var(--text-tertiary); line-height: 1.5; margin: 4px 2px 0; }
 
+/* ===== Sirius (AI mentor) integration ===== */
+.sirius-btn {
+  display: inline-flex; align-items: center; gap: 7px; padding: 10px 14px; border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: var(--text-primary);
+  font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  transition: background 0.15s; white-space: nowrap;
+}
+.sirius-btn:hover { background: rgba(255,255,255,0.10); }
+.idea-expand {
+  border: 0; background: transparent; color: var(--text-tertiary); font-size: 14px; cursor: pointer;
+  padding: 0 4px; opacity: 0.5; transition: opacity 0.2s, color 0.2s; flex-shrink: 0;
+}
+.idea-row:hover .idea-expand { opacity: 1; }
+.idea-expand:hover { color: var(--text-primary); }
+.idea-expand:disabled { opacity: 0.3; cursor: wait; }
+
+.sirius-modal-bg {
+  position: fixed; inset: 0; z-index: 220; display: none;
+  align-items: center; justify-content: center; padding: 20px;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.sirius-modal-bg.show { display: flex; }
+.sirius-modal {
+  width: 100%; max-width: 480px; max-height: 82vh; overflow-y: auto;
+  background: #0e0e10; border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px; padding: 22px; box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+}
+.sirius-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.sirius-modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+.sirius-modal-close { border: 0; background: transparent; color: var(--text-tertiary); font-size: 24px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.sirius-modal-close:hover { color: var(--text-primary); }
+
+.sirius-key-form { display: flex; flex-direction: column; gap: 10px; }
+.sirius-key-row { display: flex; gap: 8px; }
+.sirius-key-row input {
+  flex: 1; min-width: 0; padding: 11px 13px; border: 1px solid rgba(255,255,255,0.08); border-radius: 11px;
+  background: rgba(0,0,0,0.3); color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none;
+}
+.sirius-key-row button {
+  border: 0; border-radius: 11px; padding: 0 16px; cursor: pointer; color: #0A0A0B;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); font-weight: 700; font-size: 13px; font-family: inherit;
+}
+.sirius-key-hint { font-size: 11.5px; color: var(--text-tertiary); line-height: 1.5; }
+.sirius-key-hint a { color: var(--text-secondary); }
+
+.sirius-loading { display: flex; align-items: center; gap: 8px; color: var(--text-tertiary); font-size: 13px; padding: 8px 0; }
+.sirius-dots { display: inline-flex; gap: 5px; }
+.sirius-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-primary); opacity: 0.4; animation: sirius-d 1.2s ease-in-out infinite; }
+.sirius-dots i:nth-child(2) { animation-delay: 0.2s; } .sirius-dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes sirius-d { 0%,100%{opacity:.35;transform:scale(1)} 50%{opacity:1;transform:scale(1.4)} }
+
+.sirius-idea-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 13px;
+  margin-bottom: 6px; background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06); border-radius: 11px;
+}
+.sirius-idea-text { font-size: 13.5px; color: var(--text-primary); line-height: 1.4; }
+.sirius-idea-add {
+  flex-shrink: 0; font-size: 11px; font-weight: 700; padding: 7px 11px; border-radius: 9px;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: var(--text-secondary);
+  cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.sirius-idea-add:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
+.sirius-idea-add.done { color: var(--success); border-color: rgba(107,227,164,0.4); }
+.sirius-err { color: var(--danger); font-size: 12.5px; line-height: 1.5; }
+
 @media (max-width: 480px) {
   body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
   .gm-card { padding: 16px; }
@@ -161,10 +226,13 @@ body::after {
           <span class="gm-progress-label">built</span>
         </div>
       </div>
-      <button class="copy-btn" id="copyBtn" type="button">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        <span id="copyBtnText">Copy for Claude</span>
-      </button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <button class="sirius-btn" id="siriusBrainstormBtn" type="button">🧠 Brainstorm</button>
+        <button class="copy-btn" id="copyBtn" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span id="copyBtnText">Copy for Claude</span>
+        </button>
+      </div>
     </div>
     <div class="gm-bar" id="gmBar"></div>
 
@@ -175,9 +243,20 @@ body::after {
       <input id="ideaInput" class="gm-input" type="text" placeholder="A feature idea for the dashboard…" autocomplete="off">
       <button type="button" id="ideaAddBtn" class="gm-add">+ Add</button>
     </div>
-    <div class="hint">Check an idea off once it's built. "Copy for Claude" puts the whole list on your clipboard — paste it into a Claude Code chat to have it built.</div>
+    <div class="hint">Check an idea off once it's built. Hover an idea for a "✨" button to have Sirius flesh it out. "Copy for Claude" puts the whole list on your clipboard — paste it into a Claude Code chat to have it built.</div>
   </div>
 
+</div>
+
+<!-- ===== Sirius modal (shared by "Brainstorm" and per-idea "Expand") ===== -->
+<div class="sirius-modal-bg" id="siriusModalBg">
+  <div class="sirius-modal" role="dialog" aria-label="Sirius">
+    <div class="sirius-modal-head">
+      <span class="sirius-modal-title" id="siriusModalTitle">Sirius</span>
+      <button class="sirius-modal-close" id="siriusModalClose" type="button" aria-label="Close">×</button>
+    </div>
+    <div id="siriusModalBody"></div>
+  </div>
 </div>
 
 <script>
@@ -252,6 +331,13 @@ body::after {
         time.className = 'idea-time';
         time.textContent = relTime(it.addedAt);
 
+        const expand = document.createElement('button');
+        expand.type = 'button';
+        expand.className = 'idea-expand';
+        expand.title = 'Flesh this out with Sirius';
+        expand.textContent = '✨';
+        expand.addEventListener('click', () => runSiriusExpand(it.id, expand));
+
         const del = document.createElement('button');
         del.type = 'button';
         del.className = 'idea-del';
@@ -261,7 +347,7 @@ body::after {
           render();
         });
 
-        li.append(cb, txt, time, del);
+        li.append(cb, txt, time, expand, del);
         list.appendChild(li);
       });
   }
@@ -303,6 +389,130 @@ body::after {
   $('ideaAddBtn').addEventListener('click', addIdea);
   $('ideaInput').addEventListener('keydown', e => { if (e.key === 'Enter') addIdea(); });
   $('copyBtn').addEventListener('click', copyForClaude);
+
+  // ---------- Sirius (AI mentor): brainstorm + expand ----------
+  const SIRIUS_KEY_LS = 'nova_lite_api_key'; // shared with the Sirius mentor tile
+  function siriusKey() { try { return localStorage.getItem(SIRIUS_KEY_LS) || ''; } catch (e) { return ''; } }
+  function siriusEsc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  function openSiriusModal(title) {
+    $('siriusModalTitle').textContent = title;
+    $('siriusModalBg').classList.add('show');
+  }
+  function closeSiriusModal() { $('siriusModalBg').classList.remove('show'); }
+  $('siriusModalClose').addEventListener('click', closeSiriusModal);
+  $('siriusModalBg').addEventListener('click', (e) => { if (e.target === $('siriusModalBg')) closeSiriusModal(); });
+
+  function renderKeyForm(onSaved) {
+    $('siriusModalBody').innerHTML =
+      '<div class="sirius-key-form">' +
+      '<div class="sirius-key-row"><input id="siriusKeyInput" type="password" placeholder="paste your Anthropic API key (sk-ant-…)" autocomplete="off">' +
+      '<button id="siriusKeySave" type="button">Save</button></div>' +
+      '<div class="sirius-key-hint">Stored only in this browser, sent straight to Anthropic. Shared with the Sirius mentor tile — paste it once. ' +
+      'Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.</div>' +
+      '</div>';
+    $('siriusKeySave').addEventListener('click', () => {
+      const k = $('siriusKeyInput').value.trim();
+      if (!k) return;
+      try { localStorage.setItem(SIRIUS_KEY_LS, k); } catch (e) {}
+      onSaved();
+    });
+  }
+
+  function renderSiriusLoading() {
+    $('siriusModalBody').innerHTML = '<div class="sirius-loading"><span class="sirius-dots"><i></i><i></i><i></i></span> Sirius is thinking…</div>';
+  }
+  function renderSiriusError(msg) {
+    $('siriusModalBody').innerHTML = '<div class="sirius-err">' + siriusEsc(msg) + '</div>';
+  }
+
+  async function callSirius(systemPrompt, userText) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': siriusKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-8',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userText }],
+      }),
+    });
+    const json = await res.json();
+    if (json.error) throw new Error(json.error.message || 'Something went wrong.');
+    return (json.content && json.content[0] && json.content[0].text) || '';
+  }
+
+  function bulletLines(text) {
+    return String(text).split(/\r?\n/).map(l => l.trim())
+      .filter(l => /^[-•*]\s+/.test(l))
+      .map(l => l.replace(/^[-•*]\s+/, '').replace(/\*\*/g, '').trim())
+      .filter(Boolean);
+  }
+
+  // ---- Brainstorm new dashboard ideas ----
+  function runSiriusBrainstorm() {
+    openSiriusModal('🧠 Brainstorm new ideas');
+    if (!siriusKey()) { renderKeyForm(runSiriusBrainstorm); return; }
+    renderSiriusLoading();
+
+    const existing = load().map(i => i.text).slice(0, 40);
+    const system = "You are Sirius, embedded in the user's personal life-tracking dashboard as a feature-idea brainstorm partner. " +
+      "The dashboard already has tiles for: Main (daily goals + a 1-year life goal), Water, Finance, Notes, Links, Sirius mentor chat, and this Ideas backlog, " +
+      "plus a Miscellaneous section with Money Ideas, Bank Accounts, USPS Tracking, and an Iron Condor options trading bot. " +
+      "Suggest fresh, concrete NEW feature ideas for this dashboard that aren't already covered. Avoid repeating anything close to the existing backlog items listed below. " +
+      "Format every suggestion as a '- ' bullet point, one short sentence each, no preamble. Give 6-8 suggestions.\n\n" +
+      "Existing backlog: " + (existing.length ? existing.join(', ') : '(empty)');
+
+    callSirius(system, 'Give me new dashboard feature ideas.').then(reply => {
+      const suggestions = bulletLines(reply);
+      if (suggestions.length === 0) { renderSiriusError('Sirius didn\'t return any ideas — try again.'); return; }
+      $('siriusModalBody').innerHTML = suggestions.map((s, i) =>
+        '<div class="sirius-idea-row"><div class="sirius-idea-text">' + siriusEsc(s) + '</div>' +
+        '<button class="sirius-idea-add" data-i="' + i + '" type="button">+ Add</button></div>'
+      ).join('');
+      $('siriusModalBody').querySelectorAll('.sirius-idea-add').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const text = suggestions[parseInt(btn.dataset.i, 10)];
+          const items = load();
+          items.unshift({ id: newId(), text, done: false, addedAt: Date.now() });
+          save(items);
+          render();
+          btn.textContent = '✓ Added'; btn.classList.add('done'); btn.disabled = true;
+        });
+      });
+    }).catch(e => renderSiriusError(e.message || String(e)));
+  }
+  $('siriusBrainstormBtn').addEventListener('click', runSiriusBrainstorm);
+
+  // ---- Expand a single idea into a fuller spec ----
+  function runSiriusExpand(id, btnEl) {
+    const items = load();
+    const entry = items.find(x => x.id === id);
+    if (!entry) return;
+    if (!siriusKey()) { openSiriusModal('✨ Expand idea'); renderKeyForm(() => runSiriusExpand(id, btnEl)); return; }
+
+    btnEl.disabled = true;
+    const original = btnEl.textContent;
+    btnEl.textContent = '…';
+
+    const system = "You are Sirius, embedded in the user's personal dashboard, helping flesh out a one-line feature idea before it's handed to a coding assistant to build. " +
+      "Expand the idea into 2-3 concise sentences: what it does, why it's useful, and a rough approach for how it could work. " +
+      "No preamble, no bullet points, no markdown — just the expanded description as plain text, written to directly replace the original one-liner.";
+
+    callSirius(system, 'Idea to expand: ' + entry.text).then(reply => {
+      const all = load();
+      const e2 = all.find(x => x.id === id);
+      if (e2) { e2.text = reply.trim(); save(all); render(); }
+    }).catch(() => {
+      btnEl.disabled = false;
+      btnEl.textContent = original;
+    });
+  }
 
   render();
 
