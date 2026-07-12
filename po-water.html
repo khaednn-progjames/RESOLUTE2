@@ -85,6 +85,14 @@ html, body {
   font-family: var(--font);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  position: relative;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(60% 45% at 82% 14%, rgba(255,255,255,0.28) 0%, transparent 60%),
+    radial-gradient(55% 45% at 18% 90%, rgba(220,220,225,0.18) 0%, transparent 60%);
+  filter: blur(85px); pointer-events: none; z-index: -1;
 }
 .shell { max-width: 720px; margin: 0 auto; padding: 24px 16px 80px; }
 
@@ -92,7 +100,7 @@ html, body {
 .day-pill {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 12px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
   border: 1px solid var(--border);
   border-radius: 999px;
   color: var(--text-2);
@@ -111,7 +119,7 @@ html, body {
 .icon-btn {
   width: 38px; height: 38px;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
   border: 1px solid var(--border);
   border-radius: 10px; color: var(--text-2); cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -133,14 +141,14 @@ html, body {
 
 /* ----- Card ----- */
 .card {
-  background: rgba(255,255,255,0.045);
+  background: rgba(255,255,255,0.09);
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 22px 20px 18px;
   margin-bottom: 14px;
-  backdrop-filter: blur(34px) saturate(1.7);
-  -webkit-backdrop-filter: blur(34px) saturate(1.7);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 16px 44px rgba(0,0,0,0.5);
+  backdrop-filter: blur(46px) saturate(2.2);
+  -webkit-backdrop-filter: blur(46px) saturate(2.2);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55);
 }
 
 /* ----- Water hero ----- */
@@ -163,7 +171,7 @@ html, body {
 .water-bar-wrap { position: relative; margin: 14px 0 22px; }
 .water-bar-track {
   position: relative; height: 28px; border-radius: 14px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
   overflow: hidden;
 }
 .water-bar-fill {
@@ -234,7 +242,7 @@ html, body {
   letter-spacing: 0.04em;
   -webkit-tap-highlight-color: transparent;
 }
-.why-toggle:hover { background: rgba(255,255,255,0.04); color: var(--text-1); }
+.why-toggle:hover { background: rgba(255,255,255,0.09); color: var(--text-1); }
 .why-arrow { transition: transform 0.2s; font-size: 14px; }
 .why-toggle[aria-expanded="true"] .why-arrow { transform: rotate(180deg); }
 .why-body {
@@ -270,7 +278,7 @@ html, body {
 .hist-row:last-child { border-bottom: none; }
 .hist-date { font-size: 11px; color: var(--text-3); font-family: var(--font-mono); }
 .hist-bar-wrap {
-  height: 8px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden;
+  height: 8px; background: rgba(255,255,255,0.09); border-radius: 4px; overflow: hidden;
 }
 .hist-bar-fill {
   height: 100%; background: linear-gradient(90deg, var(--info), var(--good));
@@ -339,7 +347,7 @@ html, body {
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .seg {
   display: flex; gap: 4px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
   border: 1px solid var(--border);
   border-radius: 10px; padding: 3px;
 }
@@ -445,7 +453,7 @@ html, body {
 .btn-secondary {
   padding: 11px 16px;
   border: 1px solid var(--border);
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
   color: var(--text-1); border-radius: 10px;
   font-family: inherit; font-size: 13px; font-weight: 600;
   cursor: pointer;

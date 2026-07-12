@@ -59,10 +59,10 @@ body::before {
   inset: -10%;
   z-index: -2;
   background:
-    radial-gradient(60% 45% at 82% 14%, rgba(200, 198, 192, 0.12) 0%, transparent 55%),
-    radial-gradient(55% 45% at 18% 90%, rgba(190, 190, 190, 0.06) 0%, transparent 55%),
+    radial-gradient(60% 45% at 82% 14%, rgba(255, 255, 255, 0.28) 0%, transparent 60%),
+    radial-gradient(55% 45% at 18% 90%, rgba(220, 220, 225, 0.18) 0%, transparent 60%),
     linear-gradient(180deg, #0A0A0B 0%, #050506 100%);
-  filter: blur(60px) saturate(1.05);
+  filter: blur(85px) saturate(1.05);
   pointer-events: none;
 }
 body::after {
@@ -89,7 +89,7 @@ body::after {
   gap: 6px;
   padding: 8px 14px 8px 10px;
   margin: 0 0 14px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 999px;
   color: var(--text-secondary);
@@ -214,8 +214,8 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   border-radius: var(--radius-lg);
   padding: 18px 20px;
   margin-bottom: 10px;
-  backdrop-filter: blur(34px) saturate(1.7);
-  -webkit-backdrop-filter: blur(34px) saturate(1.7);
+  backdrop-filter: blur(46px) saturate(2.2);
+  -webkit-backdrop-filter: blur(46px) saturate(2.2);
   box-shadow: var(--glass-shadow);
   position: relative;
   overflow: hidden;
@@ -733,7 +733,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .ord-input::placeholder { color: var(--text-tertiary); }
 .ord-input-cost { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .ord-input-ccy, .ord-input-from {
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
   border-radius: 8px;
   cursor: pointer; font-weight: 600;
   appearance: none; -webkit-appearance: none;
@@ -786,7 +786,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   border-left: 3px solid var(--text-tertiary);
   transition: background 0.15s;
 }
-.ord-card:hover { background: rgba(255,255,255,0.045); }
+.ord-card:hover { background: rgba(255,255,255,0.09); }
 .ord-card.cat-bank   { border-left-color: #FAFAFA; }
 .ord-card.cat-stocks { border-left-color: #B8B6B0; }
 .ord-card.cat-crypto { border-left-color: #8A8880; }
@@ -825,7 +825,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .ord-meta-pill {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 3px 9px; border-radius: 999px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -955,7 +955,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .wish-input-amt  { flex: 1; min-width: 80px; max-width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
 .wish-input-ccy {
   flex: 0 1 80px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
   border-radius: 9px;
   color: var(--text-primary);
   font-family: inherit; font-size: 12px;
@@ -1064,7 +1064,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .wish-row-x:hover { color: #FF8A8A; }
 .wish-row-bar {
   height: 5px; border-radius: 3px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
   margin-top: 10px;
   overflow: hidden;
 }
@@ -1249,8 +1249,8 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   margin-bottom: 8px;
 }
 .ord-deduct-opt {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18);
   color: var(--text-primary);
   font-family: inherit;
   font-size: 12px;
@@ -1278,7 +1278,7 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   cursor: not-allowed;
 }
 .ord-deduct-opt.insufficient:hover {
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
   border-color: rgba(255,255,255,0.06);
 }
 .ord-deduct-cancel {
@@ -1525,7 +1525,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.09);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 999px;
   cursor: pointer;

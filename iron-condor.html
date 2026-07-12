@@ -39,9 +39,10 @@ body {
 body::before {
   content: ''; position: fixed; inset: 0;
   background:
-    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.10), transparent 45%),
-    radial-gradient(circle at 18% 90%, rgba(200,200,200,0.06), transparent 50%);
-  filter: blur(60px); pointer-events: none; z-index: -2;
+    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.30), transparent 55%),
+    radial-gradient(circle at 18% 90%, rgba(220,220,225,0.20), transparent 60%),
+    radial-gradient(circle at 50% 55%, rgba(255,255,255,0.08), transparent 65%);
+  filter: blur(85px); pointer-events: none; z-index: -2;
   animation: drift 36s ease-in-out infinite alternate;
 }
 body::after {
@@ -61,10 +62,10 @@ body::after {
 .ic-topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
 
 .gm-card {
-  position: relative; background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px;
-  margin-bottom: 16px; backdrop-filter: blur(34px) saturate(1.7);
-  -webkit-backdrop-filter: blur(34px) saturate(1.7); box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 16px 44px rgba(0,0,0,0.5);
+  position: relative; background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 16px; padding: 20px;
+  margin-bottom: 16px; backdrop-filter: blur(46px) saturate(2.2);
+  -webkit-backdrop-filter: blur(46px) saturate(2.2); box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55);
 }
 .section-title {
   font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
@@ -142,7 +143,7 @@ input:checked + .slider::before { transform: translateX(22px); background: var(-
 /* ---- trade log ---- */
 .trade-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 13px;
-  margin-bottom: 6px; background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.06); border-radius: 11px;
+  margin-bottom: 6px; background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); border-radius: 11px;
   font-size: 12.5px;
 }
 .trade-main { display: flex; flex-direction: column; gap: 2px; }
@@ -151,7 +152,7 @@ input:checked + .slider::before { transform: translateX(22px); background: var(-
 .trade-badge { font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em; }
 .trade-badge.submitted { color: var(--danger); background: rgba(255,107,107,0.10); border: 1px solid rgba(255,107,107,0.3); }
 .trade-badge.simulated { color: var(--success); background: rgba(107,227,164,0.10); border: 1px solid rgba(107,227,164,0.3); }
-.trade-badge.skipped { color: var(--text-tertiary); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+.trade-badge.skipped { color: var(--text-tertiary); background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.08); }
 .empty-state { text-align: center; font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 16px 0; }
 
 .hint { font-size: 11.5px; color: var(--text-tertiary); line-height: 1.6; margin-top: 4px; }
