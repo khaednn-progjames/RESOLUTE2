@@ -95,11 +95,6 @@ body::after {
 .tile:hover::before { opacity: 1; }
 .tile.big  { grid-column: span 2; grid-row: span 2; }
 .tile.wide { grid-column: span 2; }
-.tile-top { display: flex; align-items: flex-start; justify-content: flex-end; }
-.tile-emoji {
-  font-size: 26px; line-height: 1;
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 60%, transparent));
-}
 .tile-spacer { flex: 1; }
 .tile-title {
   font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
@@ -141,9 +136,6 @@ body::after {
 
     <!-- Small tile -->
     <a class="tile" href="money-ideas.html" style="--accent:#FFFFFF">
-      <div class="tile-top">
-        <span class="tile-emoji">💰</span>
-      </div>
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Money Ideas</h2>
       <div class="tile-foot">
@@ -154,9 +146,6 @@ body::after {
 
     <!-- Small tile -->
     <a class="tile" href="bank-accounts.html" style="--accent:#FFFFFF">
-      <div class="tile-top">
-        <span class="tile-emoji">🏦</span>
-      </div>
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Bank Accounts</h2>
       <div class="tile-foot">
@@ -167,9 +156,6 @@ body::after {
 
     <!-- Small tile -->
     <a class="tile" href="usps-tracking.html" style="--accent:#FFFFFF">
-      <div class="tile-top">
-        <span class="tile-emoji">📬</span>
-      </div>
       <div class="tile-spacer"></div>
       <h2 class="tile-title">USPS Tracking</h2>
       <div class="tile-foot">
