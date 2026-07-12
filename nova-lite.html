@@ -1,9 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#050506">
 <title>Sirius Lite · AI Mentor</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
 <!-- ============================================================
  * NOVA LITE — a simple, drop-in AI mentor for ANY dashboard.
  * Single self-contained file. No backend, no build step.
@@ -27,11 +34,47 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
 
 .wrap { max-width: 560px; margin: 0 auto; padding: 28px 18px 60px; }
 .top { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
-.key-toggle { margin-left: auto; border: 1px solid var(--line); background: rgba(255,255,255,.03); border-radius: 10px; padding: 7px 10px; cursor: pointer; font-size: 15px; line-height: 1; opacity: .55; transition: opacity .15s; }
-.key-toggle:hover { opacity: 1; }
+.top-actions { margin-left: auto; display: flex; gap: 8px; }
+.key-toggle, .hist-toggle, .new-chat-btn { border: 1px solid var(--line); background: rgba(255,255,255,.03); border-radius: 10px; padding: 7px 10px; cursor: pointer; font-size: 15px; line-height: 1; opacity: .55; transition: opacity .15s; }
+.key-toggle:hover, .hist-toggle:hover, .new-chat-btn:hover { opacity: 1; }
 .key-toggle.has-key { opacity: 1; border-color: var(--accent); }
 .keypanel { display: none; }
 .keypanel.open { display: block; }
+
+.category-badge {
+  display: none; margin-left: 8px; font-family: ui-monospace, monospace; font-size: 9px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent); padding: 3px 8px; border-radius: 999px; vertical-align: middle;
+}
+
+.hist-modal-bg {
+  position: fixed; inset: 0; z-index: 300; display: none; align-items: center; justify-content: center;
+  padding: 20px; background: rgba(0,0,0,.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.hist-modal-bg.show { display: flex; }
+.hist-modal { width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto; background: #0e0e10; border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+.hist-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.hist-modal-title { font-size: 16px; font-weight: 700; color: var(--fg); }
+.hist-modal-close { border: 0; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; }
+.hist-modal-close:hover { color: var(--fg); }
+.hist-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 11px 13px;
+  margin-bottom: 6px; background: rgba(255,255,255,.03); border: 1px solid var(--line); border-radius: 11px;
+  cursor: pointer; transition: background .15s;
+}
+.hist-row:hover { background: rgba(255,255,255,.06); }
+.hist-row.active { border-color: var(--accent); }
+.hist-main { min-width: 0; }
+.hist-cat {
+  display: inline-block; font-family: ui-monospace, monospace; font-size: 9px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent);
+  padding: 2px 7px; border-radius: 999px; margin-bottom: 5px;
+}
+.hist-preview { font-size: 13px; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 300px; }
+.hist-meta { font-size: 10.5px; color: var(--muted); margin-top: 3px; font-family: ui-monospace, monospace; }
+.hist-del { border: 0; background: transparent; color: var(--muted); font-size: 15px; cursor: pointer; padding: 2px 5px; flex-shrink: 0; }
+.hist-del:hover { color: #ff6b6b; }
+.hist-empty { text-align: center; font-size: 12px; font-style: italic; color: var(--muted); padding: 20px 0; }
 
 /* ---- flat CSS orb avatar (lightweight, no Three.js) ---- */
 .orb { width: 60px; height: 60px; border-radius: 50%; position: relative; flex-shrink: 0;
@@ -87,8 +130,12 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
   <div class="wrap">
     <div class="top">
       <div class="orb" id="orb"></div>
-      <div class="title"><h1>Sirius Lite</h1><div class="role">your mentor</div></div>
-      <button id="keyToggle" class="key-toggle" aria-label="API key settings" title="API key">🔑</button>
+      <div class="title"><h1>Sirius Lite</h1><div class="role">your mentor<span class="category-badge" id="categoryBadge"></span></div></div>
+      <div class="top-actions">
+        <button id="newChatBtn" class="new-chat-btn" aria-label="New chat" title="New chat">+</button>
+        <button id="histToggle" class="hist-toggle" aria-label="Chat history" title="Chat history">🕘</button>
+        <button id="keyToggle" class="key-toggle" aria-label="API key settings" title="API key">🔑</button>
+      </div>
     </div>
 
     <div class="keypanel" id="keypanel">
@@ -110,9 +157,23 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
     </div>
   </div>
 
+  <div class="hist-modal-bg" id="histModalBg">
+    <div class="hist-modal" role="dialog" aria-label="Chat history">
+      <div class="hist-modal-head">
+        <span class="hist-modal-title">Chat History</span>
+        <button class="hist-modal-close" id="histModalClose" aria-label="Close">×</button>
+      </div>
+      <div id="histList"></div>
+    </div>
+  </div>
+
 <script>
 (function(){
   const KEY_LS = 'nova_lite_api_key';
+  const SESSIONS_LS = 'sirius:sessions';
+  const ACTIVE_LS = 'siriusActiveSessionId'; // deliberately NOT prefixed 'sirius:' — local-only, not synced
+  const CATEGORIES = ['Fitness', 'Nutrition', 'Sleep', 'Mental Health', 'Finance', 'Productivity', 'Relationships', 'Career', 'General'];
+
   const feed = document.getElementById('feed');
   const input = document.getElementById('chatInput');
   const orb = document.getElementById('orb');
@@ -120,10 +181,18 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
   const hint = document.getElementById('hint');
   const keypanel = document.getElementById('keypanel');
   const keyToggle = document.getElementById('keyToggle');
+  const categoryBadge = document.getElementById('categoryBadge');
+  const histToggle = document.getElementById('histToggle');
+  const histModalBg = document.getElementById('histModalBg');
+  const histModalClose = document.getElementById('histModalClose');
+  const histList = document.getElementById('histList');
+  const newChatBtn = document.getElementById('newChatBtn');
+
   keyToggle.addEventListener('click', () => keypanel.classList.toggle('open'));
 
   function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
   function setOrb(s){ orb.className = 'orb' + (s ? ' ' + s : ''); }
+  function loadJSON(k, f) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; } catch (e) { return f; } }
 
   // ---- key handling ----
   function savedKey(){ try { return localStorage.getItem(KEY_LS) || ''; } catch(e){ return ''; } }
@@ -143,10 +212,43 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
     const out = {};
     for (let i = 0; i < localStorage.length; i++){
       const k = localStorage.key(i);
-      if (k === KEY_LS) continue; // never send the key as data
+      if (k === KEY_LS || k === ACTIVE_LS || k.indexOf('sirius:') === 0) continue; // never send the key, or Sirius's own chat log, back as "dashboard data"
       try { out[k] = JSON.parse(localStorage.getItem(k)); } catch(e){ out[k] = localStorage.getItem(k); }
     }
     return out;
+  }
+
+  // ---- sessions: persistent, categorized chat history ----
+  function loadSessions() { return loadJSON(SESSIONS_LS, []); }
+  function saveSessions(list) { localStorage.setItem(SESSIONS_LS, JSON.stringify(list)); }
+  function newSessionId() { return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function newSession() {
+    return { id: newSessionId(), category: null, messages: [], startedAt: Date.now(), updatedAt: Date.now() };
+  }
+
+  let activeSession = null;
+  function loadActiveSession() {
+    const sessions = loadSessions();
+    const id = localStorage.getItem(ACTIVE_LS);
+    let session = id ? sessions.find(s => s.id === id) : null;
+    if (!session) {
+      session = newSession();
+      sessions.unshift(session);
+      saveSessions(sessions);
+      localStorage.setItem(ACTIVE_LS, session.id);
+    }
+    return session;
+  }
+  function persistActiveSession() {
+    const sessions = loadSessions();
+    const ix = sessions.findIndex(s => s.id === activeSession.id);
+    if (ix >= 0) sessions[ix] = activeSession; else sessions.unshift(activeSession);
+    saveSessions(sessions);
+  }
+  function setCategoryBadge(cat) {
+    if (cat) { categoryBadge.textContent = cat; categoryBadge.style.display = 'inline-block'; }
+    else { categoryBadge.style.display = 'none'; }
   }
 
   // ---- render: bullets + **pills** ----
@@ -166,6 +268,19 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
   function addCoach(html){ const e = document.createElement('div'); e.className = 'msg coach'; e.innerHTML = '<div class="bubble"><span class="tag">Sirius</span><div>' + html + '</div></div>'; feed.appendChild(e); scroll(); return e; }
   function scroll(){ window.scrollTo(0, document.body.scrollHeight); }
 
+  function renderFeedFromSession() {
+    feed.innerHTML = '';
+    if (activeSession.messages.length === 0) {
+      addCoach('Hey — I am <b>Sirius</b>. Paste your key above, then ask me about food, training, sleep, or where to start. I keep it short and give you <b>one thing to act on</b>.');
+    } else {
+      activeSession.messages.forEach(m => {
+        if (m.role === 'user') addUser(m.content);
+        else addCoach(render(m.content));
+      });
+    }
+    setCategoryBadge(activeSession.category);
+  }
+
   const SYS =
     "You are Sirius, a personal mentor living inside the user's life-tracking dashboard. " +
     "You can see their saved data (food, water, gym, finance, sleep, goals, etc.). " +
@@ -173,7 +288,21 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
     "Answer in short bullet points starting with '- ', few words each, plain language. " +
     "Wrap key words and numbers in **double asterisks**. " +
     "End with one '- Do today:' bullet giving the single action. " +
+    "After your reply, on its own final line, output exactly one hidden tag in the form <category>X</category> where X is " +
+    "whichever single word from this list best fits what this message is mainly about: " + CATEGORIES.join(', ') + ". " +
+    "Always include this tag, picking the closest match even if imperfect — it will not be shown to the user. " +
     "Dashboard data as JSON:\n";
+
+  function stripCategoryTag(reply) {
+    const m = reply.match(/<category>\s*([^<]+?)\s*<\/category>\s*$/i);
+    let category = null;
+    if (m) {
+      const found = CATEGORIES.find(c => c.toLowerCase() === m[1].trim().toLowerCase());
+      category = found || 'General';
+      reply = reply.slice(0, m.index).trim();
+    }
+    return { reply, category };
+  }
 
   let busy = false;
   async function ask(text){
@@ -181,6 +310,7 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
     const key = savedKey();
     if (!key){ addCoach('- Paste your **Anthropic API key** above first, then ask me again.'); return; }
     busy = true; addUser(text); input.value = '';
+    activeSession.messages.push({ role: 'user', content: text, ts: Date.now() });
     setOrb('think');
     const loading = addCoach('<span class="dots"><i></i><i></i><i></i></span>');
     try {
@@ -196,16 +326,26 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
           model: 'claude-opus-4-8',
           max_tokens: 1024,
           system: SYS + JSON.stringify(dashboardData()),
-          messages: [{ role: 'user', content: text }],
+          messages: activeSession.messages.map(m => ({ role: m.role, content: m.content })),
         }),
       });
       const json = await res.json();
-      if (json.error){ loading.querySelector('div:last-child').innerHTML = render('- ' + (json.error.message || 'Something went wrong — check your API key.')); setOrb(''); busy = false; return; }
-      const reply = (json.content && json.content[0] && json.content[0].text) || 'Hmm, no reply.';
+      if (json.error){
+        loading.querySelector('div:last-child').innerHTML = render('- ' + (json.error.message || 'Something went wrong — check your API key.'));
+        activeSession.messages.pop(); // don't keep the user message queued against a failed turn
+        setOrb(''); busy = false; return;
+      }
+      const raw = (json.content && json.content[0] && json.content[0].text) || 'Hmm, no reply.';
+      const { reply, category } = stripCategoryTag(raw);
       loading.querySelector('div:last-child').innerHTML = render(reply);
+      activeSession.messages.push({ role: 'assistant', content: reply, ts: Date.now() });
+      if (category) { activeSession.category = category; setCategoryBadge(category); }
+      activeSession.updatedAt = Date.now();
+      persistActiveSession();
       setOrb('happy'); setTimeout(() => setOrb(''), 2500);
     } catch(e){
       loading.querySelector('div:last-child').innerHTML = render('- Could not reach Anthropic — check your connection and key.');
+      activeSession.messages.pop();
       setOrb('');
     }
     busy = false;
@@ -214,7 +354,91 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
   document.getElementById('send').addEventListener('click', () => ask(input.value));
   input.addEventListener('keydown', e => { if (e.key === 'Enter') ask(input.value); });
 
-  addCoach('Hey — I am <b>Sirius</b>. Paste your key above, then ask me about food, training, sleep, or where to start. I keep it short and give you <b>one thing to act on</b>.');
+  // ---- new chat ----
+  newChatBtn.addEventListener('click', () => {
+    activeSession = newSession();
+    const sessions = loadSessions();
+    sessions.unshift(activeSession);
+    saveSessions(sessions);
+    localStorage.setItem(ACTIVE_LS, activeSession.id);
+    renderFeedFromSession();
+    closeHist();
+  });
+
+  // ---- history panel ----
+  function relTime(ts) {
+    if (!ts) return '';
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    if (s < 604800) return Math.floor(s / 86400) + 'd ago';
+    return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+  function renderHistory() {
+    const sessions = loadSessions().slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    if (sessions.length === 0) { histList.innerHTML = '<div class="hist-empty">No chats yet.</div>'; return; }
+    histList.innerHTML = sessions.map(s => {
+      const firstUser = s.messages.find(m => m.role === 'user');
+      const preview = firstUser ? firstUser.content : '(empty chat)';
+      return '<div class="hist-row' + (s.id === activeSession.id ? ' active' : '') + '" data-id="' + s.id + '">' +
+        '<div class="hist-main">' +
+        (s.category ? '<span class="hist-cat">' + esc(s.category) + '</span>' : '') +
+        '<div class="hist-preview">' + esc(preview) + '</div>' +
+        '<div class="hist-meta">' + s.messages.length + ' messages · ' + relTime(s.updatedAt) + '</div>' +
+        '</div>' +
+        '<button class="hist-del" data-del="' + s.id + '" aria-label="Delete">×</button>' +
+        '</div>';
+    }).join('');
+    histList.querySelectorAll('.hist-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.hist-del')) return;
+        const id = row.dataset.id;
+        const found = loadSessions().find(s => s.id === id);
+        if (!found) return;
+        activeSession = found;
+        localStorage.setItem(ACTIVE_LS, activeSession.id);
+        renderFeedFromSession();
+        closeHist();
+      });
+    });
+    histList.querySelectorAll('.hist-del').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.del;
+        let sessions = loadSessions().filter(s => s.id !== id);
+        saveSessions(sessions);
+        if (id === activeSession.id) {
+          activeSession = sessions[0] || newSession();
+          if (sessions.length === 0) { sessions.push(activeSession); saveSessions(sessions); }
+          localStorage.setItem(ACTIVE_LS, activeSession.id);
+          renderFeedFromSession();
+        }
+        renderHistory();
+      });
+    });
+  }
+  function openHist() { renderHistory(); histModalBg.classList.add('show'); }
+  function closeHist() { histModalBg.classList.remove('show'); }
+  histToggle.addEventListener('click', openHist);
+  histModalClose.addEventListener('click', closeHist);
+  histModalBg.addEventListener('click', (e) => { if (e.target === histModalBg) closeHist(); });
+
+  // ---- boot ----
+  activeSession = loadActiveSession();
+  renderFeedFromSession();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof initCloudSync !== 'function') return;
+    initCloudSync({
+      appKey: 'sirius',
+      syncedKeys: [SESSIONS_LS],
+      onApplied: function () {
+        const fresh = loadSessions().find(s => s.id === activeSession.id);
+        if (fresh) { activeSession = fresh; renderFeedFromSession(); }
+      },
+    });
+  });
 })();
 </script>
 </body>
