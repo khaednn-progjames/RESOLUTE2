@@ -454,18 +454,37 @@ body::after {
       .filter(Boolean);
   }
 
+  // Reads the live tile list straight from the hub pages, so this never goes
+  // stale when tiles are added, renamed, or moved (e.g. into Miscellaneous).
+  async function fetchExistingTiles() {
+    const tiles = [];
+    for (const page of ['index.html', 'misc.html']) {
+      try {
+        const res = await fetch(page, { cache: 'no-store' });
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('.tile-title').forEach(el => {
+          const sub = el.closest('.tile') ? el.closest('.tile').querySelector('.tile-sub') : null;
+          tiles.push(el.textContent.trim() + (sub ? ' (' + sub.textContent.trim() + ')' : ''));
+        });
+      } catch (e) { /* fine — just brainstorm with less context */ }
+    }
+    return tiles;
+  }
+
   // ---- Brainstorm new dashboard ideas ----
-  function runSiriusBrainstorm() {
+  async function runSiriusBrainstorm() {
     openSiriusModal('🧠 Brainstorm new ideas');
     if (!siriusKey()) { renderKeyForm(runSiriusBrainstorm); return; }
     renderSiriusLoading();
 
     const existing = load().map(i => i.text).slice(0, 40);
+    const existingTiles = await fetchExistingTiles();
     const system = "You are Sirius, embedded in the user's personal life-tracking dashboard as a feature-idea brainstorm partner. " +
-      "The dashboard already has tiles for: Main (daily goals + a 1-year life goal), Water, Finance, Notes, Links, Sirius mentor chat, and this Ideas backlog, " +
-      "plus a Miscellaneous section with Money Ideas, Bank Accounts, USPS Tracking, and an Iron Condor options trading bot. " +
-      "Suggest fresh, concrete NEW feature ideas for this dashboard that aren't already covered. Avoid repeating anything close to the existing backlog items listed below. " +
+      "Suggest fresh, concrete NEW feature ideas for this dashboard that aren't already covered by the tiles or backlog items listed below — " +
+      "avoid repeating or closely overlapping with anything already there. " +
       "Format every suggestion as a '- ' bullet point, one short sentence each, no preamble. Give 6-8 suggestions.\n\n" +
+      "Existing tiles: " + (existingTiles.length ? existingTiles.join(', ') : '(unknown)') + "\n" +
       "Existing backlog: " + (existing.length ? existing.join(', ') : '(empty)');
 
     callSirius(system, 'Give me new dashboard feature ideas.').then(reply => {
