@@ -99,6 +99,87 @@ body::after {
 .notes-search::placeholder { color: var(--text-tertiary); }
 .notes-search:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
 
+.pinned-ideas-btn {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px;
+  border-radius: 11px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.04);
+  color: var(--text-primary); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s; text-align: left; flex-shrink: 0;
+}
+.pinned-ideas-btn:hover { background: rgba(255,255,255,0.08); }
+.pinned-ideas-btn.active { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.28); }
+.pinned-ideas-btn .cnt { margin-left: auto; font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
+
+/* ===== Ideas view (merged from the former standalone Ideas tab) ===== */
+.gm-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.gm-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
+.gm-progress-row { display: flex; align-items: baseline; gap: 6px; }
+.gm-progress-num { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.04em; color: var(--text-primary); line-height: 1; }
+.gm-progress-total { font-family: var(--font-mono); font-size: 15px; color: var(--text-tertiary); }
+.gm-progress-label { font-size: 11px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-left: 4px; }
+.copy-btn {
+  display: inline-flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: var(--text-primary);
+  font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  transition: background 0.15s, transform 0.1s; white-space: nowrap;
+}
+.copy-btn:hover { background: rgba(255,255,255,0.10); }
+.copy-btn:active { transform: translateY(1px); }
+.copy-btn.copied { background: rgba(107,227,164,0.14); border-color: rgba(107,227,164,0.4); color: #FFFFFF; }
+.gm-bar { display: flex; gap: 4px; height: 6px; margin-bottom: 4px; }
+.gm-bar:empty { display: none; }
+.gm-bar-seg { flex: 1; background: rgba(255,255,255,0.06); border-radius: 3px; transition: background 0.3s; }
+.gm-bar-seg-done { background: #FFFFFF; }
+
+.idea-list { list-style: none; margin: 16px 0 0; padding: 0; overflow-y: auto; flex: 1; }
+.idea-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 6px;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); border-radius: 12px;
+  transition: background 0.2s, opacity 0.3s;
+}
+.idea-row:hover { background: rgba(255,255,255,0.06); }
+.idea-row.is-done { opacity: 0.45; }
+.idea-row.is-done .idea-text { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
+.idea-check {
+  appearance: none; -webkit-appearance: none; width: 22px; height: 22px; flex-shrink: 0; margin: 0;
+  border: 1.5px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); border-radius: 7px;
+  position: relative; cursor: pointer; transition: background 0.2s, border-color 0.2s, box-shadow 0.25s;
+}
+.idea-check:checked { background: #FFFFFF; border-color: #FFFFFF; box-shadow: 0 0 12px rgba(255,255,255,0.30); }
+.idea-check:checked::after {
+  content: ''; position: absolute; left: 6px; top: 2px; width: 6px; height: 11px;
+  border: solid #0A0A0B; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
+}
+.idea-text { flex: 1; font-size: 14px; color: var(--text-primary); outline: none; border-radius: 4px; padding: 2px 4px; margin: -2px -4px; }
+.idea-text[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); }
+.idea-time { font-size: 10.5px; color: var(--text-tertiary); font-family: var(--font-mono); flex-shrink: 0; }
+.idea-expand {
+  border: 0; background: transparent; color: var(--text-tertiary); font-size: 14px; cursor: pointer;
+  padding: 0 4px; opacity: 0.5; transition: opacity 0.2s, color 0.2s; flex-shrink: 0;
+}
+.idea-row:hover .idea-expand { opacity: 1; }
+.idea-expand:hover { color: var(--text-primary); }
+.idea-expand:disabled { opacity: 0.3; cursor: wait; }
+.idea-del { border: 0; background: transparent; color: var(--text-tertiary); font-size: 18px; cursor: pointer; padding: 0 4px; opacity: 0.5; transition: opacity 0.2s, color 0.2s; flex-shrink: 0; }
+.idea-row:hover .idea-del { opacity: 1; }
+.idea-del:hover { color: var(--danger); }
+
+.gm-input-wrap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
+.gm-input {
+  flex: 1; min-width: 0; padding: 11px 14px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gm-input::placeholder { color: var(--text-tertiary); }
+.gm-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.gm-add {
+  padding: 11px 20px; border: 0; border-radius: 12px; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 22px rgba(0,0,0,0.25); transition: transform 0.1s, filter 0.15s;
+}
+.gm-add:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.gm-add:active { transform: translateY(0); }
+.ideas-hint { font-size: 11.5px; color: var(--text-tertiary); line-height: 1.5; margin: 4px 2px 0; flex-shrink: 0; }
+
 .notes-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 5px; }
 .notes-empty { text-align: center; font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 20px 8px; }
 .notes-item {
@@ -272,6 +353,14 @@ body::after {
   cursor: pointer; transition: background 0.15s, color 0.15s;
 }
 .sirius-idea-add:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
+.sirius-idea-add.done { color: var(--success); border-color: rgba(107,227,164,0.4); }
+.sirius-btn {
+  display: inline-flex; align-items: center; gap: 7px; padding: 10px 14px; border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: var(--text-primary);
+  font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  transition: background 0.15s; white-space: nowrap;
+}
+.sirius-btn:hover { background: rgba(255,255,255,0.10); }
 
 .sirius-summary-text { font-size: 13.5px; color: var(--text-primary); line-height: 1.65; }
 .sirius-summary-text ul { margin: 6px 0 0; padding-left: 18px; }
@@ -308,30 +397,63 @@ body::after {
     <div class="notes-sidebar-backdrop" id="notesBackdrop"></div>
     <aside class="notes-sidebar" id="notesSidebar">
       <input class="notes-search" id="notesSearch" type="text" placeholder="Search notes…" autocomplete="off">
-      <button class="sirius-ideas-btn" id="siriusIdeasBtn" type="button">💡 Ideas to write about</button>
+      <button class="pinned-ideas-btn" id="dashboardIdeasBtn" type="button">💡 Dashboard Ideas <span class="cnt" id="ideasCount"></span></button>
+      <button class="sirius-ideas-btn" id="siriusIdeasBtn" type="button">✍️ Ideas to write about</button>
       <ul class="notes-list" id="notesList"></ul>
     </aside>
 
     <section class="notes-editor">
-      <div class="notes-editor-head">
-        <input class="notes-title-input" id="notesTitleInput" type="text" placeholder="Untitled" autocomplete="off">
-        <div class="notes-editor-actions">
-          <button class="notes-icon-btn" id="notesPinBtn" type="button" aria-label="Pin note" title="Pin">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2l1.2 5.4L18 9l-4.5 3 1.3 6-4.8-3.4L5.2 18l1.3-6L2 9l4.8-1.6L8 2z"/>
-            </svg>
-          </button>
-          <button class="notes-icon-btn" id="notesDeleteBtn" type="button" aria-label="Delete note" title="Delete">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-            </svg>
-          </button>
-          <button class="notes-icon-btn" id="siriusSummarizeBtn" type="button" aria-label="Summarize with Sirius" title="Summarize with Sirius">🧠</button>
+      <div id="noteView" style="display:flex; flex-direction:column; flex:1; min-height:0;">
+        <div class="notes-editor-head">
+          <input class="notes-title-input" id="notesTitleInput" type="text" placeholder="Untitled" autocomplete="off">
+          <div class="notes-editor-actions">
+            <button class="notes-icon-btn" id="notesPinBtn" type="button" aria-label="Pin note" title="Pin">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l1.2 5.4L18 9l-4.5 3 1.3 6-4.8-3.4L5.2 18l1.3-6L2 9l4.8-1.6L8 2z"/>
+              </svg>
+            </button>
+            <button class="notes-icon-btn" id="notesDeleteBtn" type="button" aria-label="Delete note" title="Delete">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
+            <button class="notes-icon-btn" id="siriusSummarizeBtn" type="button" aria-label="Summarize with Sirius" title="Summarize with Sirius">🧠</button>
+          </div>
         </div>
+        <div class="notes-meta" id="notesMeta">—</div>
+        <div id="editor"></div>
+        <div class="notes-footer" id="notesFooter">0 words</div>
       </div>
-      <div class="notes-meta" id="notesMeta">—</div>
-      <div id="editor"></div>
-      <div class="notes-footer" id="notesFooter">0 words</div>
+
+      <div id="ideasView" style="display:none; flex-direction:column; flex:1; min-height:0;">
+        <div class="gm-header">
+          <div>
+            <div class="gm-eyebrow">Dashboard Backlog</div>
+            <div class="gm-progress-row">
+              <span class="gm-progress-num" id="doneNum">0</span>
+              <span class="gm-progress-total" id="totalNum">/ 0</span>
+              <span class="gm-progress-label">built</span>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap">
+            <button class="sirius-btn" id="siriusBrainstormBtn" type="button">🧠 Brainstorm</button>
+            <button class="copy-btn" id="copyBtn" type="button">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span id="copyBtnText">Copy for Claude</span>
+            </button>
+          </div>
+        </div>
+        <div class="gm-bar" id="gmBar"></div>
+
+        <ul class="idea-list" id="ideaList"></ul>
+        <div id="ideasEmptyState" class="notes-empty">No ideas yet — jot one below.</div>
+
+        <div class="gm-input-wrap">
+          <input id="ideaInput" class="gm-input" type="text" placeholder="A feature idea for the dashboard…" autocomplete="off">
+          <button type="button" id="ideaAddBtn" class="gm-add">+ Add</button>
+        </div>
+        <div class="ideas-hint">Check an idea off once it's built. Hover an idea for a "✨" button to have Sirius flesh it out. "Copy for Claude" puts the whole list on your clipboard — paste it into a Claude Code chat to have it built.</div>
+      </div>
     </section>
   </div>
 
@@ -355,6 +477,8 @@ body::after {
   const INDEX_KEY = 'notes:index';
   const DOC_PREFIX = 'notes:doc:';
   const ACTIVE_KEY = 'notesActiveId'; // deliberately NOT prefixed 'notes:' — local-only, not synced
+  const IDEAS_ID = '__IDEAS__'; // sentinel activeId for the pinned Dashboard Ideas view
+  const IDEAS_KEY = 'ideas:items';
 
   function loadJSON(k, f) {
     try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; }
@@ -501,6 +625,11 @@ body::after {
   }
 
   function renderSidebar(filter) {
+    const ideasItems = loadJSON(IDEAS_KEY, []);
+    const ideasBtn = $('dashboardIdeasBtn');
+    ideasBtn.classList.toggle('active', activeId === IDEAS_ID);
+    $('ideasCount').textContent = ideasItems.length ? ideasItems.filter(i => i.done).length + '/' + ideasItems.length : '';
+
     const listEl = $('notesList');
     listEl.innerHTML = '';
     const q = (filter || '').trim().toLowerCase();
@@ -558,10 +687,22 @@ body::after {
     $('notesFooter').textContent = words + (words === 1 ? ' word' : ' words');
   }
 
+  function selectIdeasView() {
+    activeId = IDEAS_ID;
+    localStorage.setItem(ACTIVE_KEY, IDEAS_ID);
+    $('noteView').style.display = 'none';
+    $('ideasView').style.display = 'flex';
+    renderIdeas();
+    renderSidebar($('notesSearch').value);
+  }
+
   function selectNote(id) {
+    if (id === IDEAS_ID) { selectIdeasView(); return; }
     const idx = loadIndex();
     const entry = idx.find((n) => n.id === id);
     if (!entry) return;
+    $('ideasView').style.display = 'none';
+    $('noteView').style.display = 'flex';
     activeId = id;
     localStorage.setItem(ACTIVE_KEY, id);
     $('notesTitleInput').value = entry.title || '';
@@ -798,16 +939,241 @@ body::after {
   }
   $('siriusSummarizeBtn').addEventListener('click', runSiriusSummarize);
 
+  // ---------- Dashboard Ideas (merged from the former standalone Ideas tab) ----------
+  function loadIdeas() { return loadJSON(IDEAS_KEY, []); }
+  function saveIdeas(items) { localStorage.setItem(IDEAS_KEY, JSON.stringify(items)); }
+
+  function renderIdeasBar(items) {
+    const bar = $('gmBar');
+    bar.innerHTML = '';
+    items.forEach(it => {
+      const seg = document.createElement('div');
+      seg.className = 'gm-bar-seg' + (it.done ? ' gm-bar-seg-done' : '');
+      bar.appendChild(seg);
+    });
+  }
+
+  function renderIdeas() {
+    const items = loadIdeas();
+    const done = items.filter(i => i.done).length;
+    $('doneNum').textContent = done;
+    $('totalNum').textContent = '/ ' + items.length;
+    renderIdeasBar(items);
+
+    const list = $('ideaList');
+    list.innerHTML = '';
+    $('ideasEmptyState').style.display = items.length ? 'none' : '';
+
+    items.slice().sort((a, b) => (a.done === b.done) ? (b.addedAt || 0) - (a.addedAt || 0) : (a.done ? 1 : -1))
+      .forEach(it => {
+        const li = document.createElement('li');
+        li.className = 'idea-row' + (it.done ? ' is-done' : '');
+
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.className = 'idea-check';
+        cb.checked = !!it.done;
+        cb.addEventListener('change', () => {
+          const all = loadIdeas();
+          const entry = all.find(x => x.id === it.id);
+          if (entry) { entry.done = cb.checked; saveIdeas(all); renderIdeas(); renderSidebar($('notesSearch').value); }
+        });
+
+        const txt = document.createElement('div');
+        txt.className = 'idea-text';
+        txt.textContent = it.text;
+        txt.contentEditable = 'true';
+        txt.addEventListener('blur', () => {
+          const all = loadIdeas();
+          const entry = all.find(x => x.id === it.id);
+          if (entry) { entry.text = txt.textContent.trim(); saveIdeas(all); }
+        });
+        txt.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); txt.blur(); } });
+
+        const time = document.createElement('span');
+        time.className = 'idea-time';
+        time.textContent = relTime(it.addedAt);
+
+        const expand = document.createElement('button');
+        expand.type = 'button';
+        expand.className = 'idea-expand';
+        expand.title = 'Flesh this out with Sirius';
+        expand.textContent = '✨';
+        expand.addEventListener('click', () => runSiriusExpand(it.id, expand));
+
+        const del = document.createElement('button');
+        del.type = 'button';
+        del.className = 'idea-del';
+        del.textContent = '×';
+        del.addEventListener('click', () => {
+          saveIdeas(loadIdeas().filter(x => x.id !== it.id));
+          renderIdeas(); renderSidebar($('notesSearch').value);
+        });
+
+        li.append(cb, txt, time, expand, del);
+        list.appendChild(li);
+      });
+  }
+
+  function addIdea() {
+    const text = $('ideaInput').value.trim();
+    if (!text) return;
+    const items = loadIdeas();
+    items.unshift({ id: newId(), text, done: false, addedAt: Date.now() });
+    saveIdeas(items);
+    $('ideaInput').value = '';
+    renderIdeas(); renderSidebar($('notesSearch').value);
+  }
+
+  function copyForClaude() {
+    const items = loadIdeas().slice().sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+    let md = '## Dashboard ideas\n\n';
+    if (items.length === 0) md += '_(no ideas yet)_\n';
+    items.forEach(it => { md += '- [' + (it.done ? 'x' : ' ') + '] ' + it.text + '\n'; });
+    const btn = $('copyBtn'), label = $('copyBtnText');
+    const done = () => {
+      btn.classList.add('copied'); label.textContent = 'Copied ✓';
+      setTimeout(() => { btn.classList.remove('copied'); label.textContent = 'Copy for Claude'; }, 1800);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(md).then(done).catch(() => fallbackCopy(md, done));
+    } else {
+      fallbackCopy(md, done);
+    }
+  }
+  function fallbackCopy(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  $('ideaAddBtn').addEventListener('click', addIdea);
+  $('ideaInput').addEventListener('keydown', e => { if (e.key === 'Enter') addIdea(); });
+  $('copyBtn').addEventListener('click', copyForClaude);
+  $('dashboardIdeasBtn').addEventListener('click', () => { selectIdeasView(); closeDrawer(); });
+
+  // Reads the live tile list straight from the hub pages, so this never goes
+  // stale when tiles are added, renamed, or moved (e.g. into Miscellaneous).
+  async function fetchExistingTiles() {
+    const tiles = [];
+    for (const page of ['index.html', 'misc.html']) {
+      try {
+        const res = await fetch(page, { cache: 'no-store' });
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('.tile-title').forEach(el => {
+          const sub = el.closest('.tile') ? el.closest('.tile').querySelector('.tile-sub') : null;
+          tiles.push(el.textContent.trim() + (sub ? ' (' + sub.textContent.trim() + ')' : ''));
+        });
+      } catch (e) { /* fine — just brainstorm with less context */ }
+    }
+    return tiles;
+  }
+
+  // Tracks every suggestion Sirius has ever shown (not just ones you added),
+  // local-only, so repeated clicks don't loop back to the same ideas.
+  const IDEAS_SEEN_KEY = 'ideas:seenSuggestions';
+  function loadSeen() { return loadJSON(IDEAS_SEEN_KEY, []); }
+  function rememberSeen(newOnes) {
+    const seen = loadSeen().concat(newOnes);
+    localStorage.setItem(IDEAS_SEEN_KEY, JSON.stringify(seen.slice(-80))); // cap history
+  }
+
+  const BRAINSTORM_ANGLES = [
+    'productivity and focus', 'health and fitness tracking', 'finance and money',
+    'automation and integrations', 'fun, gamification, or personalization',
+    'data visualization and insights', 'notifications and reminders',
+    'social or shared/multi-person use', 'security and privacy', 'travel and planning',
+  ];
+
+  // ---- Brainstorm new dashboard ideas ----
+  async function runSiriusBrainstorm() {
+    openSiriusModal('🧠 Brainstorm new ideas');
+    if (!siriusKey()) { renderKeyForm(runSiriusBrainstorm); return; }
+    renderSiriusLoading();
+
+    const existing = loadIdeas().map(i => i.text).slice(0, 40);
+    const seen = loadSeen();
+    const existingTiles = await fetchExistingTiles();
+    const angle = BRAINSTORM_ANGLES[Math.floor(Math.random() * BRAINSTORM_ANGLES.length)];
+    const system = "You are Sirius, embedded in the user's personal life-tracking dashboard as a feature-idea brainstorm partner. " +
+      "Suggest fresh, concrete NEW feature ideas for this dashboard that aren't already covered by the tiles, backlog items, or previously-suggested ideas listed below — " +
+      "avoid repeating or closely overlapping with anything already there, including your own past suggestions. " +
+      "Every time you're asked, give genuinely different ideas from last time — vary the angle, don't default to the same obvious first picks. " +
+      "For this batch, lean especially toward ideas related to " + angle + ", but don't force it if a better idea doesn't fit. " +
+      "Format every suggestion as a '- ' bullet point, one short sentence each, no preamble. Give 6-8 suggestions.\n\n" +
+      "Existing tiles: " + (existingTiles.length ? existingTiles.join(', ') : '(unknown)') + "\n" +
+      "Existing backlog: " + (existing.length ? existing.join(', ') : '(empty)') + "\n" +
+      "Previously suggested (do not repeat): " + (seen.length ? seen.join(', ') : '(none yet)');
+
+    callSirius(system, 'Give me new dashboard feature ideas.').then(reply => {
+      const suggestions = bulletLines(reply);
+      if (suggestions.length === 0) { renderSiriusError('Sirius didn\'t return any ideas — try again.'); return; }
+      rememberSeen(suggestions);
+      $('siriusModalBody').innerHTML = suggestions.map((s, i) =>
+        '<div class="sirius-idea-row"><div class="sirius-idea-text">' + siriusEsc(s) + '</div>' +
+        '<button class="sirius-idea-add" data-i="' + i + '" type="button">+ Add</button></div>'
+      ).join('');
+      $('siriusModalBody').querySelectorAll('.sirius-idea-add').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const text = suggestions[parseInt(btn.dataset.i, 10)];
+          const items = loadIdeas();
+          items.unshift({ id: newId(), text, done: false, addedAt: Date.now() });
+          saveIdeas(items);
+          renderIdeas(); renderSidebar($('notesSearch').value);
+          btn.textContent = '✓ Added'; btn.classList.add('done'); btn.disabled = true;
+        });
+      });
+    }).catch(e => renderSiriusError(e.message || String(e)));
+  }
+  $('siriusBrainstormBtn').addEventListener('click', runSiriusBrainstorm);
+
+  // ---- Expand a single idea into a fuller spec ----
+  function runSiriusExpand(id, btnEl) {
+    const items = loadIdeas();
+    const entry = items.find(x => x.id === id);
+    if (!entry) return;
+    if (!siriusKey()) { openSiriusModal('✨ Expand idea'); renderKeyForm(() => runSiriusExpand(id, btnEl)); return; }
+
+    btnEl.disabled = true;
+    const original = btnEl.textContent;
+    btnEl.textContent = '…';
+
+    const system = "You are Sirius, embedded in the user's personal dashboard, helping flesh out a one-line feature idea before it's handed to a coding assistant to build. " +
+      "Expand the idea into 2-3 concise sentences: what it does, why it's useful, and a rough approach for how it could work. " +
+      "No preamble, no bullet points, no markdown — just the expanded description as plain text, written to directly replace the original one-liner.";
+
+    callSirius(system, 'Idea to expand: ' + entry.text).then(reply => {
+      const all = loadIdeas();
+      const e2 = all.find(x => x.id === id);
+      if (e2) { e2.text = reply.trim(); saveIdeas(all); renderIdeas(); }
+    }).catch(() => {
+      btnEl.disabled = false;
+      btnEl.textContent = original;
+    });
+  }
+
   // ---------- boot ----------
   ensureAtLeastOneNote();
   const startId = localStorage.getItem(ACTIVE_KEY);
   const idx = loadIndex();
-  const startEntry = (startId && idx.find((n) => n.id === startId)) || sortedIndex()[0];
-  selectNote(startEntry.id);
+  if (startId === IDEAS_ID) {
+    selectIdeasView();
+  } else {
+    const startEntry = (startId && idx.find((n) => n.id === startId)) || sortedIndex()[0];
+    selectNote(startEntry.id);
+  }
 
   // ---------- cloud sync ----------
   document.addEventListener('DOMContentLoaded', function () {
     if (typeof initCloudSync !== 'function') return;
+    initCloudSync({
+      appKey: 'ideas',
+      syncedPrefixes: ['ideas:'],
+      onApplied: function () { if (activeId === IDEAS_ID) renderIdeas(); renderSidebar($('notesSearch').value); },
+    });
     initCloudSync({
       appKey: 'notes',
       syncedPrefixes: ['notes:'],
@@ -817,7 +1183,7 @@ body::after {
         const stillExists = idx2.find((n) => n.id === activeId);
         if (stillExists) {
           selectNote(activeId);
-        } else {
+        } else if (activeId !== IDEAS_ID) {
           const next = sortedIndex()[0];
           if (next) selectNote(next.id);
         }
