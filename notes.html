@@ -192,7 +192,22 @@ body::after {
 .notes-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .notes-item-title { font-size: 13.5px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .notes-item.active .notes-item-title { color: #FFFFFF; }
+.notes-item-meta-row { display: flex; align-items: center; gap: 6px; }
 .notes-item-time { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.notes-item-cat {
+  font-size: 8.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-tertiary);
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); border-radius: 999px; padding: 1px 6px;
+}
+
+/* ===== Category filter chips ===== */
+.cat-chip-row { display: flex; flex-wrap: wrap; gap: 5px; flex-shrink: 0; }
+.cat-chip {
+  padding: 5px 9px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.03);
+  color: var(--text-tertiary); font-size: 10.5px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.cat-chip:hover { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
+.cat-chip.on { background: rgba(255,255,255,0.14); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
 .notes-pin, .notes-item-del {
   border: 0; background: transparent; cursor: pointer; flex-shrink: 0;
   padding: 3px; opacity: 0; transition: opacity 0.15s, color 0.15s;
@@ -227,8 +242,28 @@ body::after {
 }
 .notes-title-input::placeholder { color: var(--text-tertiary); }
 .notes-editor-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.notes-meta { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); margin: 4px 2px 10px; }
+.notes-meta-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 2px 10px; }
+.notes-meta { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.notes-cat-select {
+  font-family: inherit; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-secondary); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px; padding: 4px 22px 4px 10px; cursor: pointer; outline: none;
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2376746E' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 6px center; background-size: 12px;
+}
+.notes-cat-select:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.22); }
 .notes-footer { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); margin: 8px 2px 0; flex-shrink: 0; }
+
+/* ===== Quick Thought capture ===== */
+.qt-textarea {
+  width: 100%; min-height: 110px; padding: 12px 14px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  resize: vertical; transition: border-color 0.2s, background 0.2s;
+}
+.qt-textarea::placeholder { color: var(--text-tertiary); }
+.qt-textarea:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.qt-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 8px; line-height: 1.5; }
 
 /* ===== Quill dark theme overrides ===== */
 .ql-toolbar.ql-snow {
@@ -397,8 +432,10 @@ body::after {
     <div class="notes-sidebar-backdrop" id="notesBackdrop"></div>
     <aside class="notes-sidebar" id="notesSidebar">
       <input class="notes-search" id="notesSearch" type="text" placeholder="Search notes…" autocomplete="off">
+      <div class="cat-chip-row" id="catChipRow"></div>
       <button class="pinned-ideas-btn" id="dashboardIdeasBtn" type="button">💡 Dashboard Ideas <span class="cnt" id="ideasCount"></span></button>
       <button class="sirius-ideas-btn" id="siriusIdeasBtn" type="button">✍️ Ideas to write about</button>
+      <button class="sirius-ideas-btn" id="quickThoughtBtn" type="button">💭 Quick Thought</button>
       <ul class="notes-list" id="notesList"></ul>
     </aside>
 
@@ -420,7 +457,10 @@ body::after {
             <button class="notes-icon-btn" id="siriusSummarizeBtn" type="button" aria-label="Summarize with Sirius" title="Summarize with Sirius">🧠</button>
           </div>
         </div>
-        <div class="notes-meta" id="notesMeta">—</div>
+        <div class="notes-meta-row">
+          <div class="notes-meta" id="notesMeta">—</div>
+          <select class="notes-cat-select" id="notesCatSelect"></select>
+        </div>
         <div id="editor"></div>
         <div class="notes-footer" id="notesFooter">0 words</div>
       </div>
@@ -479,6 +519,8 @@ body::after {
   const ACTIVE_KEY = 'notesActiveId'; // deliberately NOT prefixed 'notes:' — local-only, not synced
   const IDEAS_ID = '__IDEAS__'; // sentinel activeId for the pinned Dashboard Ideas view
   const IDEAS_KEY = 'ideas:items';
+  const CATEGORIES = ['Work', 'Personal', 'Health', 'Relationships', 'Finance', 'Ideas', 'Reflection', 'Other'];
+  let categoryFilter = null; // null = "All"
 
   function loadJSON(k, f) {
     try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; }
@@ -624,16 +666,43 @@ body::after {
     });
   }
 
+  function renderCatChips(allItems) {
+    const row = $('catChipRow');
+    const counts = {};
+    allItems.forEach(n => { if (n.category) counts[n.category] = (counts[n.category] || 0) + 1; });
+    const present = CATEGORIES.filter(c => counts[c]);
+    if (present.length === 0) { row.innerHTML = ''; return; }
+    row.innerHTML = '';
+    const allChip = document.createElement('button');
+    allChip.type = 'button';
+    allChip.className = 'cat-chip' + (categoryFilter === null ? ' on' : '');
+    allChip.textContent = 'All';
+    allChip.addEventListener('click', () => { categoryFilter = null; renderSidebar($('notesSearch').value); });
+    row.appendChild(allChip);
+    present.forEach(c => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'cat-chip' + (categoryFilter === c ? ' on' : '');
+      chip.textContent = c + ' ' + counts[c];
+      chip.addEventListener('click', () => { categoryFilter = (categoryFilter === c ? null : c); renderSidebar($('notesSearch').value); });
+      row.appendChild(chip);
+    });
+  }
+
   function renderSidebar(filter) {
     const ideasItems = loadJSON(IDEAS_KEY, []);
     const ideasBtn = $('dashboardIdeasBtn');
     ideasBtn.classList.toggle('active', activeId === IDEAS_ID);
     $('ideasCount').textContent = ideasItems.length ? ideasItems.filter(i => i.done).length + '/' + ideasItems.length : '';
 
+    const allItems = sortedIndex();
+    renderCatChips(allItems);
+
     const listEl = $('notesList');
     listEl.innerHTML = '';
     const q = (filter || '').trim().toLowerCase();
-    let items = sortedIndex();
+    let items = allItems;
+    if (categoryFilter) items = items.filter((n) => n.category === categoryFilter);
     if (q) {
       items = items.filter((n) => {
         if ((n.title || '').toLowerCase().indexOf(q) !== -1) return true;
@@ -643,7 +712,7 @@ body::after {
     if (items.length === 0) {
       const li = document.createElement('li');
       li.className = 'notes-empty';
-      li.textContent = q ? 'No notes match your search.' : 'No notes yet.';
+      li.textContent = q || categoryFilter ? 'No notes match.' : 'No notes yet.';
       listEl.appendChild(li);
       return;
     }
@@ -656,10 +725,19 @@ body::after {
       const title = document.createElement('div');
       title.className = 'notes-item-title';
       title.textContent = n.title || 'Untitled';
-      const time = document.createElement('div');
+      const metaRow = document.createElement('div');
+      metaRow.className = 'notes-item-meta-row';
+      const time = document.createElement('span');
       time.className = 'notes-item-time';
       time.textContent = relTime(n.updatedAt);
-      main.append(title, time);
+      metaRow.appendChild(time);
+      if (n.category) {
+        const catBadge = document.createElement('span');
+        catBadge.className = 'notes-item-cat';
+        catBadge.textContent = n.category;
+        metaRow.appendChild(catBadge);
+      }
+      main.append(title, metaRow);
 
       const pin = document.createElement('button');
       pin.type = 'button';
@@ -708,6 +786,7 @@ body::after {
     $('notesTitleInput').value = entry.title || '';
     $('notesMeta').textContent = entry.updatedAt ? 'Edited ' + relTime(entry.updatedAt) : '';
     $('notesPinBtn').classList.toggle('on', !!entry.pinned);
+    $('notesCatSelect').value = entry.category || '';
     suppressAutosave = true;
     quill.setContents(loadJSON(DOC_PREFIX + id, { ops: [{ insert: '\n' }] }));
     suppressAutosave = false;
@@ -718,7 +797,7 @@ body::after {
   function createNote() {
     const id = newId();
     const idx = loadIndex();
-    idx.unshift({ id, title: 'Untitled', updatedAt: Date.now(), pinned: false });
+    idx.unshift({ id, title: 'Untitled', category: null, updatedAt: Date.now(), pinned: false });
     saveIndex(idx);
     saveJSON(DOC_PREFIX + id, { ops: [{ insert: '\n' }] });
     selectNote(id);
@@ -794,6 +873,29 @@ body::after {
   $('notesNewBtn').addEventListener('click', createNote);
   $('notesPinBtn').addEventListener('click', () => { if (activeId) togglePin(activeId); });
   $('notesDeleteBtn').addEventListener('click', () => { if (activeId) deleteNote(activeId); });
+
+  // ---------- category select (manual tagging for any note) ----------
+  (function populateCatSelect() {
+    const sel = $('notesCatSelect');
+    const none = document.createElement('option');
+    none.value = ''; none.textContent = 'No category';
+    sel.appendChild(none);
+    CATEGORIES.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = c;
+      sel.appendChild(opt);
+    });
+  })();
+  $('notesCatSelect').addEventListener('change', function () {
+    if (!activeId || activeId === IDEAS_ID) return;
+    const idx = loadIndex();
+    const entry = idx.find((n) => n.id === activeId);
+    if (!entry) return;
+    entry.category = this.value || null;
+    entry.updatedAt = Date.now();
+    saveIndex(idx);
+    renderSidebar($('notesSearch').value);
+  });
 
   // ---------- mobile drawer ----------
   function openDrawer() {
@@ -938,6 +1040,67 @@ body::after {
     }).catch(e => renderSiriusError(e.message || String(e)));
   }
   $('siriusSummarizeBtn').addEventListener('click', runSiriusSummarize);
+
+  // ---- Quick Thought: compact a rough thought into a clean, auto-categorized note ----
+  function openQuickThoughtModal() {
+    openSiriusModal('💭 Quick Thought');
+    if (!siriusKey()) { renderKeyForm(openQuickThoughtModal); return; }
+    $('siriusModalBody').innerHTML =
+      '<textarea id="qtInput" class="qt-textarea" placeholder="Type whatever\'s on your mind about a situation — Sirius will tidy it up into a note and file it under the right category…"></textarea>' +
+      '<button class="gm-add" id="qtSubmit" type="button" style="width:100%; margin-top:12px">Capture</button>' +
+      '<div class="qt-hint">⌘/Ctrl + Enter to capture. Categorized as: ' + CATEGORIES.join(', ') + '.</div>';
+    $('qtInput').focus();
+    $('qtSubmit').addEventListener('click', submitQuickThought);
+    $('qtInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submitQuickThought(); }
+    });
+  }
+
+  function submitQuickThought() {
+    const raw = ($('qtInput').value || '').trim();
+    if (!raw) return;
+    renderSiriusLoading();
+
+    const system = "You are Sirius, helping the user quickly capture a messy, unstructured thought about a situation into a clean, organized note. " +
+      "Condense their raw input: fix rambling, tighten the language, keep their perspective and the concrete details that matter, using a short paragraph or a few '- ' bullet points, whichever fits the content better. " +
+      "Also classify what they're talking about into exactly one category from this list: " + CATEGORIES.join(', ') + ". " +
+      "Respond in EXACTLY this format and nothing else:\n" +
+      "TITLE: <a short 3-7 word title for the note>\n" +
+      "CATEGORY: <one category from the list above, exact spelling>\n" +
+      "BODY:\n<the compacted note content>";
+
+    callSirius(system, raw).then(reply => {
+      const titleMatch = reply.match(/TITLE:\s*(.+)/i);
+      const catMatch = reply.match(/CATEGORY:\s*(.+)/i);
+      const bodyMatch = reply.match(/BODY:\s*([\s\S]*)/i);
+      const title = titleMatch ? titleMatch[1].trim() : 'Quick thought';
+      const catRaw = catMatch ? catMatch[1].trim().toLowerCase() : '';
+      const category = CATEGORIES.find(c => c.toLowerCase() === catRaw) || 'Other';
+      const body = (bodyMatch ? bodyMatch[1] : reply).trim();
+      createNoteFromQuickThought(title, category, body);
+      closeSiriusModal();
+    }).catch(e => renderSiriusError(e.message || String(e)));
+  }
+
+  function createNoteFromQuickThought(title, category, body) {
+    const id = newId();
+    const idx = loadIndex();
+    idx.unshift({ id, title, category, updatedAt: Date.now(), pinned: false });
+    saveIndex(idx);
+
+    const lines = bulletLines(body);
+    const Delta = Quill.import('delta');
+    const insertDelta = new Delta();
+    if (lines.length) {
+      lines.forEach(line => { insertDelta.insert(line).insert('\n', { list: 'bullet' }); });
+    } else {
+      body.split(/\r?\n+/).map(l => l.trim()).filter(Boolean).forEach(line => { insertDelta.insert(line).insert('\n'); });
+    }
+    saveJSON(DOC_PREFIX + id, insertDelta);
+    selectNote(id);
+    closeDrawer();
+  }
+  $('quickThoughtBtn').addEventListener('click', openQuickThoughtModal);
 
   // ---------- Dashboard Ideas (merged from the former standalone Ideas tab) ----------
   function loadIdeas() { return loadJSON(IDEAS_KEY, []); }
