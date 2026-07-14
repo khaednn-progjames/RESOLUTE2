@@ -96,6 +96,92 @@
   opacity: 0.85;
 }
 
+/* ===== Command palette (Cmd/Ctrl+K) ===== */
+.topbar-cmdk-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 42px; padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: inherit; font-size: 12.5px; font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+.topbar-cmdk-btn:hover { background: rgba(255, 255, 255, 0.08); color: #FAFAFA; }
+.topbar-cmdk-kbd {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10.5px; font-weight: 700;
+  padding: 2px 6px; border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
+}
+@media (max-width: 600px) {
+  .topbar-cmdk-btn { padding: 0 12px; }
+  .topbar-cmdk-label, .topbar-cmdk-kbd { display: none; }
+}
+
+.cmdk-bg {
+  position: fixed; inset: 0; z-index: 300; display: none;
+  align-items: flex-start; justify-content: center;
+  padding: min(14vh, 130px) 20px 20px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.cmdk-bg.show { display: flex; }
+.cmdk {
+  width: 100%; max-width: 560px;
+  background: #101012;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255,255,255,0.08);
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+}
+.cmdk-input-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 15px 17px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.cmdk-input-row svg { width: 17px; height: 17px; color: rgba(255,255,255,0.4); flex-shrink: 0; }
+.cmdk-input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+  color: #FAFAFA; font-family: inherit; font-size: 15.5px;
+}
+.cmdk-input::placeholder { color: rgba(255, 255, 255, 0.30); }
+.cmdk-list { max-height: min(46vh, 400px); overflow-y: auto; padding: 7px; }
+.cmdk-group-label {
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.32);
+  padding: 9px 11px 4px;
+}
+.cmdk-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 11px; border-radius: 10px; cursor: pointer;
+  color: #D8D6D0; font-size: 13.5px; font-weight: 500;
+}
+.cmdk-item .cmdk-ic { width: 22px; text-align: center; font-size: 15px; flex-shrink: 0; filter: grayscale(100%) brightness(1.35); opacity: 0.8; }
+.cmdk-item .cmdk-sub { margin-left: auto; font-size: 11px; color: rgba(255,255,255,0.30); white-space: nowrap; }
+.cmdk-item.sel { background: rgba(255, 255, 255, 0.10); color: #FFFFFF; }
+.cmdk-item.sel .cmdk-ic { opacity: 1; }
+.cmdk-empty { text-align: center; color: rgba(255,255,255,0.35); font-size: 13px; padding: 22px 0 26px; }
+.cmdk-foot {
+  display: flex; gap: 14px; align-items: center;
+  padding: 9px 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 10.5px; color: rgba(255, 255, 255, 0.30);
+}
+.cmdk-foot b {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-weight: 700; font-size: 10px;
+  padding: 1px 5px; border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.45);
+}
+
 /* Bottom tab bar — Instagram-style */
 .bottombar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
@@ -197,6 +283,11 @@ body.topbar-modal-open {
   // -------- HTML --------
   const topbarHtml = `
 <header class="topbar" id="topbar" role="navigation" aria-label="Quick actions">
+  <button class="topbar-cmdk-btn" id="topbarCmdk" type="button" aria-label="Open command palette">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span class="topbar-cmdk-label">Search</span>
+    <span class="topbar-cmdk-kbd">⌘K</span>
+  </button>
   <div class="topbar-water-wrap">
     <a href="health.html#water" class="topbar-water-pill" id="topbarWater" aria-label="Water progress">
       <span class="topbar-pill-dot"></span>
@@ -208,6 +299,19 @@ body.topbar-modal-open {
     <span class="topbar-finance-icon">📊</span>
   </a>
 </header>
+`;
+
+  const cmdkHtml = `
+<div class="cmdk-bg" id="cmdkBg" role="dialog" aria-label="Command palette">
+  <div class="cmdk">
+    <div class="cmdk-input-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="cmdk-input" id="cmdkInput" type="text" placeholder="Jump to a page or run an action…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="cmdk-list" id="cmdkList"></div>
+    <div class="cmdk-foot"><span><b>↑↓</b> navigate</span><span><b>↵</b> open</span><span><b>esc</b> close</span></div>
+  </div>
+</div>
 `;
 
   const bottombarHtml = `
@@ -407,6 +511,151 @@ body.topbar-modal-open {
     pushWaterMergedToSupabase(state);
   }
 
+  // -------- Command palette (Cmd/Ctrl+K) --------
+  const CMDK_COMMANDS = [
+    { group: 'Pages', ic: '🏠', label: 'Home',            sub: 'hub',                href: 'index.html',        kw: 'hub dashboard tiles home' },
+    { group: 'Pages', ic: '🎯', label: 'Main',            sub: 'goals & daily plan', href: 'main.html',         kw: 'goals today plan countdown ticker' },
+    { group: 'Pages', ic: '💧', label: 'Water',           sub: 'hydration',          href: 'po-water.html',     kw: 'water hydration drink' },
+    { group: 'Pages', ic: '📅', label: 'Planner',         sub: 'monthly goals',      href: 'planner.html',      kw: 'planner month schedule monthly goals' },
+    { group: 'Pages', ic: '📊', label: 'Finance',         sub: 'net worth & budget', href: 'finance.html',      kw: 'money net worth budget subs subscriptions wishlist orders' },
+    { group: 'Pages', ic: '🧠', label: 'Sirius',          sub: 'AI mentor',          href: 'nova-lite.html',    kw: 'ai chat mentor sirius ask' },
+    { group: 'Pages', ic: '📝', label: 'Notes',           sub: 'ideas & docs',       href: 'notes.html',        kw: 'notes docs writing ideas quick thought web' },
+    { group: 'Pages', ic: '🔗', label: 'Links',           sub: 'saved & sorted',     href: 'links.html',        kw: 'links bookmarks saved urls' },
+    { group: 'Pages', ic: '🗂', label: 'Miscellaneous',   sub: 'everything else',    href: 'misc.html',         kw: 'misc other tools' },
+    { group: 'Pages', ic: '❤️', label: 'Health',          sub: 'supplements & water', href: 'health.html',      kw: 'health stack supplements vitamins' },
+    { group: 'Pages', ic: '🏋️', label: 'Gym',             sub: 'training & weight',  href: 'gym.html',          kw: 'gym workout lifts training bodyweight fitness' },
+    { group: 'Pages', ic: '☕', label: 'Caffeine',        sub: 'intake & timing',    href: 'caffeine.html',     kw: 'caffeine coffee energy drinks' },
+    { group: 'Pages', ic: '💡', label: 'Money Ideas',     sub: 'AI brainstorm',      href: 'money-ideas.html',  kw: 'money ideas brainstorm income' },
+    { group: 'Pages', ic: '🏦', label: 'Bank Accounts',   sub: 'Plaid',              href: 'bank-accounts.html', kw: 'bank accounts plaid balances' },
+    { group: 'Pages', ic: '📦', label: 'USPS Tracking',   sub: 'packages',           href: 'usps-tracking.html', kw: 'usps packages tracking mail shipping' },
+    { group: 'Pages', ic: '🤖', label: 'Iron Condor Bot', sub: 'options bot',        href: 'iron-condor.html',  kw: 'trading options bot spy tastytrade' },
+    { group: 'Actions', ic: '➕', label: 'Log a drink of water', sub: 'instant', action: 'water',  kw: 'water add drink log +1' },
+    { group: 'Actions', ic: '📅', label: "Open today's Daily Note", sub: 'notes', href: 'notes.html#daily', kw: 'daily note today journal write' },
+    { group: 'Actions', ic: '💭', label: 'Capture a Quick Thought', sub: 'notes', href: 'notes.html#quick', kw: 'quick thought capture brain dump' },
+    { group: 'Actions', ic: '🕸', label: 'Open the Web of notes', sub: 'graph', href: 'notes.html#web', kw: 'web graph notes connections obsidian' },
+  ];
+
+  let cmdkOpen = false;
+  let cmdkSel = 0;
+  let cmdkMatches = [];
+
+  function cmdkFilter(q) {
+    q = q.trim().toLowerCase();
+    if (!q) return CMDK_COMMANDS.slice();
+    const terms = q.split(/\s+/);
+    const scored = [];
+    CMDK_COMMANDS.forEach((c, order) => {
+      const label = c.label.toLowerCase();
+      const hay = (c.label + ' ' + (c.sub || '') + ' ' + (c.kw || '')).toLowerCase();
+      if (!terms.every((t) => hay.indexOf(t) !== -1)) return;
+      // Rank: label prefix > label substring > keyword-only match.
+      let score = 2;
+      if (terms.some((t) => label.indexOf(t) === 0)) score = 0;
+      else if (terms.some((t) => label.indexOf(t) !== -1)) score = 1;
+      scored.push({ c, score, order });
+    });
+    scored.sort((a, b) => a.score - b.score || a.order - b.order);
+    return scored.map((s) => s.c);
+  }
+
+  function cmdkRender() {
+    const list = document.getElementById('cmdkList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (cmdkMatches.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'cmdk-empty';
+      empty.textContent = 'No matches.';
+      list.appendChild(empty);
+      return;
+    }
+    let lastGroup = null;
+    cmdkMatches.forEach((c, i) => {
+      if (c.group !== lastGroup) {
+        lastGroup = c.group;
+        const gl = document.createElement('div');
+        gl.className = 'cmdk-group-label';
+        gl.textContent = c.group;
+        list.appendChild(gl);
+      }
+      const row = document.createElement('div');
+      row.className = 'cmdk-item' + (i === cmdkSel ? ' sel' : '');
+      row.innerHTML = '<span class="cmdk-ic"></span><span></span><span class="cmdk-sub"></span>';
+      row.children[0].textContent = c.ic;
+      row.children[1].textContent = c.label;
+      row.children[2].textContent = c.sub || '';
+      row.addEventListener('click', () => cmdkRun(c));
+      row.addEventListener('mousemove', () => {
+        if (cmdkSel !== i) { cmdkSel = i; cmdkRender(); }
+      });
+      list.appendChild(row);
+    });
+    const selEl = list.querySelectorAll('.cmdk-item')[cmdkSel];
+    if (selEl) selEl.scrollIntoView({ block: 'nearest' });
+  }
+
+  function cmdkRun(c) {
+    if (c.action === 'water') { addWater(); closeCmdk(); return; }
+    if (c.href) window.location.href = c.href;
+  }
+
+  function openCmdk() {
+    const bg = document.getElementById('cmdkBg');
+    if (!bg) return;
+    cmdkOpen = true;
+    bg.classList.add('show');
+    document.body.classList.add('topbar-modal-open');
+    const input = document.getElementById('cmdkInput');
+    input.value = '';
+    cmdkSel = 0;
+    cmdkMatches = cmdkFilter('');
+    cmdkRender();
+    setTimeout(() => input.focus(), 0);
+  }
+  function closeCmdk() {
+    const bg = document.getElementById('cmdkBg');
+    if (!bg) return;
+    cmdkOpen = false;
+    bg.classList.remove('show');
+    document.body.classList.remove('topbar-modal-open');
+  }
+
+  function initCmdk() {
+    if (!shouldShowChrome()) return;
+    if (document.getElementById('cmdkBg')) return;
+    const wrap = document.createElement('div');
+    wrap.innerHTML = cmdkHtml.trim();
+    document.body.appendChild(wrap.firstChild);
+
+    const btn = document.getElementById('topbarCmdk');
+    if (btn) btn.addEventListener('click', openCmdk);
+
+    const bg = document.getElementById('cmdkBg');
+    bg.addEventListener('click', (e) => { if (e.target === bg) closeCmdk(); });
+
+    const input = document.getElementById('cmdkInput');
+    input.addEventListener('input', () => {
+      cmdkSel = 0;
+      cmdkMatches = cmdkFilter(input.value);
+      cmdkRender();
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); cmdkSel = Math.min(cmdkSel + 1, cmdkMatches.length - 1); cmdkRender(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); cmdkSel = Math.max(cmdkSel - 1, 0); cmdkRender(); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (cmdkMatches[cmdkSel]) cmdkRun(cmdkMatches[cmdkSel]); }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        cmdkOpen ? closeCmdk() : openCmdk();
+      } else if (e.key === 'Escape' && cmdkOpen) {
+        e.preventDefault();
+        closeCmdk();
+      }
+    });
+  }
+
   // -------- Mobile lockdown helpers --------
   // Belt-and-suspenders zoom prevention — iOS Safari sometimes ignores
   // user-scalable=no, so we also kill the gesture events directly.
@@ -457,6 +706,7 @@ body.topbar-modal-open {
   // -------- Boot --------
   function boot() {
     injectStyleAndHTML();
+    initCmdk();
     const btn = document.getElementById('topbarWaterAdd');
     if (btn) btn.addEventListener('click', (e) => { e.preventDefault(); addWater(); });
     render();

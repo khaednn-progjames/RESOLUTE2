@@ -1730,14 +1730,21 @@ body::after {
 
   // ---------- boot ----------
   ensureAtLeastOneNote();
+  const startHash = (window.location.hash || '').toLowerCase();
   const startId = localStorage.getItem(ACTIVE_KEY);
   const idx = loadIndex();
-  if (startId === IDEAS_ID) {
+  if (startHash === '#daily') {
+    openDailyNote();
+    quill.focus();
+  } else if (startId === IDEAS_ID) {
     selectIdeasView();
   } else {
     const startEntry = (startId && idx.find((n) => n.id === startId)) || sortedIndex()[0];
     selectNote(startEntry.id);
   }
+  if (startHash === '#quick') openQuickThoughtModal();
+  else if (startHash === '#web') openGraphOverlay();
+  if (startHash) history.replaceState(null, '', window.location.pathname);
 
   // ---------- cloud sync ----------
   document.addEventListener('DOMContentLoaded', function () {
