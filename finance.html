@@ -369,6 +369,34 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .fin-ai-dots i:nth-child(2) { animation-delay: 0.2s; } .fin-ai-dots i:nth-child(3) { animation-delay: 0.4s; }
 @keyframes fin-ai-d { 0%,100%{opacity:.35;transform:scale(1)} 50%{opacity:1;transform:scale(1.4)} }
 .fin-ai-err { color: var(--danger); font-size: 12.5px; line-height: 1.5; }
+.fin-ai-textarea {
+  width: 100%; min-height: 90px; padding: 12px 14px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  resize: vertical; transition: border-color 0.2s, background 0.2s;
+}
+.fin-ai-textarea::placeholder { color: var(--text-tertiary); }
+.fin-ai-textarea:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.fin-ai-submit-btn {
+  width: 100%; margin-top: 10px; padding: 11px; border: 0; border-radius: 11px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); color: #0A0A0B;
+  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.fin-ai-submit-btn:hover { filter: brightness(1.05); }
+.fin-ai-answer { font-size: 13.5px; color: var(--text-primary); line-height: 1.65; white-space: pre-line; }
+.fin-ai-verdict-row {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+  padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.06);
+}
+.fin-ai-verdict-row:first-of-type { border-top: 0; }
+.fin-ai-verdict-name { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.fin-ai-verdict-note { font-size: 11.5px; color: var(--text-tertiary); margin-top: 2px; line-height: 1.4; }
+.fin-ai-verdict-badge {
+  flex-shrink: 0; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+  padding: 4px 9px; border-radius: 999px; white-space: nowrap;
+}
+.fin-ai-verdict-badge.now { background: rgba(107,227,164,0.14); color: var(--success); border: 1px solid rgba(107,227,164,0.35); }
+.fin-ai-verdict-badge.soon { background: rgba(242,192,99,0.14); color: var(--warning); border: 1px solid rgba(242,192,99,0.35); }
+.fin-ai-verdict-badge.not-yet { background: rgba(255,107,107,0.12); color: var(--danger); border: 1px solid rgba(255,107,107,0.32); }
 
 /* Custom list rows */
 .custom-item {
@@ -1643,7 +1671,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <div id="netWorthTotal" style="font-size:34px;font-weight:700;color:var(--text-primary);line-height:1.05;margin-top:2px">$0</div>
         <div id="netWorthBreakdown" style="font-size:11px;color:var(--text-tertiary);margin-top:4px"></div>
       </div>
-      <button class="scan-bank-btn" id="bankScanBtn" type="button" style="width:auto;margin-top:0;padding:9px 16px">Scan an account screenshot</button>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <button class="scan-bank-btn" id="bankScanBtn" type="button" style="width:auto;margin-top:0;padding:9px 16px">Scan an account screenshot</button>
+        <button class="scan-bank-btn" id="askSiriusBtn" type="button" style="width:auto;margin-top:0;padding:9px 16px">Ask Sirius about your budget</button>
+      </div>
     </div>
 
     <!-- Overview row: stock-style line chart on the left, donut allocation chart on the right -->
@@ -1864,6 +1895,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <div class="wish-hero-bar-fill" id="wishHeroFill" style="width:0%"></div>
     </div>
     <div class="wish-hero-foot" id="wishPctOfNw">Add net worth first to see this as a %</div>
+    <button class="scan-bank-btn" id="wishBudgetBtn" type="button" style="margin-top:14px">Budget check — what can I afford?</button>
   </div>
 
   <!-- Add row -->
@@ -1874,6 +1906,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <input type="number" id="wishAmount" placeholder="Cost" step="0.01" class="wish-input wish-input-amt">
       <button class="wish-add-btn" id="wishAddBtn" onclick="window.__addWish && window.__addWish()">+ Add</button>
     </div>
+    <button class="scan-bank-btn" id="wishScanBtn" type="button" style="margin-top:10px">Scan an item screenshot</button>
   </div>
 
   <!-- Items list -->
@@ -2567,6 +2600,260 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 
   document.getElementById('bankScanBtn').addEventListener('click', openBankScanModal);
+
+  // ============================================================
+  // ASK SIRIUS — free-form budgeting Q&A grounded in real net worth,
+  // subscriptions, and wishlist data.
+  // ============================================================
+  function buildFinanceContext() {
+    const cats = [
+      { key: 'bank', label: 'Bank accounts' },
+      { key: 'stocks', label: 'Stocks / Investments' },
+      { key: 'crypto', label: 'Crypto' },
+      { key: 'other', label: 'Other assets' },
+    ];
+    let grand = 0;
+    const catLines = [];
+    cats.forEach((c) => {
+      const items = storeGet('nw:' + c.key) || [];
+      const sub = items.reduce((s, it) => s + (Number(it.amount) || 0), 0);
+      grand += sub;
+      if (items.length) {
+        catLines.push(c.label + ': ' + fmtMoney(sub) + ' (' + items.map((it) => it.name + ' ' + fmtMoney(it.amount)).join(', ') + ')');
+      }
+    });
+    const subs = storeGet('subs') || [];
+    const monthlyBurn = subs.reduce((s, it) => s + monthlyEquivalent(it), 0);
+    const wishlist = storeGet('wishlist') || [];
+
+    let ctx = 'Net worth: ' + fmtMoney(grand) + ' total.\n';
+    ctx += catLines.length ? catLines.join('\n') + '\n' : 'No accounts added yet.\n';
+    ctx += 'Monthly subscriptions: ' + fmtMoney(monthlyBurn) + '/mo across ' + subs.length + ' active subscription' + (subs.length === 1 ? '' : 's') + '.\n';
+    ctx += wishlist.length
+      ? 'Wishlist (' + wishlist.length + ' items): ' + wishlist.map((it) => it.name + ' ' + fmtMoney(it.amount)).join(', ') + '.\n'
+      : 'Wishlist: empty.\n';
+    return ctx;
+  }
+
+  function openAskSiriusModal() {
+    document.getElementById('finAiModalTitle').textContent = 'Ask Sirius about your budget';
+    openFinAiModal();
+    if (!finAiKey()) { finAiRenderKeyForm(openAskSiriusModal); return; }
+    document.getElementById('finAiModalBody').innerHTML =
+      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px">Ask about anything you want to spend on, or how to budget — Sirius sees your real net worth, subscriptions, and wishlist.</div>' +
+      '<textarea id="askSiriusInput" class="fin-ai-textarea" placeholder="e.g. Can I afford a $2,000 laptop right now? How much should I set aside for groceries each month?"></textarea>' +
+      '<button class="fin-ai-submit-btn" id="askSiriusSubmit" type="button">Ask</button>';
+    const input = document.getElementById('askSiriusInput');
+    input.focus();
+    document.getElementById('askSiriusSubmit').addEventListener('click', () => {
+      const q = input.value.trim();
+      if (q) runAskSirius(q);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); document.getElementById('askSiriusSubmit').click(); }
+    });
+  }
+
+  async function runAskSirius(question) {
+    finAiRenderLoading();
+    const system = "You are Sirius, a financial mentor embedded in the user's net worth dashboard. " +
+      "Answer their budgeting question using the real financial context below — be specific with numbers, direct, and practical. " +
+      "3-6 sentences, plain conversational text, no markdown headers or bullet lists.\n\n" +
+      "Their current finances:\n" + buildFinanceContext();
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': finAiKey(),
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-8',
+          max_tokens: 1024,
+          system: system,
+          messages: [{ role: 'user', content: question }],
+        }),
+      });
+      const json = await res.json();
+      if (json.error) { finAiRenderError(json.error.message || 'Something went wrong.'); return; }
+      const reply = (json.content && json.content[0] && json.content[0].text) || '';
+      document.getElementById('finAiModalBody').innerHTML = '<div class="fin-ai-answer">' + finAiEsc(reply.trim()) + '</div>';
+    } catch (e) {
+      finAiRenderError(e.message || String(e));
+    }
+  }
+  document.getElementById('askSiriusBtn').addEventListener('click', openAskSiriusModal);
+
+  // ============================================================
+  // BUDGET CHECK — evaluates every wishlist item against real
+  // finances and gives a NOW / SOON / NOT_YET verdict for each.
+  // ============================================================
+  function openBudgetCheckModal() {
+    document.getElementById('finAiModalTitle').textContent = 'Budget check';
+    openFinAiModal();
+    if (!finAiKey()) { finAiRenderKeyForm(openBudgetCheckModal); return; }
+    const wishlist = storeGet('wishlist') || [];
+    if (wishlist.length === 0) {
+      document.getElementById('finAiModalBody').innerHTML = '<div style="font-size:13px;color:var(--text-tertiary);line-height:1.5">Add something to your wishlist first, then check back here.</div>';
+      return;
+    }
+    runBudgetCheck();
+  }
+
+  async function runBudgetCheck() {
+    finAiRenderLoading();
+    const wishlist = storeGet('wishlist') || [];
+    const system = "You are Sirius, a financial mentor embedded in the user's net worth dashboard. " +
+      "Given their real financial context below, evaluate EVERY item on their wishlist and tell them what they can actually afford right now. " +
+      "For each wishlist item, decide one verdict: NOW (can comfortably afford it today without hurting their safety net), " +
+      "SOON (not yet, but reachable with a bit more saving), or NOT_YET (would meaningfully hurt their financial position right now). " +
+      "Respond in EXACTLY this format and nothing else, one ITEM line per wishlist item in the order given:\n" +
+      "ITEM: <name> | VERDICT: <NOW|SOON|NOT_YET> | NOTE: <one short sentence explaining why>\n" +
+      "(repeat for every wishlist item)\n" +
+      "SUMMARY: <2-3 sentence overall recommendation on what to prioritize and why>\n\n" +
+      "Their current finances:\n" + buildFinanceContext() +
+      "\nTheir wishlist, in order: " + wishlist.map((it) => it.name + ' (' + fmtMoney(it.amount) + ')').join(', ');
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': finAiKey(),
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-8',
+          max_tokens: 1536,
+          system: system,
+          messages: [{ role: 'user', content: 'Check my wishlist against my budget.' }],
+        }),
+      });
+      const json = await res.json();
+      if (json.error) { finAiRenderError(json.error.message || 'Something went wrong.'); return; }
+      const reply = (json.content && json.content[0] && json.content[0].text) || '';
+      const verdicts = [];
+      reply.split(/\r?\n/).forEach((line) => {
+        const m = line.match(/^ITEM:\s*(.+?)\s*\|\s*VERDICT:\s*(NOW|SOON|NOT_YET)\s*\|\s*NOTE:\s*(.+)/i);
+        if (m) verdicts.push({ name: m[1].trim(), verdict: m[2].toUpperCase(), note: m[3].trim() });
+      });
+      const summaryMatch = reply.match(/SUMMARY:\s*([\s\S]*)/i);
+      const summary = summaryMatch ? summaryMatch[1].trim() : '';
+      if (verdicts.length === 0) { finAiRenderError("Sirius couldn't evaluate your wishlist — try again."); return; }
+      const badgeMeta = { NOW: { cls: 'now', label: 'Can afford now' }, SOON: { cls: 'soon', label: 'Soon' }, NOT_YET: { cls: 'not-yet', label: 'Not yet' } };
+      const rowsHtml = verdicts.map((v) => {
+        const meta = badgeMeta[v.verdict] || badgeMeta.NOT_YET;
+        return '<div class="fin-ai-verdict-row">' +
+          '<div><div class="fin-ai-verdict-name">' + finAiEsc(v.name) + '</div><div class="fin-ai-verdict-note">' + finAiEsc(v.note) + '</div></div>' +
+          '<span class="fin-ai-verdict-badge ' + meta.cls + '">' + meta.label + '</span>' +
+        '</div>';
+      }).join('');
+      document.getElementById('finAiModalBody').innerHTML =
+        rowsHtml +
+        (summary ? '<div style="font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-tertiary);margin:16px 0 6px">Sirius says</div><div class="fin-ai-answer">' + finAiEsc(summary) + '</div>' : '');
+    } catch (e) {
+      finAiRenderError(e.message || String(e));
+    }
+  }
+  document.getElementById('wishBudgetBtn').addEventListener('click', openBudgetCheckModal);
+
+  // ============================================================
+  // SCAN AN ITEM SCREENSHOT — read a product/cart/price-tag image
+  // and add every item found straight to the wishlist.
+  // ============================================================
+  function openWishScanModal() {
+    document.getElementById('finAiModalTitle').textContent = 'Scan item screenshot';
+    openFinAiModal();
+    if (!finAiKey()) { finAiRenderKeyForm(openWishScanModal); return; }
+    document.getElementById('finAiModalBody').innerHTML =
+      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">Upload a screenshot of a product — a shopping page, a cart, a price tag. If it shows multiple items, Sirius adds each one to your wishlist separately.</div>' +
+      '<input type="file" id="wishScanFileInput" class="fin-ai-file-input" accept="image/*">';
+    document.getElementById('wishScanFileInput').addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (file) handleWishScanFile(file);
+    });
+  }
+
+  function handleWishScanFile(file) {
+    finAiRenderLoading();
+    const reader = new FileReader();
+    reader.onload = () => {
+      const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
+      if (!match) { finAiRenderError('Could not read that image — try a different file.'); return; }
+      runWishScan(match[1], match[2]);
+    };
+    reader.onerror = () => finAiRenderError('Could not read that image — try a different file.');
+    reader.readAsDataURL(file);
+  }
+
+  async function runWishScan(mediaType, base64) {
+    const system = "You are Sirius, a financial mentor embedded in the user's net worth dashboard. " +
+      "The user has uploaded a screenshot of something they want to buy — a product page, a shopping cart, a price tag, a wishlist screenshot, etc. " +
+      "Find EVERY distinct item and its price shown in the image. If there is more than one item, list each one separately — never merge them into one. " +
+      "Respond in EXACTLY this format and nothing else, with one ITEM line per item found:\n" +
+      "ITEM: <short item name> | PRICE: <plain number, no currency symbol or commas>\n" +
+      "(repeat for every additional item visible)";
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': finAiKey(),
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-8',
+          max_tokens: 1024,
+          system: system,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+              { type: 'text', text: 'Read every item and price in this screenshot.' }
+            ]
+          }],
+        }),
+      });
+      const json = await res.json();
+      if (json.error) { finAiRenderError(json.error.message || 'Something went wrong.'); return; }
+      const reply = (json.content && json.content[0] && json.content[0].text) || '';
+      const items = [];
+      reply.split(/\r?\n/).forEach((line) => {
+        const m = line.match(/^ITEM:\s*(.+?)\s*\|\s*PRICE:\s*\$?([\d,]+\.?\d*)/i);
+        if (!m) return;
+        const price = parseFloat(m[2].replace(/,/g, ''));
+        if (isNaN(price)) return;
+        items.push({ name: m[1].trim(), price: price });
+      });
+      if (items.length === 0) { finAiRenderError("Sirius couldn't find any items in that screenshot — try a clearer image."); return; }
+      finAiShowWishResult(items);
+    } catch (e) {
+      finAiRenderError(e.message || String(e));
+    }
+  }
+
+  function finAiShowWishResult(items) {
+    const arr = storeGet('wishlist') || [];
+    items.forEach((it) => { arr.push({ name: it.name, amount: it.price, ts: Date.now() }); });
+    storeSet('wishlist', arr);
+    renderWishlist();
+
+    const rowsHtml = items.map((it) =>
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid rgba(255,255,255,0.06)">' +
+        '<div style="font-size:13.5px;font-weight:600;color:var(--text-primary)">' + finAiEsc(it.name) + '</div>' +
+        '<div style="font-size:14px;font-weight:700;color:var(--text-primary)">' + fmtMoney(it.price) + '</div>' +
+      '</div>'
+    ).join('');
+    document.getElementById('finAiModalBody').innerHTML =
+      '<div style="font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px">' +
+        items.length + (items.length === 1 ? ' item added to wishlist' : ' items added to wishlist') +
+      '</div>' +
+      rowsHtml;
+  }
+  document.getElementById('wishScanBtn').addEventListener('click', openWishScanModal);
 
   // ============================================================
   // SUBSCRIPTIONS
