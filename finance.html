@@ -383,6 +383,16 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 }
 .fin-ai-submit-btn:hover { filter: brightness(1.05); }
 .fin-ai-answer { font-size: 13.5px; color: var(--text-primary); line-height: 1.65; white-space: pre-line; }
+.fin-ai-feed { max-height: 340px; overflow-y: auto; margin-bottom: 10px; }
+.fin-ai-q {
+  font-size: 13px; color: var(--text-secondary); background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 9px 12px 10px;
+  margin-bottom: 12px; line-height: 1.5;
+}
+.fin-ai-q::before {
+  content: 'You'; display: block; font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 4px;
+}
 .fin-ai-verdict-row {
   display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
   padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.06);
@@ -2660,14 +2670,30 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     return ctx;
   }
 
+  let askSiriusMessages = []; // conversation so far, for follow-ups within this modal session
+
   function openAskSiriusModal() {
     document.getElementById('finAiModalTitle').textContent = 'Ask Sirius about your budget';
     openFinAiModal();
     if (!finAiKey()) { finAiRenderKeyForm(openAskSiriusModal); return; }
+    askSiriusMessages = [];
+    renderAskSiriusModal();
+  }
+
+  function renderAskSiriusModal(loading, errorMsg) {
+    const feedHtml = askSiriusMessages.length
+      ? askSiriusMessages.map((m) => m.role === 'user'
+          ? '<div class="fin-ai-q">' + finAiEsc(m.content) + '</div>'
+          : '<div class="fin-ai-answer" style="margin-bottom:14px">' + finAiEsc(m.content) + '</div>'
+        ).join('')
+      : '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5">Ask about anything you want to spend on, or how to budget — Sirius sees your real net worth, subscriptions, and wishlist. You can ask follow-ups too.</div>';
+    const loadingHtml = loading ? '<div class="fin-ai-loading"><span class="fin-ai-dots"><i></i><i></i><i></i></span> Sirius is thinking…</div>' : '';
+    const errorHtml = errorMsg ? '<div class="fin-ai-err" style="margin-top:6px">' + finAiEsc(errorMsg) + '</div>' : '';
     document.getElementById('finAiModalBody').innerHTML =
-      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px">Ask about anything you want to spend on, or how to budget — Sirius sees your real net worth, subscriptions, and wishlist.</div>' +
-      '<textarea id="askSiriusInput" class="fin-ai-textarea" placeholder="e.g. Can I afford a $2,000 laptop right now? How much should I set aside for groceries each month?"></textarea>' +
-      '<button class="fin-ai-submit-btn" id="askSiriusSubmit" type="button">Ask</button>';
+      '<div class="fin-ai-feed" id="askSiriusFeed">' + feedHtml + loadingHtml + errorHtml + '</div>' +
+      '<textarea id="askSiriusInput" class="fin-ai-textarea" style="min-height:60px" placeholder="' +
+        (askSiriusMessages.length ? 'Ask a follow-up…' : 'e.g. Can I afford a $2,000 laptop right now?') + '"></textarea>' +
+      '<button class="fin-ai-submit-btn" id="askSiriusSubmit" type="button">' + (askSiriusMessages.length ? 'Ask follow-up' : 'Ask') + '</button>';
     const input = document.getElementById('askSiriusInput');
     input.focus();
     document.getElementById('askSiriusSubmit').addEventListener('click', () => {
@@ -2677,13 +2703,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); document.getElementById('askSiriusSubmit').click(); }
     });
+    const feed = document.getElementById('askSiriusFeed');
+    feed.scrollTop = feed.scrollHeight;
   }
 
   async function runAskSirius(question) {
-    finAiRenderLoading();
+    askSiriusMessages.push({ role: 'user', content: question });
+    renderAskSiriusModal(true);
     const system = "You are Sirius, a financial mentor embedded in the user's net worth dashboard. " +
       "Answer their budgeting question using the real financial context below — be specific with numbers, direct, and practical. " +
-      "3-6 sentences, plain conversational text, no markdown headers or bullet lists.\n\n" +
+      "If this is a follow-up to earlier questions in this conversation, build on what you already told them rather than repeating it. " +
+      "3-6 sentences per answer, plain conversational text, no markdown headers or bullet lists.\n\n" +
       "Their current finances:\n" + buildFinanceContext();
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2698,17 +2728,23 @@ input[type="date"]::-webkit-calendar-picker-indicator {
           model: 'claude-opus-4-8',
           max_tokens: 1024,
           system: system,
-          messages: [{ role: 'user', content: question }],
+          messages: askSiriusMessages,
         }),
       });
       const json = await res.json();
-      if (json.error) { finAiRenderError(json.error.message || 'Something went wrong.'); return; }
+      if (json.error) {
+        askSiriusMessages.pop();
+        renderAskSiriusModal(false, json.error.message || 'Something went wrong.');
+        return;
+      }
       const reply = (json.content && json.content[0] && json.content[0].text) || '';
       const answer = reply.trim();
-      document.getElementById('finAiModalBody').innerHTML = '<div class="fin-ai-answer">' + finAiEsc(answer) + '</div>';
+      askSiriusMessages.push({ role: 'assistant', content: answer });
+      renderAskSiriusModal(false);
       logAiHistory({ type: 'ask', question: question, answer: answer });
     } catch (e) {
-      finAiRenderError(e.message || String(e));
+      askSiriusMessages.pop();
+      renderAskSiriusModal(false, e.message || String(e));
     }
   }
   document.getElementById('askSiriusBtn').addEventListener('click', openAskSiriusModal);
