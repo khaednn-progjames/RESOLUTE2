@@ -14,6 +14,7 @@
 
 <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 
 <style>
 /* ===== Shared design tokens (same as the rest of the dashboard) ===== */
@@ -265,6 +266,50 @@ body::after {
 .qt-textarea:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
 .qt-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 8px; line-height: 1.5; }
 
+/* ===== Wikilink autocomplete ("[[") ===== */
+.wl-autocomplete {
+  position: absolute; display: none; z-index: 50; min-width: 190px; max-width: 260px;
+  background: #141416; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px;
+  padding: 6px; box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+}
+.wl-item { padding: 7px 10px; border-radius: 7px; font-size: 13px; color: var(--text-secondary); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wl-item.sel, .wl-item:hover { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+.wl-empty { padding: 7px 10px; font-size: 12px; color: var(--text-tertiary); }
+
+/* ===== Backlinks panel ===== */
+.backlinks-panel { flex-shrink: 0; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); }
+.backlinks-title { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
+.backlinks-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.backlink-chip {
+  display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: var(--text-secondary);
+  font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.backlink-chip:hover { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+
+/* ===== Graph view ("Web of Thoughts") ===== */
+.graph-overlay {
+  position: fixed; inset: 0; z-index: 230; display: none; flex-direction: column;
+  background: rgba(5,5,6,0.92); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
+}
+.graph-overlay.show { display: flex; }
+.graph-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; flex-shrink: 0; }
+.graph-title { font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+.graph-close { border: 0; background: transparent; color: var(--text-tertiary); font-size: 26px; line-height: 1; cursor: pointer; padding: 0 6px; }
+.graph-close:hover { color: var(--text-primary); }
+.graph-canvas-wrap { flex: 1; min-height: 0; position: relative; }
+#graphSvg { width: 100%; height: 100%; cursor: grab; }
+#graphSvg:active { cursor: grabbing; }
+.graph-empty {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--text-tertiary); font-size: 13.5px; text-align: center; padding: 20px;
+}
+.graph-empty code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 5px; color: var(--text-secondary); }
+.gnode-label { fill: var(--text-secondary); font-family: var(--font); font-size: 11px; pointer-events: none; }
+.gnode-circle { fill: rgba(255,255,255,0.85); cursor: pointer; transition: fill 0.15s; }
+.gnode-circle:hover { fill: #FFFFFF; }
+.glink-line { stroke: rgba(255,255,255,0.20); stroke-width: 1.2px; }
+
 /* ===== Quill dark theme overrides ===== */
 .ql-toolbar.ql-snow {
   border: 1px solid rgba(255,255,255,0.08); border-radius: 12px 12px 0 0;
@@ -273,7 +318,7 @@ body::after {
 .ql-container.ql-snow {
   border: 1px solid rgba(255,255,255,0.08); border-top: none;
   border-radius: 0 0 12px 12px; font-family: var(--font); font-size: 15px;
-  flex: 1; min-height: 0; display: flex; flex-direction: column;
+  flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative;
 }
 .ql-editor {
   color: var(--text-primary) !important; flex: 1; overflow-y: auto;
@@ -282,6 +327,11 @@ body::after {
 .ql-editor.ql-blank::before { color: var(--text-tertiary) !important; font-style: normal; left: 18px; right: 18px; }
 .ql-editor h1, .ql-editor h2, .ql-editor h3 { color: var(--text-primary); letter-spacing: -0.02em; }
 .ql-editor a { color: #FAFAFA !important; text-decoration: underline; }
+.ql-editor a[href^="#note:"] {
+  text-decoration: none !important; background: rgba(255,255,255,0.09); border-radius: 5px;
+  padding: 1px 5px; cursor: pointer; transition: background 0.15s;
+}
+.ql-editor a[href^="#note:"]:hover { background: rgba(255,255,255,0.18); }
 .ql-editor blockquote {
   border-left: 3px solid var(--accent) !important; color: var(--text-secondary) !important;
   padding-left: 14px !important; margin: 10px 0 !important;
@@ -436,6 +486,7 @@ body::after {
       <button class="pinned-ideas-btn" id="dashboardIdeasBtn" type="button">💡 Dashboard Ideas <span class="cnt" id="ideasCount"></span></button>
       <button class="sirius-ideas-btn" id="siriusIdeasBtn" type="button">✍️ Ideas to write about</button>
       <button class="sirius-ideas-btn" id="quickThoughtBtn" type="button">💭 Quick Thought</button>
+      <button class="sirius-ideas-btn" id="graphBtn" type="button">🕸 Web of Thoughts</button>
       <ul class="notes-list" id="notesList"></ul>
     </aside>
 
@@ -463,6 +514,10 @@ body::after {
         </div>
         <div id="editor"></div>
         <div class="notes-footer" id="notesFooter">0 words</div>
+        <div class="backlinks-panel" id="backlinksPanel" style="display:none">
+          <div class="backlinks-title">🔗 Linked mentions</div>
+          <div class="backlinks-chips" id="backlinksChips"></div>
+        </div>
       </div>
 
       <div id="ideasView" style="display:none; flex-direction:column; flex:1; min-height:0;">
@@ -507,6 +562,18 @@ body::after {
       <button class="sirius-modal-close" id="siriusModalClose" type="button" aria-label="Close">×</button>
     </div>
     <div id="siriusModalBody"></div>
+  </div>
+</div>
+
+<!-- ===== Web of Thoughts (graph view) ===== -->
+<div class="graph-overlay" id="graphOverlay">
+  <div class="graph-toolbar">
+    <span class="graph-title">🕸 Web of Thoughts</span>
+    <button class="graph-close" id="graphCloseBtn" type="button" aria-label="Close">×</button>
+  </div>
+  <div class="graph-canvas-wrap">
+    <svg id="graphSvg"></svg>
+    <div class="graph-empty" id="graphEmpty" style="display:none">Link notes with <code>[[Note Title]]</code> to see them connected here.</div>
   </div>
 </div>
 
@@ -556,6 +623,32 @@ body::after {
     return d.ops.map((o) => (typeof o.insert === 'string' ? o.insert : '')).join('');
   }
 
+  // ---------- wikilinks ("[[Note Title]]") ----------
+  function extractWikilinkTitles(text) {
+    const out = [];
+    const re = /\[\[([^\[\]]+)\]\]/g;
+    let m;
+    while ((m = re.exec(text)) !== null) out.push(m[1].trim());
+    return out;
+  }
+
+  // linkedIds: authoritative, id-based (from autocompleted links — survive note renames).
+  // bracketTitles: best-effort text mentions typed by hand without using autocomplete.
+  function extractNoteLinks(id) {
+    const d = loadJSON(DOC_PREFIX + id, null);
+    if (!d || !Array.isArray(d.ops)) return { linkedIds: [], bracketTitles: [] };
+    const linked = new Set();
+    let text = '';
+    d.ops.forEach((op) => {
+      if (typeof op.insert !== 'string') return;
+      text += op.insert;
+      if (op.attributes && typeof op.attributes.link === 'string' && op.attributes.link.indexOf('#note:') === 0) {
+        linked.add(op.attributes.link.slice(6));
+      }
+    });
+    return { linkedIds: Array.from(linked), bracketTitles: extractWikilinkTitles(text) };
+  }
+
   function relTime(ts) {
     if (!ts) return '';
     const s = Math.floor((Date.now() - ts) / 1000);
@@ -571,7 +664,7 @@ body::after {
   // ---------- Quill ----------
   const quill = new Quill('#editor', {
     theme: 'snow',
-    placeholder: 'Start writing… ("# " heading, "- " bullet, "[] " checklist, "> " quote, "``` " code)',
+    placeholder: 'Start writing… ("# " heading, "- " bullet, "[] " checklist, "> " quote, "``` " code, "[[" to link a note)',
     modules: {
       toolbar: [
         [{ header: [1, 2, 3, false] }],
@@ -645,6 +738,100 @@ body::after {
       }
     );
   })();
+
+  // ---------- wikilink autocomplete ----------
+  const wlBox = document.createElement('div');
+  wlBox.id = 'wikilinkAutocomplete';
+  wlBox.className = 'wl-autocomplete';
+  quill.container.appendChild(wlBox);
+
+  let wlActive = false, wlBracketStart = null, wlCursor = null, wlMatches = [], wlSelectedIdx = 0;
+
+  function hideWikilinkAutocomplete() {
+    wlActive = false; wlMatches = []; wlBracketStart = null;
+    wlBox.style.display = 'none';
+  }
+
+  function updateWlSelection() {
+    wlBox.querySelectorAll('.wl-item').forEach((el, i) => el.classList.toggle('sel', i === wlSelectedIdx));
+  }
+
+  function showWikilinkAutocomplete(bracketStart, query, cursor) {
+    const q = query.trim().toLowerCase();
+    const matches = sortedIndex()
+      .filter((n) => n.id !== activeId)
+      .filter((n) => !q || (n.title || 'untitled').toLowerCase().indexOf(q) !== -1)
+      .slice(0, 6);
+    wlBracketStart = bracketStart; wlCursor = cursor; wlMatches = matches; wlSelectedIdx = 0;
+    if (matches.length === 0) { hideWikilinkAutocomplete(); return; }
+    wlBox.innerHTML = matches.map((n, i) =>
+      '<div class="wl-item' + (i === 0 ? ' sel' : '') + '" data-i="' + i + '">' + siriusEsc(n.title || 'Untitled') + '</div>'
+    ).join('');
+    wlBox.querySelectorAll('.wl-item').forEach((el) => {
+      el.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        chooseWikilink(matches[parseInt(el.dataset.i, 10)]);
+      });
+    });
+    const bounds = quill.getBounds(cursor);
+    wlBox.style.left = bounds.left + 'px';
+    wlBox.style.top = (bounds.bottom + 6) + 'px';
+    wlBox.style.display = 'block';
+    wlActive = true;
+  }
+
+  function checkWikilinkTrigger() {
+    const sel = quill.getSelection();
+    if (!sel || sel.length !== 0) { hideWikilinkAutocomplete(); return; }
+    const cursor = sel.index;
+    const [line, offset] = quill.getLine(cursor);
+    if (!line) { hideWikilinkAutocomplete(); return; }
+    const lineStartIndex = cursor - offset;
+    const textBefore = quill.getText(lineStartIndex, offset);
+    const bracketPos = textBefore.lastIndexOf('[[');
+    if (bracketPos === -1) { hideWikilinkAutocomplete(); return; }
+    const afterBracket = textBefore.slice(bracketPos + 2);
+    if (afterBracket.indexOf(']]') !== -1 || afterBracket.indexOf('[') !== -1) { hideWikilinkAutocomplete(); return; }
+    showWikilinkAutocomplete(lineStartIndex + bracketPos, afterBracket, cursor);
+  }
+
+  function chooseWikilink(entry) {
+    if (!entry) return;
+    const startIdx = wlBracketStart, endIdx = wlCursor;
+    hideWikilinkAutocomplete();
+    const Delta = Quill.import('delta');
+    const title = entry.title || 'Untitled';
+    const linked = '[[' + title + ']]';
+    const delta = new Delta().retain(startIdx).delete(endIdx - startIdx)
+      .insert(linked, { link: '#note:' + entry.id }).insert(' ');
+    quill.updateContents(delta, Quill.sources.USER);
+    quill.setSelection(startIdx + linked.length + 1, Quill.sources.SILENT);
+    quill.focus();
+  }
+
+  quill.root.addEventListener('keydown', function (e) {
+    if (!wlActive) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); wlSelectedIdx = Math.min(wlSelectedIdx + 1, wlMatches.length - 1); updateWlSelection(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); wlSelectedIdx = Math.max(wlSelectedIdx - 1, 0); updateWlSelection(); }
+    else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); chooseWikilink(wlMatches[wlSelectedIdx]); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); hideWikilinkAutocomplete(); }
+  }, true);
+
+  quill.on('selection-change', function (range) { if (!range) hideWikilinkAutocomplete(); });
+
+  // clicking a "[[Note Title]]" link jumps straight to that note.
+  // Intercepted on mousedown (capture phase): the browser places the caret inside the
+  // link's range on mousedown itself, which is what triggers Quill's own "Visit URL/Edit/Remove"
+  // tooltip via its selection-change listener — by the time a 'click' handler runs, it's too late.
+  quill.root.addEventListener('mousedown', function (e) {
+    const a = e.target.closest('a');
+    if (!a) return;
+    const href = a.getAttribute('href') || '';
+    if (href.indexOf('#note:') !== 0) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    const id = href.slice(6);
+    if (loadIndex().find((n) => n.id === id)) { selectNote(id); closeDrawer(); }
+  }, true);
 
   let activeId = null;
 
@@ -774,11 +961,36 @@ body::after {
     renderSidebar($('notesSearch').value);
   }
 
+  function renderBacklinks(id, title) {
+    const back = [];
+    loadIndex().forEach((n) => {
+      if (n.id === id) return;
+      const { linkedIds, bracketTitles } = extractNoteLinks(n.id);
+      const hit = linkedIds.indexOf(id) !== -1 ||
+        bracketTitles.some((t) => t.trim().toLowerCase() === (title || '').trim().toLowerCase());
+      if (hit) back.push(n);
+    });
+    const panel = $('backlinksPanel');
+    if (back.length === 0) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+    const chips = $('backlinksChips');
+    chips.innerHTML = '';
+    back.forEach((n) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'backlink-chip';
+      chip.textContent = n.title || 'Untitled';
+      chip.addEventListener('click', () => selectNote(n.id));
+      chips.appendChild(chip);
+    });
+  }
+
   function selectNote(id) {
     if (id === IDEAS_ID) { selectIdeasView(); return; }
     const idx = loadIndex();
     const entry = idx.find((n) => n.id === id);
     if (!entry) return;
+    hideWikilinkAutocomplete();
     $('ideasView').style.display = 'none';
     $('noteView').style.display = 'flex';
     activeId = id;
@@ -791,6 +1003,7 @@ body::after {
     quill.setContents(loadJSON(DOC_PREFIX + id, { ops: [{ insert: '\n' }] }));
     suppressAutosave = false;
     updateWordCount();
+    renderBacklinks(id, entry.title);
     renderSidebar($('notesSearch').value);
   }
 
@@ -852,6 +1065,7 @@ body::after {
   let saveTimer = null;
   quill.on('text-change', function (delta, oldDelta, source) {
     updateWordCount();
+    if (source === 'user') checkWikilinkTrigger();
     if (source !== 'user' || suppressAutosave || !activeId) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
@@ -1101,6 +1315,91 @@ body::after {
     closeDrawer();
   }
   $('quickThoughtBtn').addEventListener('click', openQuickThoughtModal);
+
+  // ---------- Web of Thoughts (graph view) ----------
+  let graphSim = null;
+
+  function buildGraphData() {
+    const allItems = loadIndex();
+    const nodes = allItems.map((n) => ({ id: n.id, title: n.title || 'Untitled' }));
+    const nodeIds = new Set(nodes.map((n) => n.id));
+    const edgeSet = new Set();
+    const links = [];
+    allItems.forEach((n) => {
+      const { linkedIds, bracketTitles } = extractNoteLinks(n.id);
+      const targets = new Set();
+      linkedIds.forEach((tid) => { if (nodeIds.has(tid) && tid !== n.id) targets.add(tid); });
+      bracketTitles.forEach((t) => {
+        const match = allItems.find((x) => x.id !== n.id && (x.title || '').trim().toLowerCase() === t.trim().toLowerCase());
+        if (match) targets.add(match.id);
+      });
+      targets.forEach((tid) => {
+        const key = n.id < tid ? n.id + ' ' + tid : tid + ' ' + n.id;
+        if (edgeSet.has(key)) return;
+        edgeSet.add(key);
+        links.push({ source: n.id, target: tid });
+      });
+    });
+    return { nodes, links };
+  }
+
+  function graphEscHandler(e) { if (e.key === 'Escape') closeGraphOverlay(); }
+
+  function closeGraphOverlay() {
+    $('graphOverlay').classList.remove('show');
+    if (graphSim) { graphSim.stop(); graphSim = null; }
+    document.removeEventListener('keydown', graphEscHandler);
+  }
+
+  function openGraphOverlay() {
+    const { nodes, links } = buildGraphData();
+    $('graphOverlay').classList.add('show');
+    document.addEventListener('keydown', graphEscHandler);
+
+    const svg = d3.select('#graphSvg');
+    svg.selectAll('*').remove();
+    if (nodes.length === 0) { $('graphEmpty').style.display = 'flex'; return; }
+    $('graphEmpty').style.display = 'none';
+
+    const wrap = document.querySelector('.graph-canvas-wrap');
+    const w = wrap.clientWidth || 800;
+    const h = wrap.clientHeight || 600;
+    svg.attr('viewBox', [0, 0, w, h]);
+
+    const degree = {};
+    links.forEach((l) => { degree[l.source] = (degree[l.source] || 0) + 1; degree[l.target] = (degree[l.target] || 0) + 1; });
+    const radius = (d) => Math.min(9 + (degree[d.id] || 0) * 2.5, 22);
+
+    const g = svg.append('g');
+    svg.call(d3.zoom().scaleExtent([0.25, 3]).on('zoom', (ev) => g.attr('transform', ev.transform)));
+
+    const linkSel = g.append('g').selectAll('line').data(links).join('line').attr('class', 'glink-line');
+    const nodeSel = g.append('g').selectAll('circle').data(nodes).join('circle')
+      .attr('class', 'gnode-circle')
+      .attr('r', radius)
+      .on('click', (event, d) => { closeGraphOverlay(); selectNote(d.id); closeDrawer(); })
+      .call(d3.drag()
+        .on('start', (event, d) => { if (!event.active) graphSim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+        .on('end', (event, d) => { if (!event.active) graphSim.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+    const labelSel = g.append('g').selectAll('text').data(nodes).join('text')
+      .attr('class', 'gnode-label').text((d) => d.title).attr('dy', 4).attr('dx', (d) => radius(d) + 5);
+
+    graphSim = d3.forceSimulation(nodes)
+      .force('link', d3.forceLink(links).id((d) => d.id).distance(110).strength(0.6))
+      .force('charge', d3.forceManyBody().strength(-280))
+      .force('center', d3.forceCenter(w / 2, h / 2))
+      .force('collide', d3.forceCollide().radius((d) => radius(d) + 14))
+      .on('tick', () => {
+        linkSel.attr('x1', (d) => d.source.x).attr('y1', (d) => d.source.y)
+          .attr('x2', (d) => d.target.x).attr('y2', (d) => d.target.y);
+        nodeSel.attr('cx', (d) => d.x).attr('cy', (d) => d.y);
+        labelSel.attr('x', (d) => d.x).attr('y', (d) => d.y);
+      });
+  }
+  $('graphBtn').addEventListener('click', openGraphOverlay);
+  $('graphCloseBtn').addEventListener('click', closeGraphOverlay);
 
   // ---------- Dashboard Ideas (merged from the former standalone Ideas tab) ----------
   function loadIdeas() { return loadJSON(IDEAS_KEY, []); }
