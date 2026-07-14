@@ -1643,6 +1643,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <div id="netWorthTotal" style="font-size:34px;font-weight:700;color:var(--text-primary);line-height:1.05;margin-top:2px">$0</div>
         <div id="netWorthBreakdown" style="font-size:11px;color:var(--text-tertiary);margin-top:4px"></div>
       </div>
+      <button class="scan-bank-btn" id="bankScanBtn" type="button" style="width:auto;margin-top:0;padding:9px 16px">Scan an account screenshot</button>
     </div>
 
     <!-- Overview row: stock-style line chart on the left, donut allocation chart on the right -->
@@ -1729,7 +1730,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
           <input type="number" placeholder="Amount" id="bankAmount" step="0.01" />
           <button class="quick-add-btn" id="bankAddBtn">+</button>
         </div>
-        <button class="scan-bank-btn" id="bankScanBtn" type="button">Scan a bank screenshot</button>
       </div>
       <!-- Stocks / Investments -->
       <div class="card nw-subcard">
@@ -2451,12 +2451,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     document.getElementById('finAiModalBody').innerHTML = '<div class="fin-ai-err">' + finAiEsc(msg) + '</div>';
   }
 
+  const FIN_AI_CAT_LABELS = { bank: 'Bank accounts', stocks: 'Stocks / Investments', crypto: 'Crypto', other: 'Other assets' };
+
   function openBankScanModal() {
-    document.getElementById('finAiModalTitle').textContent = 'Scan bank screenshot';
+    document.getElementById('finAiModalTitle').textContent = 'Scan account screenshot';
     openFinAiModal();
     if (!finAiKey()) { finAiRenderKeyForm(openBankScanModal); return; }
     document.getElementById('finAiModalBody').innerHTML =
-      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">Upload a screenshot of your bank balance. Sirius will read the amount, add it to your Bank accounts, and write you a short wealth plan.</div>' +
+      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">Upload a screenshot of any account balance — bank, brokerage, crypto, whatever. Sirius will read the amount, figure out which net worth category it belongs in, add it there, and write you a short wealth plan.</div>' +
       '<input type="file" id="bankScanFileInput" class="fin-ai-file-input" accept="image/*">';
     document.getElementById('bankScanFileInput').addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
@@ -2478,13 +2480,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
   async function runBankScan(mediaType, base64) {
     const system = "You are Sirius, a financial mentor embedded in the user's net worth dashboard. " +
-      "The user has uploaded a screenshot of a bank account. Find the current/total account balance shown in the image " +
-      "(prefer a clearly-labeled \"balance\" or \"available balance\" over individual transaction amounts). " +
-      "Also write a short, concrete wealth-building plan for them given that balance — 2-4 sentences, practical and specific " +
-      "(e.g. emergency fund status, whether to invest more, any obvious next step), no fluff. " +
+      "The user has uploaded a screenshot of a financial account — it could be a bank account, a brokerage/investment " +
+      "or retirement account, a crypto exchange or wallet, or something else entirely (real estate, collectibles, etc). " +
+      "1. Find the current balance or total value shown in the image (prefer a clearly-labeled \"balance\" or \"total value\" over individual transaction amounts). " +
+      "2. Classify it into exactly one category: bank (checking/savings/cash), stocks (brokerage, index funds, retirement accounts), crypto (exchanges or wallets), or other (anything else). " +
+      "3. Write a short, concrete wealth-building plan given that balance and category — 2-4 sentences, practical and specific (e.g. emergency fund status, diversification, an obvious next step), no fluff. " +
       "Respond in EXACTLY this format and nothing else:\n" +
       "BALANCE: <the balance as a plain number, no currency symbol or commas>\n" +
-      "ACCOUNT: <a short label for the account, e.g. \"Chase Checking\" — if unclear, use \"Bank Account\">\n" +
+      "CATEGORY: <one of: bank, stocks, crypto, other>\n" +
+      "ACCOUNT: <a short label for the account, e.g. \"Chase Checking\" or \"Coinbase\" — if unclear, use a generic label matching the category>\n" +
       "PLAN: <the wealth plan>";
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2503,7 +2507,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
             role: 'user',
             content: [
               { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-              { type: 'text', text: 'Read the balance in this screenshot and give me a wealth plan.' }
+              { type: 'text', text: 'Read the balance in this screenshot, classify the account, and give me a wealth plan.' }
             ]
           }]
         }),
@@ -2512,27 +2516,30 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       if (json.error) { finAiRenderError(json.error.message || 'Something went wrong.'); return; }
       const reply = (json.content && json.content[0] && json.content[0].text) || '';
       const balMatch = reply.match(/BALANCE:\s*\$?([\d,]+\.?\d*)/i);
+      const catMatch = reply.match(/CATEGORY:\s*(\w+)/i);
       const acctMatch = reply.match(/ACCOUNT:\s*(.+)/i);
       const planMatch = reply.match(/PLAN:\s*([\s\S]*)/i);
       if (!balMatch) { finAiRenderError("Sirius couldn't find a balance in that screenshot — try a clearer image."); return; }
       const balance = parseFloat(balMatch[1].replace(/,/g, ''));
-      const account = acctMatch ? acctMatch[1].trim() : 'Bank Account';
+      const catRaw = catMatch ? catMatch[1].trim().toLowerCase() : '';
+      const category = ['bank', 'stocks', 'crypto', 'other'].includes(catRaw) ? catRaw : 'other';
+      const account = acctMatch ? acctMatch[1].trim() : (FIN_AI_CAT_LABELS[category] || 'Account');
       const plan = planMatch ? planMatch[1].trim() : reply.trim();
-      finAiShowResult(account, balance, plan);
+      finAiShowResult(account, balance, category, plan);
     } catch (e) {
       finAiRenderError(e.message || String(e));
     }
   }
 
-  function finAiShowResult(account, balance, plan) {
-    const items = storeGet('nw:bank') || [];
+  function finAiShowResult(account, balance, category, plan) {
+    const items = storeGet('nw:' + category) || [];
     items.push({ name: account, amount: balance });
-    storeSet('nw:bank', items);
-    logActivity('bank', account, balance, 'add');
+    storeSet('nw:' + category, items);
+    logActivity(category, account, balance, 'add');
     renderAllNetWorth();
 
     document.getElementById('finAiModalBody').innerHTML =
-      '<div style="font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px">Added to Bank accounts</div>' +
+      '<div style="font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px">Added to ' + finAiEsc(FIN_AI_CAT_LABELS[category] || 'Other assets') + '</div>' +
       '<div style="font-size:28px;font-weight:700;color:var(--text-primary);margin-bottom:2px">' + fmtMoney(balance) + '</div>' +
       '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px">' + finAiEsc(account) + '</div>' +
       '<div style="font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:6px">Your wealth plan</div>' +
