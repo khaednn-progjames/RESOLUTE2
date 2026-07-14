@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Planner · Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
+
+<style>
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger:  #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  min-height: 100vh; position: relative; overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.30), transparent 55%),
+    radial-gradient(circle at 18% 90%, rgba(220,220,225,0.20), transparent 60%),
+    radial-gradient(circle at 50% 55%, rgba(255,255,255,0.08), transparent 65%);
+  filter: blur(85px); pointer-events: none; z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px; pointer-events: none; z-index: -1;
+}
+@keyframes drift { 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-22px,14px,0)} }
+
+.page { max-width: 720px; margin: 0 auto; }
+.dash-title {
+  margin: 0 0 14px; font-size: 28px; font-weight: 700; letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+@media (max-width: 480px) { .dash-title { font-size: 22px; } }
+
+.gm-card {
+  position: relative; background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 16px; padding: 20px;
+  margin-bottom: 14px; backdrop-filter: blur(46px) saturate(2.2);
+  -webkit-backdrop-filter: blur(46px) saturate(2.2);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55);
+  overflow: hidden;
+}
+
+/* Month navigator */
+.month-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.month-nav-btn {
+  width: 32px; height: 32px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05);
+  color: var(--text-secondary); font-size: 17px; cursor: pointer; transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.month-nav-btn:hover { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+.month-nav-label { flex: 1; font-size: 19px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; text-align: center; }
+.month-today-btn {
+  padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.09);
+  color: var(--text-primary); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s;
+}
+.month-today-btn:hover { background: rgba(255,255,255,0.07); }
+
+.gm-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
+.gm-header-left { display: flex; flex-direction: column; }
+.gm-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
+.gm-progress-row { display: flex; align-items: baseline; gap: 6px; }
+.gm-progress-num { font-size: 42px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.045em; color: var(--text-primary); line-height: 1; }
+.gm-progress-total { font-family: var(--font-mono); font-size: 18px; color: var(--text-tertiary); }
+.gm-progress-label { font-size: 11px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-left: 4px; }
+
+.gm-streak {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px;
+  background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.18);
+  color: var(--text-tertiary); font-size: 11px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase;
+}
+
+.gm-bar { display: flex; gap: 4px; height: 6px; margin-bottom: 16px; }
+.gm-bar:empty { display: none; }
+.gm-bar-seg { flex: 1; background: rgba(255,255,255,0.06); border-radius: 3px; transition: background 0.3s, box-shadow 0.3s; }
+.gm-bar-seg-done { background: var(--success); box-shadow: 0 0 6px rgba(107,227,164,0.40); }
+
+.goal-list { list-style: none; margin: 0; padding: 0; }
+.empty-state { text-align: center; font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 14px 0; }
+.gm-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 6px;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); border-radius: 12px;
+  transition: background 0.2s, opacity 0.3s;
+}
+.gm-row:hover { background: rgba(255,255,255,0.06); }
+.gm-row.gm-row-done { opacity: 0.45; background: rgba(107,227,164,0.04); }
+.gm-row.gm-row-done .gm-text { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
+.gm-check {
+  appearance: none; -webkit-appearance: none; width: 22px; height: 22px; flex-shrink: 0; margin: 0;
+  border: 1.5px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); border-radius: 7px;
+  position: relative; cursor: pointer; transition: background 0.2s, border-color 0.2s, box-shadow 0.25s;
+}
+.gm-check:checked { background: var(--success); border-color: var(--success); box-shadow: 0 0 12px rgba(107,227,164,0.40); }
+.gm-check:checked::after {
+  content: ''; position: absolute; left: 6px; top: 2px; width: 6px; height: 11px;
+  border: solid #0A0A0B; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
+}
+.gm-text { flex: 1; font-size: 14px; color: var(--text-primary); outline: none; border-radius: 4px; padding: 2px 4px; margin: -2px -4px; }
+.gm-text[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); }
+.goal-delete { border: 0; background: transparent; color: var(--text-tertiary); font-size: 18px; cursor: pointer; padding: 0 4px; opacity: 0.5; transition: opacity 0.2s, color 0.2s; }
+.gm-row:hover .goal-delete { opacity: 1; }
+.goal-delete:hover { color: var(--danger); }
+
+.gm-input-wrap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); }
+.gm-input {
+  flex: 1; min-width: 0; padding: 11px 14px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gm-input::placeholder { color: var(--text-tertiary); }
+.gm-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.gm-add {
+  padding: 11px 20px; border: 0; border-radius: 12px; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 8px rgba(0,0,0,0.35), 0 8px 22px rgba(0,0,0,0.25);
+  transition: transform 0.1s, filter 0.15s;
+}
+.gm-add:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.gm-add:active { transform: translateY(0); }
+
+/* Mini strip: quick jump across the surrounding months */
+.month-strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 4px; }
+.month-strip::-webkit-scrollbar { display: none; }
+.month-chip {
+  flex-shrink: 0; padding: 8px 12px; border-radius: 11px; border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03); color: var(--text-tertiary); font-family: inherit; font-size: 11.5px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.month-chip:hover { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
+.month-chip.active { background: rgba(255,255,255,0.14); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
+.month-chip .n { display: block; font-family: var(--font-mono); font-size: 9.5px; color: var(--text-tertiary); margin-top: 2px; }
+.month-chip.active .n { color: var(--text-secondary); }
+
+@media (max-width: 480px) {
+  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
+  .gm-card { padding: 16px; }
+  .gm-progress-num { font-size: 36px; }
+  .month-nav-label { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1 class="dash-title">Planner</h1>
+
+  <div class="gm-card">
+    <div class="month-strip" id="monthStrip"></div>
+  </div>
+
+  <div class="gm-card">
+    <div class="month-nav">
+      <button class="month-nav-btn" id="prevMonthBtn" type="button" aria-label="Previous month">‹</button>
+      <div class="month-nav-label" id="monthLabel">—</div>
+      <button class="month-nav-btn" id="nextMonthBtn" type="button" aria-label="Next month">›</button>
+      <button class="month-today-btn" id="todayBtn" type="button" style="display:none">Today</button>
+    </div>
+
+    <div class="gm-header">
+      <div class="gm-header-left">
+        <div class="gm-eyebrow">Goals this month</div>
+        <div class="gm-progress-row">
+          <span class="gm-progress-num" id="doneNum">0</span>
+          <span class="gm-progress-total" id="totalNum">/ 0</span>
+          <span class="gm-progress-label">done</span>
+        </div>
+      </div>
+      <span class="gm-streak" id="daysLeftPill" style="display:none"></span>
+    </div>
+    <div class="gm-bar" id="gmBar"></div>
+
+    <ul class="goal-list" id="goalList"></ul>
+    <div class="empty-state" id="emptyState">No goals for this month yet — add one below.</div>
+
+    <div class="gm-input-wrap">
+      <input class="gm-input" id="goalInput" type="text" placeholder="Add a goal for this month…" autocomplete="off">
+      <button class="gm-add" id="goalAddBtn" type="button">+ Add</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const STORE_PREFIX = 'planner:';
+
+  function loadJSON(k, f) {
+    try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; }
+    catch (e) { return f; }
+  }
+  function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+  function newId() { return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function firstOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
+  function monthKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+  function monthLabel(d) { return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }); }
+  function shortMonthLabel(d) { return d.toLocaleDateString(undefined, { month: 'short' }); }
+  function daysInMonth(d) { return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); }
+  function sameMonth(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth(); }
+
+  let viewDate = firstOfMonth(new Date());
+
+  function loadGoals(key) { return loadJSON(STORE_PREFIX + key, []); }
+  function saveGoals(key, arr) { saveJSON(STORE_PREFIX + key, arr); }
+
+  function renderStrip() {
+    const strip = $('monthStrip');
+    strip.innerHTML = '';
+    const today = firstOfMonth(new Date());
+    for (let i = -3; i <= 3; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      const key = monthKey(d);
+      const goals = loadGoals(key);
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'month-chip' + (sameMonth(d, viewDate) ? ' active' : '');
+      chip.innerHTML = shortMonthLabel(d) + (goals.length ? '<span class="n">' + goals.filter(g => g.done).length + '/' + goals.length + '</span>' : '');
+      chip.addEventListener('click', () => { viewDate = d; render(); });
+      strip.appendChild(chip);
+    }
+  }
+
+  function render() {
+    renderStrip();
+    const key = monthKey(viewDate);
+    const goals = loadGoals(key);
+    const isCurrent = sameMonth(viewDate, new Date());
+
+    $('monthLabel').textContent = monthLabel(viewDate);
+    $('todayBtn').style.display = isCurrent ? 'none' : '';
+
+    const daysLeftPill = $('daysLeftPill');
+    if (isCurrent) {
+      const left = daysInMonth(viewDate) - new Date().getDate();
+      daysLeftPill.style.display = '';
+      daysLeftPill.textContent = left <= 0 ? 'Last day' : left + (left === 1 ? ' day left' : ' days left');
+    } else {
+      daysLeftPill.style.display = 'none';
+    }
+
+    const done = goals.filter((g) => g.done).length;
+    $('doneNum').textContent = done;
+    $('totalNum').textContent = '/ ' + goals.length;
+
+    const bar = $('gmBar');
+    bar.innerHTML = '';
+    goals.forEach((g) => {
+      const seg = document.createElement('div');
+      seg.className = 'gm-bar-seg' + (g.done ? ' gm-bar-seg-done' : '');
+      bar.appendChild(seg);
+    });
+
+    const list = $('goalList');
+    list.innerHTML = '';
+    $('emptyState').style.display = goals.length ? 'none' : '';
+
+    goals.forEach((g, i) => {
+      const li = document.createElement('li');
+      li.className = 'gm-row' + (g.done ? ' gm-row-done' : '');
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'gm-check';
+      cb.checked = !!g.done;
+      cb.addEventListener('change', () => {
+        const arr = loadGoals(key);
+        if (arr[i]) { arr[i].done = cb.checked; saveGoals(key, arr); render(); }
+      });
+
+      const txt = document.createElement('div');
+      txt.className = 'gm-text';
+      txt.textContent = g.text;
+      txt.contentEditable = 'true';
+      txt.addEventListener('blur', () => {
+        const arr = loadGoals(key);
+        if (arr[i]) { arr[i].text = txt.textContent.trim(); saveGoals(key, arr); }
+      });
+      txt.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); txt.blur(); } });
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'goal-delete';
+      del.textContent = '×';
+      del.addEventListener('click', () => {
+        const arr = loadGoals(key);
+        arr.splice(i, 1);
+        saveGoals(key, arr);
+        render();
+      });
+
+      li.append(cb, txt, del);
+      list.appendChild(li);
+    });
+  }
+
+  function addGoal() {
+    const input = $('goalInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const key = monthKey(viewDate);
+    const arr = loadGoals(key);
+    arr.push({ id: newId(), text: text, done: false, addedAt: Date.now() });
+    saveGoals(key, arr);
+    input.value = '';
+    render();
+  }
+  $('goalAddBtn').addEventListener('click', addGoal);
+  $('goalInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addGoal(); });
+
+  $('prevMonthBtn').addEventListener('click', () => { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1); render(); });
+  $('nextMonthBtn').addEventListener('click', () => { viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1); render(); });
+  $('todayBtn').addEventListener('click', () => { viewDate = firstOfMonth(new Date()); render(); });
+
+  render();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof initCloudSync !== 'function') return;
+    initCloudSync({
+      appKey: 'planner',
+      syncedPrefixes: ['planner:'],
+      onApplied: render,
+    });
+  });
+})();
+</script>
+</body>
+</html>
