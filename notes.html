@@ -287,7 +287,7 @@ body::after {
 }
 .backlink-chip:hover { background: rgba(255,255,255,0.10); color: var(--text-primary); }
 
-/* ===== Graph view ("Web of Thoughts") ===== */
+/* ===== Graph view ("Web") ===== */
 .graph-overlay {
   position: fixed; inset: 0; z-index: 230; display: none; flex-direction: column;
   background: rgba(5,5,6,0.92); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
@@ -297,6 +297,16 @@ body::after {
 .graph-title { font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
 .graph-close { border: 0; background: transparent; color: var(--text-tertiary); font-size: 26px; line-height: 1; cursor: pointer; padding: 0 6px; }
 .graph-close:hover { color: var(--text-primary); }
+.graph-link-btn {
+  padding: 7px 13px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05); color: var(--text-secondary); font-family: inherit;
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.graph-link-btn:hover { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+.graph-link-btn.on { background: #FFFFFF; color: #0A0A0B; border-color: #FFFFFF; }
+.graph-hint {
+  text-align: center; font-size: 12px; color: var(--text-secondary); padding: 0 20px 10px; flex-shrink: 0;
+}
 .graph-canvas-wrap { flex: 1; min-height: 0; position: relative; }
 #graphSvg { width: 100%; height: 100%; cursor: grab; }
 #graphSvg:active { cursor: grabbing; }
@@ -308,6 +318,7 @@ body::after {
 .gnode-label { fill: var(--text-secondary); font-family: var(--font); font-size: 11px; pointer-events: none; }
 .gnode-circle { fill: rgba(255,255,255,0.85); cursor: pointer; transition: fill 0.15s; }
 .gnode-circle:hover { fill: #FFFFFF; }
+.gnode-circle.gnode-selected { fill: #6BE3A4; stroke: #6BE3A4; stroke-width: 3px; }
 .glink-line { stroke: rgba(255,255,255,0.20); stroke-width: 1.2px; }
 
 /* ===== Quill dark theme overrides ===== */
@@ -486,7 +497,7 @@ body::after {
       <button class="pinned-ideas-btn" id="dashboardIdeasBtn" type="button">💡 Dashboard Ideas <span class="cnt" id="ideasCount"></span></button>
       <button class="sirius-ideas-btn" id="siriusIdeasBtn" type="button">✍️ Ideas to write about</button>
       <button class="sirius-ideas-btn" id="quickThoughtBtn" type="button">💭 Quick Thought</button>
-      <button class="sirius-ideas-btn" id="graphBtn" type="button">🕸 Web of Thoughts</button>
+      <button class="sirius-ideas-btn" id="graphBtn" type="button">🕸 Web</button>
       <ul class="notes-list" id="notesList"></ul>
     </aside>
 
@@ -565,15 +576,19 @@ body::after {
   </div>
 </div>
 
-<!-- ===== Web of Thoughts (graph view) ===== -->
+<!-- ===== Web (graph view) ===== -->
 <div class="graph-overlay" id="graphOverlay">
   <div class="graph-toolbar">
-    <span class="graph-title">🕸 Web of Thoughts</span>
-    <button class="graph-close" id="graphCloseBtn" type="button" aria-label="Close">×</button>
+    <span class="graph-title">🕸 Web</span>
+    <div style="display:flex; align-items:center; gap:8px">
+      <button class="graph-link-btn" id="graphLinkBtn" type="button">Link notes</button>
+      <button class="graph-close" id="graphCloseBtn" type="button" aria-label="Close">×</button>
+    </div>
   </div>
+  <div class="graph-hint" id="graphHint" style="display:none">Click a note, then click another to connect them.</div>
   <div class="graph-canvas-wrap">
     <svg id="graphSvg"></svg>
-    <div class="graph-empty" id="graphEmpty" style="display:none">Link notes with <code>[[Note Title]]</code> to see them connected here.</div>
+    <div class="graph-empty" id="graphEmpty" style="display:none">Link notes with <code>[[Note Title]]</code> — or turn on "Link notes" above and click two of them — to see them connected here.</div>
   </div>
 </div>
 
@@ -1316,8 +1331,33 @@ body::after {
   }
   $('quickThoughtBtn').addEventListener('click', openQuickThoughtModal);
 
-  // ---------- Web of Thoughts (graph view) ----------
+  // ---------- Web (graph view) ----------
   let graphSim = null;
+  let graphLinkMode = false;
+  let graphLinkFirstNode = null;
+
+  // Appends "[[Target Title]]" as its own line at the bottom of a note's
+  // document, formatted as a real clickable link (same as autocompleted ones).
+  function appendWikilinkToNote(fromId, toTitle, toId) {
+    const doc = loadJSON(DOC_PREFIX + fromId, { ops: [{ insert: '\n' }] });
+    const ops = Array.isArray(doc.ops) ? doc.ops.slice() : [{ insert: '\n' }];
+    ops.push({ insert: '[[' + toTitle + ']]', attributes: { link: '#note:' + toId } });
+    ops.push({ insert: '\n' });
+    saveJSON(DOC_PREFIX + fromId, { ops: ops });
+
+    const idx = loadIndex();
+    const entry = idx.find((n) => n.id === fromId);
+    if (entry) { entry.updatedAt = Date.now(); saveIndex(idx); }
+
+    if (activeId === fromId) {
+      suppressAutosave = true;
+      quill.setContents({ ops: ops });
+      suppressAutosave = false;
+      updateWordCount();
+      renderBacklinks(fromId, entry ? entry.title : '');
+      renderSidebar($('notesSearch').value);
+    }
+  }
 
   function buildGraphData() {
     const allItems = loadIndex();
@@ -1334,7 +1374,7 @@ body::after {
         if (match) targets.add(match.id);
       });
       targets.forEach((tid) => {
-        const key = n.id < tid ? n.id + ' ' + tid : tid + ' ' + n.id;
+        const key = n.id < tid ? n.id + ' ' + tid : tid + ' ' + n.id;
         if (edgeSet.has(key)) return;
         edgeSet.add(key);
         links.push({ source: n.id, target: tid });
@@ -1349,9 +1389,22 @@ body::after {
     $('graphOverlay').classList.remove('show');
     if (graphSim) { graphSim.stop(); graphSim = null; }
     document.removeEventListener('keydown', graphEscHandler);
+    graphLinkMode = false;
+    graphLinkFirstNode = null;
+    $('graphLinkBtn').classList.remove('on');
+    $('graphHint').style.display = 'none';
+  }
+
+  function toggleGraphLinkMode() {
+    graphLinkMode = !graphLinkMode;
+    graphLinkFirstNode = null;
+    $('graphLinkBtn').classList.toggle('on', graphLinkMode);
+    $('graphHint').style.display = graphLinkMode ? 'block' : 'none';
+    d3.selectAll('.gnode-circle').classed('gnode-selected', false);
   }
 
   function openGraphOverlay() {
+    if (graphSim) { graphSim.stop(); graphSim = null; }
     const { nodes, links } = buildGraphData();
     $('graphOverlay').classList.add('show');
     document.addEventListener('keydown', graphEscHandler);
@@ -1377,7 +1430,18 @@ body::after {
     const nodeSel = g.append('g').selectAll('circle').data(nodes).join('circle')
       .attr('class', 'gnode-circle')
       .attr('r', radius)
-      .on('click', (event, d) => { closeGraphOverlay(); selectNote(d.id); closeDrawer(); })
+      .on('click', (event, d) => {
+        if (!graphLinkMode) { closeGraphOverlay(); selectNote(d.id); closeDrawer(); return; }
+        if (!graphLinkFirstNode) {
+          graphLinkFirstNode = d;
+          d3.select(event.currentTarget).classed('gnode-selected', true);
+          return;
+        }
+        if (graphLinkFirstNode.id === d.id) return; // same node clicked twice — ignore
+        appendWikilinkToNote(graphLinkFirstNode.id, d.title, d.id);
+        graphLinkFirstNode = null;
+        openGraphOverlay(); // rebuild so the new edge shows up immediately
+      })
       .call(d3.drag()
         .on('start', (event, d) => { if (!event.active) graphSim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
         .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
@@ -1400,6 +1464,7 @@ body::after {
   }
   $('graphBtn').addEventListener('click', openGraphOverlay);
   $('graphCloseBtn').addEventListener('click', closeGraphOverlay);
+  $('graphLinkBtn').addEventListener('click', toggleGraphLinkMode);
 
   // ---------- Dashboard Ideas (merged from the former standalone Ideas tab) ----------
   function loadIdeas() { return loadJSON(IDEAS_KEY, []); }
