@@ -1797,10 +1797,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       </div>
       <!-- Crypto -->
       <div class="card nw-subcard">
-        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span>🪙 Crypto</span><span id="cryptoTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
+        <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span>🪙 Crypto <button id="cryptoRefreshBtn" type="button" title="Update live prices for holdings named like &quot;0.5 BTC&quot;" style="border:0;background:transparent;color:var(--text-tertiary);cursor:pointer;font-size:12px;padding:2px 4px;vertical-align:1px">↻</button><span id="cryptoPriceStatus" style="font-size:9.5px;color:var(--text-tertiary);font-weight:500"></span></span><span id="cryptoTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
         <div id="cryptoList" class="nw-list"></div>
         <div class="quick-add">
-          <input type="text" placeholder="Coin / wallet" id="cryptoName" />
+          <input type="text" placeholder='Coin — name it "0.5 BTC" for live prices' id="cryptoName" />
           <input type="number" placeholder="Value" id="cryptoAmount" step="0.01" />
           <button class="quick-add-btn" id="cryptoAddBtn">+</button>
         </div>
@@ -1945,6 +1945,50 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
 </div>
 
+<!-- ===== SPENDING ===== -->
+<div class="section" data-section="spend">
+  <div class="section-title">
+    <span class="section-title-text">SPENDING</span>
+  </div>
+
+  <div class="card wish-hero">
+    <div class="wish-hero-top">
+      <div>
+        <div class="wish-hero-eyebrow" id="spendMonthLabel">THIS MONTH</div>
+        <div class="wish-hero-num" id="spendMonthTotal">$0</div>
+      </div>
+      <div class="wish-hero-pct-wrap">
+        <div class="wish-hero-pct-label">EXPENSES</div>
+        <div class="wish-hero-pct-num" id="spendMonthCount" style="color:var(--text-primary)">0</div>
+      </div>
+    </div>
+    <div class="wish-hero-foot" id="spendVsLast">—</div>
+  </div>
+
+  <div class="card wish-add-card">
+    <div class="wish-add-eyebrow">+ LOG SPENDING</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="scan-bank-btn" id="receiptScanBtn" type="button" style="width:auto;margin-top:0;padding:10px 16px">📷 Scan a receipt</button>
+    </div>
+    <div class="wish-add-row">
+      <input type="text"   id="spendName"   placeholder="What was it? (e.g. Groceries — Trader Joe's)" class="wish-input wish-input-name">
+      <input type="number" id="spendAmount" placeholder="Total" step="0.01" class="wish-input wish-input-amt">
+      <button class="wish-add-btn" id="spendAddBtn" type="button">+ Add</button>
+    </div>
+  </div>
+
+  <div class="wish-section-h">
+    <span class="wish-section-label">RECENT EXPENSES</span>
+    <span class="wish-section-count" id="spendCount">0 items</span>
+  </div>
+  <div id="spendList"></div>
+  <div class="wish-empty-card" id="spendEmpty">
+    <div class="wish-empty-icon">🧾</div>
+    <div class="wish-empty-title">Nothing logged yet</div>
+    <div class="wish-empty-sub">Scan a receipt and Sirius reads the store, date, and total for you — or log one manually above.</div>
+  </div>
+</div>
+
 </div>
 
 <!-- ===== BOTTOM TAB BAR ===== -->
@@ -1964,6 +2008,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <button class="bot-tab" data-tab="wish">
     <span class="bot-tab-icon">🎯</span>
     <span class="bot-tab-label">Wishlist</span>
+  </button>
+  <button class="bot-tab" data-tab="spend">
+    <span class="bot-tab-icon">🧾</span>
+    <span class="bot-tab-label">Spending</span>
   </button>
 </nav>
 
@@ -2025,7 +2073,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
   tabs.forEach(b => b.addEventListener('click', () => setActiveTab(b.dataset.tab)));
   const savedTab = storeGet(TAB_KEY);
-  setActiveTab(savedTab && ['net','subs','incoming','wish'].includes(savedTab) ? savedTab : 'net');
+  setActiveTab(savedTab && ['net','subs','incoming','wish','spend'].includes(savedTab) ? savedTab : 'net');
 
   // ============================================================
   // NET WORTH (copied from the main dashboard, verbatim logic)
@@ -2519,6 +2567,62 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 
   const FIN_AI_CAT_LABELS = { bank: 'Bank accounts', stocks: 'Stocks / Investments', crypto: 'Crypto', other: 'Other assets' };
+
+  // ============================================================
+  // LIVE CRYPTO PRICES — CoinGecko free API (no key). Any crypto
+  // item named like "0.5 BTC" gets its value refreshed from the
+  // live price. Items without a quantity+symbol name are skipped.
+  // ============================================================
+  const COINGECKO_IDS = {
+    btc: 'bitcoin', eth: 'ethereum', sol: 'solana', doge: 'dogecoin', ada: 'cardano',
+    xrp: 'ripple', ltc: 'litecoin', dot: 'polkadot', link: 'chainlink', avax: 'avalanche-2',
+    matic: 'matic-network', bnb: 'binancecoin', shib: 'shiba-inu', uni: 'uniswap',
+    atom: 'cosmos', xlm: 'stellar', trx: 'tron', near: 'near', apt: 'aptos',
+    arb: 'arbitrum', op: 'optimism', pepe: 'pepe', sui: 'sui', hbar: 'hedera-hashgraph',
+  };
+  function parseCryptoHolding(name) {
+    const m = String(name || '').match(/([\d]+(?:[.,]\d+)?)\s*([A-Za-z]{2,5})\b/);
+    if (!m) return null;
+    const id = COINGECKO_IDS[m[2].toLowerCase()];
+    if (!id) return null;
+    return { qty: parseFloat(m[1].replace(',', '.')), id };
+  }
+  async function refreshCryptoPrices(manual) {
+    const statusEl = document.getElementById('cryptoPriceStatus');
+    const items = storeGet('nw:crypto') || [];
+    const holdings = items.map((it) => ({ it, h: parseCryptoHolding(it.name) })).filter((x) => x.h);
+    if (holdings.length === 0) {
+      if (manual && statusEl) { statusEl.textContent = ' name a coin like "0.5 BTC" first'; setTimeout(() => { statusEl.textContent = ''; }, 4000); }
+      return;
+    }
+    if (statusEl) statusEl.textContent = ' updating…';
+    try {
+      const ids = Array.from(new Set(holdings.map((x) => x.h.id))).join(',');
+      const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=' + ids + '&vs_currencies=usd');
+      const prices = await res.json();
+      let changed = false;
+      holdings.forEach(({ it, h }) => {
+        const price = prices[h.id] && prices[h.id].usd;
+        if (!price) return;
+        const next = h.qty * price;
+        const delta = next - (Number(it.amount) || 0);
+        if (Math.abs(delta) > 0.005) {
+          it.amount = next;
+          logActivity('crypto', it.name, delta, 'edit');
+          changed = true;
+        }
+      });
+      if (changed) { storeSet('nw:crypto', items); renderAllNetWorth(); }
+      if (statusEl) {
+        statusEl.textContent = ' live ✓';
+        setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      }
+    } catch (e) {
+      if (statusEl) { statusEl.textContent = ' price fetch failed'; setTimeout(() => { statusEl.textContent = ''; }, 4000); }
+    }
+  }
+  document.getElementById('cryptoRefreshBtn').addEventListener('click', () => refreshCryptoPrices(true));
+  refreshCryptoPrices(false); // silent refresh on every page load
 
   function openBankScanModal() {
     document.getElementById('finAiModalTitle').textContent = 'Scan account screenshot';
@@ -3958,6 +4062,180 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   safeRenderTicker();
   setInterval(safeRenderTicker, 1500);
 
+  // ============================================================
+  // SPENDING — receipt scanning (Sirius vision) + manual expenses.
+  // Stored in 'expenses': [{id, merchant, total, date, category, ts}]
+  // ============================================================
+  const SPEND_CATS = ['Groceries', 'Dining', 'Transport', 'Shopping', 'Entertainment', 'Health', 'Utilities', 'Other'];
+
+  function monthKeyOf(dateStr) { return String(dateStr || '').slice(0, 7); }
+  function thisMonthKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+  function lastMonthKey() {
+    const d = new Date();
+    const m = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+    return m.getFullYear() + '-' + String(m.getMonth() + 1).padStart(2, '0');
+  }
+  function spendDateLabel(dateStr) {
+    const p = String(dateStr).split('-').map(Number);
+    if (p.length < 3 || !p[0]) return dateStr;
+    return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  function renderSpending() {
+    const list = document.getElementById('spendList');
+    if (!list) return;
+    const items = (storeGet('expenses') || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)) || (b.ts || 0) - (a.ts || 0));
+    const mk = thisMonthKey();
+    const thisMonth = items.filter((it) => monthKeyOf(it.date) === mk);
+    const lastMonth = items.filter((it) => monthKeyOf(it.date) === lastMonthKey());
+    const totalThis = thisMonth.reduce((s, it) => s + (Number(it.total) || 0), 0);
+    const totalLast = lastMonth.reduce((s, it) => s + (Number(it.total) || 0), 0);
+
+    document.getElementById('spendMonthLabel').textContent = new Date().toLocaleDateString(undefined, { month: 'long' }).toUpperCase() + ' SPENDING';
+    document.getElementById('spendMonthTotal').textContent = fmtMoney(totalThis);
+    document.getElementById('spendMonthCount').textContent = thisMonth.length;
+    const vs = document.getElementById('spendVsLast');
+    if (totalLast > 0) {
+      const diff = totalThis - totalLast;
+      vs.textContent = (diff >= 0 ? '+' : '−') + fmtMoney(Math.abs(diff)).replace('$', '$') + ' vs last month (' + fmtMoney(totalLast) + ')';
+    } else {
+      vs.textContent = 'First month of tracking — scan receipts as you go.';
+    }
+
+    document.getElementById('spendCount').textContent = items.length + (items.length === 1 ? ' item' : ' items');
+    document.getElementById('spendEmpty').classList.toggle('hidden', items.length > 0);
+    list.innerHTML = '';
+    items.slice(0, 80).forEach((it) => {
+      const idx = (storeGet('expenses') || []).findIndex((x) => x.id === it.id);
+      const row = document.createElement('div');
+      row.className = 'wish-row';
+      row.innerHTML =
+          '<div class="wish-row-h">'
+        + '<div class="wish-row-info">'
+        +   '<div class="wish-row-name">' + escapeHtml(it.merchant || 'Expense') + '</div>'
+        +   '<div class="wish-row-meta">' + spendDateLabel(it.date) + (it.category ? ' · ' + escapeHtml(it.category) : '') + '</div>'
+        + '</div>'
+        + '<div class="wish-row-amt-wrap"><div class="wish-row-amt">' + fmtMoney(Number(it.total) || 0) + '</div></div>'
+        + '<button class="wish-row-x" data-id="' + escapeHtml(it.id) + '" aria-label="Remove">×</button>'
+        + '</div>';
+      list.appendChild(row);
+    });
+    list.querySelectorAll('.wish-row-x').forEach((b) => {
+      b.addEventListener('click', () => {
+        storeSet('expenses', (storeGet('expenses') || []).filter((x) => x.id !== b.dataset.id));
+        renderSpending();
+      });
+    });
+  }
+
+  function addExpense(merchant, total, date, category) {
+    const arr = storeGet('expenses') || [];
+    arr.push({
+      id: 'x_' + Date.now() + '_' + Math.floor(Math.random() * 9999),
+      merchant: String(merchant || 'Expense'),
+      total: Number(total) || 0,
+      date: date || new Date().toISOString().slice(0, 10),
+      category: category || null,
+      ts: Date.now(),
+    });
+    storeSet('expenses', arr);
+    renderSpending();
+  }
+
+  document.getElementById('spendAddBtn').addEventListener('click', () => {
+    const n = document.getElementById('spendName').value.trim();
+    const a = parseFloat(document.getElementById('spendAmount').value);
+    if (!n || isNaN(a)) return;
+    addExpense(n, a, null, null);
+    document.getElementById('spendName').value = '';
+    document.getElementById('spendAmount').value = '';
+  });
+  ['spendName', 'spendAmount'].forEach((id) => {
+    document.getElementById(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('spendAddBtn').click(); });
+  });
+
+  // ---- receipt scan via Sirius vision ----
+  function openReceiptScanModal() {
+    document.getElementById('finAiModalTitle').textContent = 'Scan a receipt';
+    openFinAiModal();
+    if (!finAiKey()) { finAiRenderKeyForm(openReceiptScanModal); return; }
+    document.getElementById('finAiModalBody').innerHTML =
+      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">Photo or screenshot of any receipt — Sirius reads the store, date, total, and category, and logs it under Spending.</div>' +
+      '<input type="file" id="receiptFileInput" class="fin-ai-file-input" accept="image/*">';
+    document.getElementById('receiptFileInput').addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      finAiRenderLoading();
+      const reader = new FileReader();
+      reader.onload = () => {
+        const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
+        if (!match) { finAiRenderError('Could not read that image — try a different file.'); return; }
+        runReceiptScan(match[1], match[2]);
+      };
+      reader.onerror = () => finAiRenderError('Could not read that image — try a different file.');
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function runReceiptScan(mediaType, base64) {
+    const system = "You are Sirius, a finance assistant embedded in the user's spending tracker. " +
+      "The user uploaded a photo or screenshot of a receipt. Read it and extract the merchant/store name, the purchase date, " +
+      "the final total actually paid (after tax, tips, and discounts — the grand total, not the subtotal), and classify the purchase " +
+      "into exactly one category from: " + SPEND_CATS.join(', ') + ". " +
+      "If the date isn't visible, use UNKNOWN. Respond in EXACTLY this format and nothing else:\n" +
+      "MERCHANT: <store name>\n" +
+      "DATE: <YYYY-MM-DD or UNKNOWN>\n" +
+      "TOTAL: <plain number, no currency symbol or commas>\n" +
+      "CATEGORY: <one category from the list>";
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': finAiKey(),
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-8',
+          max_tokens: 512,
+          system: system,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+              { type: 'text', text: 'Read this receipt.' }
+            ]
+          }]
+        }),
+      });
+      const json = await res.json();
+      if (json.error) { finAiRenderError(json.error.message || 'Something went wrong.'); return; }
+      const reply = (json.content && json.content[0] && json.content[0].text) || '';
+      const merchant = (reply.match(/MERCHANT:\s*(.+)/i) || [])[1];
+      const totalRaw = (reply.match(/TOTAL:\s*\$?([\d,]+\.?\d*)/i) || [])[1];
+      const dateRaw = ((reply.match(/DATE:\s*(.+)/i) || [])[1] || '').trim();
+      const catRaw = ((reply.match(/CATEGORY:\s*(.+)/i) || [])[1] || '').trim();
+      if (!totalRaw) { finAiRenderError("Sirius couldn't find a total on that receipt — try a clearer photo."); return; }
+      const total = parseFloat(totalRaw.replace(/,/g, ''));
+      const date = /^\d{4}-\d{2}-\d{2}$/.test(dateRaw) ? dateRaw : new Date().toISOString().slice(0, 10);
+      const category = SPEND_CATS.find((c) => c.toLowerCase() === catRaw.toLowerCase()) || 'Other';
+      addExpense((merchant || 'Receipt').trim(), total, date, category);
+      document.getElementById('finAiModalBody').innerHTML =
+        '<div style="font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:4px">Logged under ' + finAiEsc(category) + '</div>' +
+        '<div style="font-size:28px;font-weight:700;color:var(--text-primary);margin-bottom:2px">' + fmtMoney(total) + '</div>' +
+        '<div style="font-size:13px;color:var(--text-secondary)">' + finAiEsc((merchant || 'Receipt').trim()) + ' · ' + spendDateLabel(date) + '</div>';
+    } catch (e) {
+      finAiRenderError(e.message || String(e));
+    }
+  }
+  document.getElementById('receiptScanBtn').addEventListener('click', openReceiptScanModal);
+  renderSpending();
+  window.addEventListener('storage', renderSpending);
+
 })();
 </script>
 
@@ -3966,7 +4244,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'finance',
-    syncedKeys: ['subs', 'wishlist', 'incoming_orders', 'nw:activity', 'nw:history', 'fin:ai_history'],
+    syncedKeys: ['subs', 'wishlist', 'incoming_orders', 'nw:activity', 'nw:history', 'fin:ai_history', 'expenses'],
     syncedPrefixes: ['nw:'],
     onApplied: function () {
       window.dispatchEvent(new Event('storage'));
