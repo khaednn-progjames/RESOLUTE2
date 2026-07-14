@@ -498,6 +498,7 @@ body::after {
       <button class="pinned-ideas-btn" id="dashboardIdeasBtn" type="button">💡 Dashboard Ideas <span class="cnt" id="ideasCount"></span></button>
       <button class="sirius-ideas-btn" id="siriusIdeasBtn" type="button">✍️ Ideas to write about</button>
       <button class="sirius-ideas-btn" id="quickThoughtBtn" type="button">💭 Quick Thought</button>
+      <button class="sirius-ideas-btn" id="weeklyReviewBtn" type="button">📊 Weekly Review</button>
       <button class="sirius-ideas-btn" id="graphBtn" type="button">🕸 Web</button>
       <ul class="notes-list" id="notesList"></ul>
     </aside>
@@ -1376,6 +1377,97 @@ body::after {
     closeDrawer();
   }
   $('quickThoughtBtn').addEventListener('click', openQuickThoughtModal);
+
+  // ---- Weekly Review: Sirius reads the last 7 days and writes a review note ----
+  function collectWeekContext() {
+    const lines = [];
+    let daysWithGoals = 0, goalsDone = 0, goalsTotal = 0;
+    const perDay = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      const goals = loadJSON('goals:' + ds, []);
+      if (Array.isArray(goals) && goals.length) {
+        daysWithGoals++;
+        const done = goals.filter((g) => g && g.done).length;
+        goalsDone += done; goalsTotal += goals.length;
+        perDay.push(d.toLocaleDateString(undefined, { weekday: 'short' }) + ': ' + done + '/' + goals.length +
+          ' (' + goals.map((g) => (g.text || '') + (g.done ? ' ✓' : ' ✗')).join(', ') + ')');
+      } else {
+        // Past days are archived to goalhist: by the rollover on Main.
+        const hist = loadJSON('goalhist:' + ds, null);
+        if (hist && typeof hist.total === 'number' && hist.total > 0) {
+          daysWithGoals++;
+          goalsDone += hist.done || 0; goalsTotal += hist.total;
+          perDay.push(d.toLocaleDateString(undefined, { weekday: 'short' }) + ': ' + (hist.done || 0) + '/' + hist.total);
+        }
+      }
+    }
+    lines.push('Goals this week — ' + goalsDone + '/' + goalsTotal + ' done across ' + daysWithGoals + ' active days:');
+    lines.push(perDay.length ? perDay.join('\n') : '(no goals set this week)');
+
+    const water = loadJSON('po_water_v1', null);
+    if (water && water.logs) {
+      let sum = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        sum += water.logs[d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')] || 0;
+      }
+      lines.push('Water: ' + sum + ' drinks logged over the last 7 days.');
+    }
+
+    const hist = loadJSON('nw:history', []);
+    if (Array.isArray(hist) && hist.length >= 2) {
+      const weekAgo = Date.now() - 7 * 86400000;
+      const old = hist.filter((h) => h.t <= weekAgo).pop() || hist[0];
+      const latest = hist[hist.length - 1];
+      if (old && latest && old.v != null && latest.v != null) {
+        const diff = latest.v - old.v;
+        lines.push('Net worth: $' + Math.round(latest.v).toLocaleString('en-US') + ' (' + (diff >= 0 ? '+' : '−') + '$' + Math.abs(Math.round(diff)).toLocaleString('en-US') + ' this week).');
+      }
+    }
+
+    const weekAgoTs = Date.now() - 7 * 86400000;
+    const touched = loadIndex().filter((n) => (n.updatedAt || 0) >= weekAgoTs).length;
+    lines.push('Notes: ' + touched + ' notes created or edited this week.');
+    return lines.join('\n');
+  }
+
+  function runWeeklyReview() {
+    openSiriusModal('📊 Weekly Review');
+    if (!siriusKey()) { renderKeyForm(runWeeklyReview); return; }
+    renderSiriusLoading();
+
+    const system = "You are Sirius, the user's personal mentor, writing their weekly review from real dashboard data. " +
+      "Write it in second person. Structure: one short paragraph on how the week actually went (call out the real numbers), " +
+      "then 3-5 '- ' bullet points: what worked, what slipped, and the single most important focus for next week. " +
+      "Honest but encouraging, no fluff, no headers, no greeting.";
+
+    callSirius(system, collectWeekContext()).then(reply => {
+      const title = 'Weekly Review — ' + new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const id = newId();
+      const idx2 = loadIndex();
+      idx2.unshift({ id, title, category: 'Reflection', updatedAt: Date.now(), pinned: false });
+      saveIndex(idx2);
+      // Mixed content: keep paragraphs as plain lines, render "- " lines as bullets.
+      const Delta = Quill.import('delta');
+      const insertDelta = new Delta();
+      reply.trim().split(/\r?\n/).map((l) => l.trim()).filter(Boolean).forEach((line) => {
+        if (/^[-•*]\s+/.test(line)) {
+          insertDelta.insert(line.replace(/^[-•*]\s+/, '').replace(/\*\*/g, '')).insert('\n', { list: 'bullet' });
+        } else {
+          insertDelta.insert(line.replace(/\*\*/g, '')).insert('\n');
+        }
+      });
+      saveJSON(DOC_PREFIX + id, insertDelta);
+      selectNote(id);
+      closeDrawer();
+      closeSiriusModal();
+    }).catch(e => renderSiriusError(e.message || String(e)));
+  }
+  $('weeklyReviewBtn').addEventListener('click', runWeeklyReview);
 
   // ---------- Web (graph view) ----------
   let graphSim = null;

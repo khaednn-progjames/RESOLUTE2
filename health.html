@@ -504,6 +504,37 @@ main {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
+
+/* ===== Meals (photo → calories) ===== */
+.meal-totals { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0 4px; }
+.meal-total {
+  flex: 1; min-width: 100px; padding: 12px 14px; border-radius: 12px;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18);
+}
+.meal-total .n { font-size: 22px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; line-height: 1; }
+.meal-total .l { font-size: 9.5px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 5px; }
+.meal-snap-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 18px; border-radius: 12px; border: 0; margin-top: 12px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); color: #0A0A0B;
+  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 22px rgba(0,0,0,0.25);
+  transition: transform 0.1s, filter 0.15s;
+}
+.meal-snap-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.meal-snap-btn:disabled { opacity: 0.55; cursor: wait; transform: none; }
+.meal-status { font-size: 12px; color: var(--text-tertiary); margin-top: 10px; line-height: 1.5; }
+.meal-status.err { color: #FF8A8A; }
+.meal-list { list-style: none; margin: 14px 0 0; padding: 0; }
+.meal-row {
+  display: flex; align-items: center; gap: 12px; padding: 11px 14px; margin-bottom: 6px;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); border-radius: 12px;
+}
+.meal-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.meal-macros { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+.meal-del { border: 0; background: transparent; color: var(--text-tertiary); font-size: 17px; cursor: pointer; padding: 0 4px; opacity: 0.5; transition: opacity 0.2s, color 0.2s; }
+.meal-row:hover .meal-del { opacity: 1; }
+.meal-del:hover { color: #FF6B6B; }
 </style>
 </head>
 <body>
@@ -550,6 +581,25 @@ main {
         <button id="stackAddBtn" class="stack-add-btn">+ Add</button>
       </div>
     </div>
+  </div>
+
+  <div class="section-title">Meals</div>
+
+  <div class="stack-card" id="mealsCard">
+    <div class="stack-head">
+      <div class="sf-eyebrow">Food log</div>
+      <div class="sf-title">Snap a photo — Sirius counts the calories</div>
+    </div>
+    <div class="meal-totals">
+      <div class="meal-total"><div class="n" id="mealCals">0</div><div class="l">Calories today</div></div>
+      <div class="meal-total"><div class="n" id="mealProtein">0g</div><div class="l">Protein</div></div>
+      <div class="meal-total"><div class="n" id="mealCarbs">0g</div><div class="l">Carbs</div></div>
+      <div class="meal-total"><div class="n" id="mealFat">0g</div><div class="l">Fat</div></div>
+    </div>
+    <button class="meal-snap-btn" id="mealSnapBtn" type="button">📷 Snap a meal</button>
+    <input type="file" id="mealFileInput" accept="image/*" capture="environment" style="display:none">
+    <div class="meal-status" id="mealStatus"></div>
+    <ul class="meal-list" id="mealList"></ul>
   </div>
 
   <section id="water" class="water-embed">
@@ -1077,12 +1127,144 @@ main {
 </script>
 
 <script>
+// ===== Meals: photo → Sirius vision → calories/macros, logged per day =====
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const KEY_LS = 'nova_lite_api_key'; // shared BYOK Anthropic key
+
+  function calKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function mealsKey() { return 'meals:' + calKey(); }
+  function loadMeals() { try { return JSON.parse(localStorage.getItem(mealsKey())) || []; } catch (e) { return []; } }
+  function saveMeals(arr) { try { localStorage.setItem(mealsKey(), JSON.stringify(arr)); } catch (e) {} }
+  function apiKey() { try { return localStorage.getItem(KEY_LS) || ''; } catch (e) { return ''; } }
+
+  function render() {
+    const meals = loadMeals();
+    let cal = 0, p = 0, c = 0, f = 0;
+    meals.forEach((m) => { cal += m.cal || 0; p += m.protein || 0; c += m.carbs || 0; f += m.fat || 0; });
+    $('mealCals').textContent = Math.round(cal);
+    $('mealProtein').textContent = Math.round(p) + 'g';
+    $('mealCarbs').textContent = Math.round(c) + 'g';
+    $('mealFat').textContent = Math.round(f) + 'g';
+
+    const list = $('mealList');
+    list.innerHTML = '';
+    meals.slice().reverse().forEach((m) => {
+      const li = document.createElement('li');
+      li.className = 'meal-row';
+      const name = document.createElement('div');
+      name.className = 'meal-name';
+      name.textContent = m.name;
+      const macros = document.createElement('div');
+      macros.className = 'meal-macros';
+      macros.textContent = Math.round(m.cal) + ' cal · ' + Math.round(m.protein) + 'p / ' + Math.round(m.carbs) + 'c / ' + Math.round(m.fat) + 'f';
+      const del = document.createElement('button');
+      del.className = 'meal-del';
+      del.type = 'button';
+      del.textContent = '×';
+      del.addEventListener('click', () => { saveMeals(loadMeals().filter((x) => x.id !== m.id)); render(); });
+      li.append(name, macros, del);
+      list.appendChild(li);
+    });
+  }
+
+  function status(msg, isErr) {
+    const el = $('mealStatus');
+    el.textContent = msg || '';
+    el.classList.toggle('err', !!isErr);
+  }
+
+  async function analyzeMeal(mediaType, base64) {
+    const system = "You are Sirius, a nutrition assistant. The user photographed a meal. " +
+      "Identify what it is and estimate the full meal's nutrition — be realistic about portion size from the photo. " +
+      "Respond in EXACTLY this format and nothing else:\n" +
+      "NAME: <short name of the meal, e.g. \"Chicken burrito bowl\">\n" +
+      "CALORIES: <number>\n" +
+      "PROTEIN: <grams, number>\n" +
+      "CARBS: <grams, number>\n" +
+      "FAT: <grams, number>";
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-8',
+        max_tokens: 256,
+        system: system,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: 'What is this meal and what are its estimated calories and macros?' }
+          ]
+        }],
+      }),
+    });
+    const json = await res.json();
+    if (json.error) throw new Error(json.error.message || 'Something went wrong.');
+    const reply = (json.content && json.content[0] && json.content[0].text) || '';
+    const name = ((reply.match(/NAME:\s*(.+)/i) || [])[1] || 'Meal').trim();
+    const num = (re) => parseFloat((reply.match(re) || [])[1]) || 0;
+    const cal = num(/CALORIES:\s*([\d.]+)/i);
+    if (!cal) throw new Error("Sirius couldn't read that photo as a meal — try another angle.");
+    return { name, cal, protein: num(/PROTEIN:\s*([\d.]+)/i), carbs: num(/CARBS:\s*([\d.]+)/i), fat: num(/FAT:\s*([\d.]+)/i) };
+  }
+
+  $('mealSnapBtn').addEventListener('click', () => {
+    if (!apiKey()) {
+      status('No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.', true);
+      return;
+    }
+    $('mealFileInput').click();
+  });
+  $('mealFileInput').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const btn = $('mealSnapBtn');
+    btn.disabled = true;
+    status('Sirius is looking at your meal…');
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
+        if (!match) throw new Error('Could not read that image — try a different file.');
+        const meal = await analyzeMeal(match[1], match[2]);
+        const arr = loadMeals();
+        arr.push({ id: 'm' + Date.now().toString(36), ...meal, ts: Date.now() });
+        saveMeals(arr);
+        render();
+        status('Logged: ' + meal.name + ' — ~' + Math.round(meal.cal) + ' cal ✓');
+      } catch (err) {
+        status(err.message || String(err), true);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+    reader.onerror = () => { status('Could not read that image — try a different file.', true); btn.disabled = false; };
+    reader.readAsDataURL(file);
+  });
+
+  render();
+  window.addEventListener('storage', render);
+})();
+</script>
+
+<script>
 document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'health',
     syncedKeys: ['stack:items', 'stack:version', 'stack:low', 'po_water_v1'],
-    syncedPrefixes: ['stack:taken:'],
+    syncedPrefixes: ['stack:taken:', 'meals:'],
     onApplied: function () {
       window.dispatchEvent(new Event('storage'));
     }
