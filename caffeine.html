@@ -118,6 +118,7 @@ body::after {
 .tips { list-style: none; margin: 14px 0 0; padding: 0; }
 .tip { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); }
 .tip:first-child { border-top: 0; }
+.tip .ic { flex-shrink: 0; }
 
 /* ===== Daily bar ===== */
 .daily-top { display: flex; align-items: baseline; gap: 8px; }
@@ -508,16 +509,16 @@ body::after {
 
     // tips
     const tips=[];
-    tips.push('Front-load it. Caffeine works best 30–90 min after waking — aim your first cup near '+fmtClock(wakeHour+0.5)+'.');
+    tips.push(['☀️','Front-load it. Caffeine works best 30–90 min after waking — aim your first cup near '+fmtClock(wakeHour+0.5)+'.']);
     const bedTs=hToTs(bedHour < nowHour() ? bedHour+24 : bedHour);
     const atBed=Math.round(totalActiveAt(bedTs));
-    if(a.cutoff < a.now) tips.push('It\'s past your coffee cutoff ('+fmtClock(a.cutoff)+'). More caffeine now will likely cost you sleep tonight.');
-    else tips.push('You can still have coffee until ~'+fmtClock(a.cutoff)+' without wrecking your '+fmtClock(bedHour)+' bedtime.');
-    if(atBed>=50) tips.push('~'+atBed+' mg will still be active at bedtime — that\'s enough to delay deep sleep. Ease off.');
-    if(a.crashSignificant) tips.push('Beat the '+fmtClock(a.crashT)+' dip with 10 min of daylight + water instead of another coffee — you\'ll avoid stacking a late crash.');
-    tips.push('Drink a glass of water per caffeinated drink — dehydration mimics and worsens the crash.');
+    if(a.cutoff < a.now) tips.push(['🌙','It\'s past your coffee cutoff ('+fmtClock(a.cutoff)+'). More caffeine now will likely cost you sleep tonight.']);
+    else tips.push(['🌙','You can still have coffee until ~'+fmtClock(a.cutoff)+' without wrecking your '+fmtClock(bedHour)+' bedtime.']);
+    if(atBed>=50) tips.push(['⚠️','~'+atBed+' mg will still be active at bedtime — that\'s enough to delay deep sleep. Ease off.']);
+    if(a.crashSignificant) tips.push(['🚶','Beat the '+fmtClock(a.crashT)+' dip with 10 min of daylight + water instead of another coffee — you\'ll avoid stacking a late crash.']);
+    tips.push(['💧','Drink a glass of water per caffeinated drink — dehydration mimics and worsens the crash.']);
     const ul=$('tips'); ul.innerHTML='';
-    tips.forEach((txt)=>{ const li=document.createElement('li'); li.className='tip'; li.textContent=txt; ul.appendChild(li); });
+    tips.forEach(([ic,txt])=>{ const li=document.createElement('li'); li.className='tip'; li.innerHTML='<span class="ic">'+ic+'</span><span>'+txt+'</span>'; ul.appendChild(li); });
   }
 
   function renderDaily(){
@@ -531,7 +532,7 @@ body::after {
     fill.style.background=color;
     const msg=$('dailyMsg'); msg.className='daily-msg';
     if(total===0){ msg.classList.add('good'); msg.textContent="You haven't logged anything today."; }
-    else if(total>=limit){ msg.classList.add('bad'); msg.textContent="That's over your limit for today — ease off the caffeine."; }
+    else if(total>=limit){ msg.classList.add('bad'); msg.textContent="⚠️ That's over your limit for today — ease off the caffeine."; }
     else if(total>=target){ msg.classList.add('warn'); msg.textContent="Getting up there. "+(limit-total)+" mg until your ceiling."; }
     else { msg.classList.add('good'); msg.textContent="You're in a good range — "+(target-total)+" mg under your target."; }
     const parts=[];

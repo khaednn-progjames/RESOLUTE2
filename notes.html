@@ -483,10 +483,10 @@ body::after {
     <aside class="notes-sidebar" id="notesSidebar">
       <input class="notes-search" id="notesSearch" type="text" placeholder="Search notes…" autocomplete="off">
       <div class="cat-chip-row" id="catChipRow"></div>
-      <button class="pinned-ideas-btn" id="dashboardIdeasBtn" type="button">Dashboard Ideas <span class="cnt" id="ideasCount"></span></button>
-      <button class="sirius-ideas-btn" id="siriusIdeasBtn" type="button">Ideas to write about</button>
-      <button class="sirius-ideas-btn" id="quickThoughtBtn" type="button">Quick Thought</button>
-      <button class="sirius-ideas-btn" id="graphBtn" type="button">Web of Thoughts</button>
+      <button class="pinned-ideas-btn" id="dashboardIdeasBtn" type="button">💡 Dashboard Ideas <span class="cnt" id="ideasCount"></span></button>
+      <button class="sirius-ideas-btn" id="siriusIdeasBtn" type="button">✍️ Ideas to write about</button>
+      <button class="sirius-ideas-btn" id="quickThoughtBtn" type="button">💭 Quick Thought</button>
+      <button class="sirius-ideas-btn" id="graphBtn" type="button">🕸 Web of Thoughts</button>
       <ul class="notes-list" id="notesList"></ul>
     </aside>
 
@@ -505,7 +505,7 @@ body::after {
                 <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
               </svg>
             </button>
-            <button class="notes-icon-btn" id="siriusSummarizeBtn" type="button" aria-label="Summarize with Sirius" title="Summarize with Sirius" style="font-size:11px; font-weight:800; letter-spacing:0.02em;">AI</button>
+            <button class="notes-icon-btn" id="siriusSummarizeBtn" type="button" aria-label="Summarize with Sirius" title="Summarize with Sirius">🧠</button>
           </div>
         </div>
         <div class="notes-meta-row">
@@ -515,7 +515,7 @@ body::after {
         <div id="editor"></div>
         <div class="notes-footer" id="notesFooter">0 words</div>
         <div class="backlinks-panel" id="backlinksPanel" style="display:none">
-          <div class="backlinks-title">Linked mentions</div>
+          <div class="backlinks-title">🔗 Linked mentions</div>
           <div class="backlinks-chips" id="backlinksChips"></div>
         </div>
       </div>
@@ -531,7 +531,7 @@ body::after {
             </div>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap">
-            <button class="sirius-btn" id="siriusBrainstormBtn" type="button">Brainstorm</button>
+            <button class="sirius-btn" id="siriusBrainstormBtn" type="button">🧠 Brainstorm</button>
             <button class="copy-btn" id="copyBtn" type="button">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               <span id="copyBtnText">Copy for Claude</span>
@@ -547,7 +547,7 @@ body::after {
           <input id="ideaInput" class="gm-input" type="text" placeholder="A feature idea for the dashboard…" autocomplete="off">
           <button type="button" id="ideaAddBtn" class="gm-add">+ Add</button>
         </div>
-        <div class="ideas-hint">Check an idea off once it's built. Hover an idea for a "»" button to have Sirius flesh it out. "Copy for Claude" puts the whole list on your clipboard — paste it into a Claude Code chat to have it built.</div>
+        <div class="ideas-hint">Check an idea off once it's built. Hover an idea for a "✨" button to have Sirius flesh it out. "Copy for Claude" puts the whole list on your clipboard — paste it into a Claude Code chat to have it built.</div>
       </div>
     </section>
   </div>
@@ -568,7 +568,7 @@ body::after {
 <!-- ===== Web of Thoughts (graph view) ===== -->
 <div class="graph-overlay" id="graphOverlay">
   <div class="graph-toolbar">
-    <span class="graph-title">Web of Thoughts</span>
+    <span class="graph-title">🕸 Web of Thoughts</span>
     <button class="graph-close" id="graphCloseBtn" type="button" aria-label="Close">×</button>
   </div>
   <div class="graph-canvas-wrap">
@@ -1189,7 +1189,7 @@ body::after {
 
   // ---- Ideas: what to write about ----
   function runSiriusIdeas() {
-    openSiriusModal('Ideas to write about');
+    openSiriusModal('💡 Ideas to write about');
     if (!siriusKey()) { renderKeyForm(runSiriusIdeas); return; }
     renderSiriusLoading();
 
@@ -1222,7 +1222,7 @@ body::after {
 
   // ---- Summarize the current note ----
   function runSiriusSummarize() {
-    openSiriusModal('Summarize this note');
+    openSiriusModal('🧠 Summarize this note');
     if (!activeId) { renderSiriusError('Open a note first.'); return; }
     const text = quill.getText().trim();
     if (!text) { renderSiriusError('This note is empty — write something first.'); return; }
@@ -1257,7 +1257,7 @@ body::after {
 
   // ---- Quick Thought: compact a rough thought into a clean, auto-categorized note ----
   function openQuickThoughtModal() {
-    openSiriusModal('Quick Thought');
+    openSiriusModal('💭 Quick Thought');
     if (!siriusKey()) { renderKeyForm(openQuickThoughtModal); return; }
     $('siriusModalBody').innerHTML =
       '<textarea id="qtInput" class="qt-textarea" placeholder="Type whatever\'s on your mind about a situation — Sirius will tidy it up into a note and file it under the right category…"></textarea>' +
@@ -1460,7 +1460,7 @@ body::after {
         expand.type = 'button';
         expand.className = 'idea-expand';
         expand.title = 'Flesh this out with Sirius';
-        expand.textContent = '»';
+        expand.textContent = '✨';
         expand.addEventListener('click', () => runSiriusExpand(it.id, expand));
 
         const del = document.createElement('button');
@@ -1552,7 +1552,7 @@ body::after {
 
   // ---- Brainstorm new dashboard ideas ----
   async function runSiriusBrainstorm() {
-    openSiriusModal('Brainstorm new ideas');
+    openSiriusModal('🧠 Brainstorm new ideas');
     if (!siriusKey()) { renderKeyForm(runSiriusBrainstorm); return; }
     renderSiriusLoading();
 
@@ -1597,7 +1597,7 @@ body::after {
     const items = loadIdeas();
     const entry = items.find(x => x.id === id);
     if (!entry) return;
-    if (!siriusKey()) { openSiriusModal('Expand idea'); renderKeyForm(() => runSiriusExpand(id, btnEl)); return; }
+    if (!siriusKey()) { openSiriusModal('✨ Expand idea'); renderKeyForm(() => runSiriusExpand(id, btnEl)); return; }
 
     btnEl.disabled = true;
     const original = btnEl.textContent;
