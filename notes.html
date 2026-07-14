@@ -494,6 +494,7 @@ body::after {
     <aside class="notes-sidebar" id="notesSidebar">
       <input class="notes-search" id="notesSearch" type="text" placeholder="Search notes…" autocomplete="off">
       <div class="cat-chip-row" id="catChipRow"></div>
+      <button class="pinned-ideas-btn" id="dailyNoteBtn" type="button">📅 Daily Note <span class="cnt" id="dailyNoteStatus"></span></button>
       <button class="pinned-ideas-btn" id="dashboardIdeasBtn" type="button">💡 Dashboard Ideas <span class="cnt" id="ideasCount"></span></button>
       <button class="sirius-ideas-btn" id="siriusIdeasBtn" type="button">✍️ Ideas to write about</button>
       <button class="sirius-ideas-btn" id="quickThoughtBtn" type="button">💭 Quick Thought</button>
@@ -601,6 +602,7 @@ body::after {
   const ACTIVE_KEY = 'notesActiveId'; // deliberately NOT prefixed 'notes:' — local-only, not synced
   const IDEAS_ID = '__IDEAS__'; // sentinel activeId for the pinned Dashboard Ideas view
   const IDEAS_KEY = 'ideas:items';
+  const DAILY_MAP_KEY = 'notes:dailyMap'; // maps 'YYYY-MM-DD' -> note id
   const CATEGORIES = ['Work', 'Personal', 'Health', 'Relationships', 'Finance', 'Ideas', 'Reflection', 'Other'];
   let categoryFilter = null; // null = "All"
 
@@ -896,6 +898,7 @@ body::after {
     const ideasBtn = $('dashboardIdeasBtn');
     ideasBtn.classList.toggle('active', activeId === IDEAS_ID);
     $('ideasCount').textContent = ideasItems.length ? ideasItems.filter(i => i.done).length + '/' + ideasItems.length : '';
+    renderDailyNoteButton();
 
     const allItems = sortedIndex();
     renderCatChips(allItems);
@@ -1033,6 +1036,48 @@ body::after {
     $('notesTitleInput').focus();
   }
 
+  // ---------- Daily Note: one seamless, always-there note per calendar day ----------
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function loadDailyMap() { return loadJSON(DAILY_MAP_KEY, {}); }
+  function saveDailyMap(map) { saveJSON(DAILY_MAP_KEY, map); }
+
+  function dailyNoteIdForToday() {
+    const id = loadDailyMap()[todayKey()];
+    return id && loadIndex().find((n) => n.id === id) ? id : null;
+  }
+  function dailyNoteDone() {
+    const id = dailyNoteIdForToday();
+    return !!(id && docText(id).trim().length > 0);
+  }
+
+  function openDailyNote() {
+    const key = todayKey();
+    const map = loadDailyMap();
+    const idx = loadIndex();
+    let id = map[key];
+    if (!id || !idx.find((n) => n.id === id)) {
+      id = newId();
+      const title = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+      idx.unshift({ id, title, category: null, updatedAt: Date.now(), pinned: false });
+      saveIndex(idx);
+      saveJSON(DOC_PREFIX + id, { ops: [{ insert: '\n' }] });
+      map[key] = id;
+      saveDailyMap(map);
+    }
+    selectNote(id);
+    closeDrawer();
+  }
+
+  function renderDailyNoteButton() {
+    const id = dailyNoteIdForToday();
+    $('dailyNoteBtn').classList.toggle('active', !!(id && activeId === id));
+    $('dailyNoteStatus').textContent = dailyNoteDone() ? '✓' : '';
+  }
+  $('dailyNoteBtn').addEventListener('click', openDailyNote);
+
   function deleteNote(id) {
     if (!confirm('Delete this note? This can\'t be undone.')) return;
     let idx = loadIndex();
@@ -1092,6 +1137,7 @@ body::after {
         saveIndex(idx);
         $('notesMeta').textContent = 'Edited ' + relTime(entry.updatedAt);
       }
+      renderDailyNoteButton();
     }, 400);
   });
 

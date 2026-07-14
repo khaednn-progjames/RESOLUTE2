@@ -111,6 +111,7 @@ body::after {
 .tile-sub {
   font-size: 13px; color: var(--text-tertiary);
 }
+.tile-sub.reminder { color: #F2C063; font-weight: 600; }
 .tile-arrow {
   font-size: 18px; color: var(--accent);
   transition: transform 0.18s ease; flex-shrink: 0;
@@ -256,7 +257,7 @@ body::after {
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Notes</h2>
       <div class="tile-foot">
-        <span class="tile-sub">Ideas & docs</span>
+        <span class="tile-sub" id="notesTileSub">Ideas & docs</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -436,6 +437,30 @@ body::after {
     if (kg) $('weight').value = weightUnit === 'lb' ? Math.round(kg * 2.20462) : Math.round(kg);
   }));
   $('sexSeg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => setSex(b.dataset.s)));
+})();
+</script>
+
+<script>
+// Swap the Notes tile subtitle to a reminder until today's Daily Note has been written.
+(function () {
+  'use strict';
+  function loadJSON(k, f) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; } catch (e) { return f; } }
+  function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function docText(id) {
+    const doc = loadJSON('notes:doc:' + id, null);
+    if (!doc || !Array.isArray(doc.ops)) return '';
+    return doc.ops.map((o) => (typeof o.insert === 'string' ? o.insert : '')).join('');
+  }
+  const dailyMap = loadJSON('notes:dailyMap', {});
+  const todayId = dailyMap[todayKey()];
+  const written = !!(todayId && docText(todayId).trim().length > 0);
+  if (!written) {
+    const sub = document.getElementById('notesTileSub');
+    if (sub) { sub.textContent = 'Write your daily note'; sub.classList.add('reminder'); }
+  }
 })();
 </script>
 </body>
