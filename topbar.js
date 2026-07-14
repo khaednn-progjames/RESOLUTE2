@@ -96,6 +96,51 @@
   opacity: 0.85;
 }
 
+/* ===== Focus timer ===== */
+.topbar-focus-wrap { position: relative; }
+.topbar-focus-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 42px; padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12.5px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.topbar-focus-btn:hover { background: rgba(255, 255, 255, 0.08); color: #FAFAFA; }
+.topbar-focus-btn.running { color: #FAFAFA; border-color: rgba(255,255,255,0.30); background: rgba(255,255,255,0.09); }
+.topbar-focus-btn.done {
+  color: #6BE3A4; border-color: rgba(107,227,164,0.45); background: rgba(107,227,164,0.10);
+  animation: focus-done-pulse 1.2s ease-in-out infinite;
+}
+@keyframes focus-done-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(107,227,164,0.35); }
+  50%      { box-shadow: 0 0 0 6px rgba(107,227,164,0); }
+}
+.focus-menu {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 310;
+  display: none; flex-direction: column; gap: 4px;
+  min-width: 170px; padding: 7px;
+  background: #101012;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 13px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+}
+.focus-menu.show { display: flex; }
+.focus-menu button {
+  border: 0; background: transparent; text-align: left;
+  padding: 10px 12px; border-radius: 9px;
+  color: #D8D6D0; font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+.focus-menu button:hover { background: rgba(255,255,255,0.09); color: #FFFFFF; }
+.focus-menu .focus-stop { color: #FF8A8A; }
+
 /* ===== Command palette (Cmd/Ctrl+K) ===== */
 .topbar-cmdk-btn {
   display: inline-flex; align-items: center; gap: 7px;
@@ -283,6 +328,16 @@ body.topbar-modal-open {
   // -------- HTML --------
   const topbarHtml = `
 <header class="topbar" id="topbar" role="navigation" aria-label="Quick actions">
+  <div class="topbar-focus-wrap">
+    <button class="topbar-focus-btn" id="topbarFocus" type="button" aria-label="Focus timer">◔ Focus</button>
+    <div class="focus-menu" id="focusMenu">
+      <button type="button" data-min="25">25 min — deep focus</button>
+      <button type="button" data-min="50">50 min — long block</button>
+      <button type="button" data-min="5">5 min — break</button>
+      <button type="button" data-min="10">10 min — break</button>
+      <button type="button" class="focus-stop" id="focusStop" style="display:none">Stop timer</button>
+    </div>
+  </div>
   <button class="topbar-cmdk-btn" id="topbarCmdk" type="button" aria-label="Open command palette">
     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <span class="topbar-cmdk-label">Search</span>
@@ -511,6 +566,76 @@ body.topbar-modal-open {
     pushWaterMergedToSupabase(state);
   }
 
+  // -------- Focus timer (persists across pages via localStorage) --------
+  const FOCUS_KEY = 'focus:timer'; // { endTs, min } | { doneAt } | null
+
+  function focusState() {
+    try { return JSON.parse(localStorage.getItem(FOCUS_KEY)); } catch (e) { return null; }
+  }
+  function setFocusState(s) {
+    try {
+      if (s) localStorage.setItem(FOCUS_KEY, JSON.stringify(s));
+      else localStorage.removeItem(FOCUS_KEY);
+    } catch (e) {}
+  }
+
+  function renderFocus() {
+    const btn = document.getElementById('topbarFocus');
+    if (!btn) return;
+    const stopBtn = document.getElementById('focusStop');
+    const s = focusState();
+    btn.classList.remove('running', 'done');
+    if (stopBtn) stopBtn.style.display = s && s.endTs ? '' : 'none';
+    if (!s) { btn.textContent = '◔ Focus'; return; }
+    if (s.doneAt) { btn.textContent = '✓ Done'; btn.classList.add('done'); return; }
+    const left = s.endTs - Date.now();
+    if (left <= 0) {
+      setFocusState({ doneAt: Date.now() });
+      btn.textContent = '✓ Done';
+      btn.classList.add('done');
+      if (document.title.indexOf('⏰') !== 0) document.title = '⏰ ' + document.title;
+      return;
+    }
+    const m = Math.floor(left / 60000);
+    const sec = Math.floor((left % 60000) / 1000);
+    btn.textContent = '◔ ' + m + ':' + String(sec).padStart(2, '0');
+    btn.classList.add('running');
+  }
+
+  function initFocus() {
+    const btn = document.getElementById('topbarFocus');
+    if (!btn) return;
+    const menu = document.getElementById('focusMenu');
+    btn.addEventListener('click', () => {
+      const s = focusState();
+      if (s && s.doneAt) { // acknowledge finished timer
+        setFocusState(null);
+        document.title = document.title.replace(/^⏰ /, '');
+        renderFocus();
+        return;
+      }
+      menu.classList.toggle('show');
+    });
+    menu.querySelectorAll('button[data-min]').forEach((b) => {
+      b.addEventListener('click', () => {
+        const min = parseInt(b.dataset.min, 10);
+        setFocusState({ endTs: Date.now() + min * 60000, min });
+        menu.classList.remove('show');
+        renderFocus();
+      });
+    });
+    document.getElementById('focusStop').addEventListener('click', () => {
+      setFocusState(null);
+      menu.classList.remove('show');
+      renderFocus();
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.topbar-focus-wrap')) menu.classList.remove('show');
+    });
+    setInterval(renderFocus, 1000);
+    renderFocus();
+  }
+
   // -------- Command palette (Cmd/Ctrl+K) --------
   const CMDK_COMMANDS = [
     { group: 'Pages', ic: '🏠', label: 'Home',            sub: 'hub',                href: 'index.html',        kw: 'hub dashboard tiles home' },
@@ -522,6 +647,7 @@ body.topbar-modal-open {
     { group: 'Pages', ic: '📝', label: 'Notes',           sub: 'ideas & docs',       href: 'notes.html',        kw: 'notes docs writing ideas quick thought web' },
     { group: 'Pages', ic: '🔗', label: 'Links',           sub: 'saved & sorted',     href: 'links.html',        kw: 'links bookmarks saved urls' },
     { group: 'Pages', ic: '🗂', label: 'Miscellaneous',   sub: 'everything else',    href: 'misc.html',         kw: 'misc other tools' },
+    { group: 'Pages', ic: '⏳', label: 'Events',          sub: 'countdowns',         href: 'events.html',       kw: 'events countdown birthday deadline trip' },
     { group: 'Pages', ic: '❤️', label: 'Health',          sub: 'supplements & water', href: 'health.html',      kw: 'health stack supplements vitamins' },
     { group: 'Pages', ic: '🏋️', label: 'Gym',             sub: 'training & weight',  href: 'gym.html',          kw: 'gym workout lifts training bodyweight fitness' },
     { group: 'Pages', ic: '☕', label: 'Caffeine',        sub: 'intake & timing',    href: 'caffeine.html',     kw: 'caffeine coffee energy drinks' },
@@ -707,6 +833,7 @@ body.topbar-modal-open {
   function boot() {
     injectStyleAndHTML();
     initCmdk();
+    initFocus();
     const btn = document.getElementById('topbarWaterAdd');
     if (btn) btn.addEventListener('click', (e) => { e.preventDefault(); addWater(); });
     render();

@@ -641,6 +641,40 @@ body::after {
   .gm-card { padding: 16px; }
   .gm-progress-num { font-size: 36px; }
 }
+/* ===== Consistency heatmap ===== */
+.heatmap-scroll { overflow-x: auto; padding-bottom: 4px; }
+.heatmap-scroll::-webkit-scrollbar { display: none; }
+.heatmap-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 13px);
+  grid-auto-columns: 13px;
+  gap: 3px;
+  width: max-content;
+}
+.hm {
+  width: 13px; height: 13px; border-radius: 3.5px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.hm.l1 { background: rgba(107,227,164,0.22); border-color: rgba(107,227,164,0.10); }
+.hm.l2 { background: rgba(107,227,164,0.50); border-color: rgba(107,227,164,0.25); }
+.hm.l3 { background: #6BE3A4; border-color: #6BE3A4; box-shadow: 0 0 6px rgba(107,227,164,0.35); }
+.hm.today { outline: 1.5px solid rgba(255,255,255,0.65); outline-offset: 1px; }
+.heatmap-months {
+  display: flex; gap: 0;
+  width: max-content;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 9px; color: var(--text-tertiary);
+}
+.heatmap-months span { display: inline-block; }
+.heatmap-legend {
+  display: flex; align-items: center; gap: 5px;
+  margin-top: 10px;
+  font-size: 10px; color: var(--text-tertiary);
+}
+.heatmap-legend .hm { flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -766,6 +800,26 @@ body::after {
     </div>
   </div>
 
+  <!-- CONSISTENCY HEATMAP -->
+  <div class="gm-card" id="heatmapCard">
+    <div class="gm-header">
+      <div class="gm-header-left">
+        <div class="gm-eyebrow">Consistency</div>
+        <div class="gm-tomorrow-sub" id="heatmapSummary">Your last 6 months of goals, day by day.</div>
+      </div>
+      <div class="gm-tomorrow-count" id="heatmapStreak"></div>
+    </div>
+    <div class="heatmap-scroll">
+      <div class="heatmap-grid" id="heatmapGrid"></div>
+      <div class="heatmap-months" id="heatmapMonths"></div>
+    </div>
+    <div class="heatmap-legend">
+      <span>less</span>
+      <i class="hm l0"></i><i class="hm l1"></i><i class="hm l2"></i><i class="hm l3"></i>
+      <span>more</span>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -844,6 +898,11 @@ body::after {
       const dateStr = k.slice('goals:'.length);
       if (dateStr >= todayDateStr) return;
       const old = getGoals(k);
+      // Archive the day's final score before deleting, so history
+      // (consistency heatmap, weekly review) survives the rollover.
+      if (old.length) {
+        storeSet('goalhist:' + dateStr, { done: old.filter(g => g && g.done).length, total: old.length });
+      }
       old.forEach(g => {
         if (!g.done && g.text && !texts.has(g.text)) {
           today.push({ text: g.text, done: false });
@@ -1467,7 +1526,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'goals',
-    syncedPrefixes: ['goals:'],
+    syncedPrefixes: ['goals:', 'goalhist:'],
     syncedKeys: ['lifegoal:v1'],
     onApplied: function () {
       window.dispatchEvent(new CustomEvent('goals-changed'));
@@ -1476,6 +1535,107 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
+</script>
+
+<script>
+// ===== Consistency heatmap — built from goals:YYYY-MM-DD history =====
+(function () {
+  'use strict';
+  const DAYS = 183; // ~6 months
+  const grid = document.getElementById('heatmapGrid');
+  const monthsEl = document.getElementById('heatmapMonths');
+  if (!grid) return;
+
+  function dateStr(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function dayStats(d) {
+    // Past days live in the goalhist: archive (rollover deletes their
+    // goals: keys); today (and not-yet-rolled-over days) in goals:.
+    try {
+      const hist = JSON.parse(localStorage.getItem('goalhist:' + dateStr(d)));
+      if (hist && typeof hist.total === 'number') return { done: hist.done || 0, total: hist.total };
+    } catch (e) {}
+    let goals = [];
+    try { goals = JSON.parse(localStorage.getItem('goals:' + dateStr(d))) || []; } catch (e) {}
+    const total = Array.isArray(goals) ? goals.length : 0;
+    const done = total ? goals.filter((g) => g && g.done).length : 0;
+    return { done, total };
+  }
+  function levelFor(s) {
+    if (!s.total || !s.done) return 0;
+    const r = s.done / s.total;
+    if (r >= 1) return 3;
+    if (r >= 0.5) return 2;
+    return 1;
+  }
+
+  function render() {
+    grid.innerHTML = '';
+    monthsEl.innerHTML = '';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(today);
+    start.setDate(start.getDate() - (DAYS - 1));
+    // Align the grid to start on a Sunday so weeks stack as columns.
+    start.setDate(start.getDate() - start.getDay());
+
+    let activeDays = 0, doneDays = 0;
+    let streak = 0;
+    // Current streak: consecutive days ending today (or yesterday) with all goals done.
+    for (let i = 0; ; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const s = dayStats(d);
+      const full = s.total > 0 && s.done >= s.total;
+      if (i === 0 && !full) continue; // today may still be in progress — don't break the streak yet
+      if (full) streak++;
+      else break;
+      if (i > 400) break;
+    }
+
+    const monthPositions = [];
+    let col = 0;
+    for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+      const cell = document.createElement('i');
+      const s = dayStats(d);
+      if (s.total > 0) { activeDays++; if (s.done >= s.total) doneDays++; }
+      cell.className = 'hm l' + levelFor(s) + (d.getTime() === today.getTime() ? ' today' : '');
+      cell.title = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + (s.total ? ' — ' + s.done + '/' + s.total + ' done' : ' — no goals');
+      grid.appendChild(cell);
+      if (d.getDay() === 0) {
+        if (d.getDate() <= 7) monthPositions.push({ col, label: d.toLocaleDateString(undefined, { month: 'short' }) });
+        col++;
+      }
+    }
+
+    // Month labels under their starting week-column (each column is 16px wide).
+    let lastEnd = 0;
+    monthPositions.forEach((m) => {
+      const px = m.col * 16;
+      const span = document.createElement('span');
+      span.style.marginLeft = Math.max(0, px - lastEnd) + 'px';
+      span.textContent = m.label;
+      monthsEl.appendChild(span);
+      lastEnd = px + m.label.length * 6;
+    });
+
+    const streakEl = document.getElementById('heatmapStreak');
+    streakEl.textContent = streak > 0 ? streak + '-day streak' : '';
+    const summary = document.getElementById('heatmapSummary');
+    summary.textContent = activeDays
+      ? doneDays + ' of ' + activeDays + ' active days fully done in the last 6 months.'
+      : 'Your last 6 months of goals, day by day.';
+
+    // Scroll to the most recent week.
+    const scroller = grid.parentElement;
+    scroller.scrollLeft = scroller.scrollWidth;
+  }
+
+  render();
+  window.addEventListener('storage', render);
+  window.addEventListener('focus', render);
+})();
 </script>
 </body>
 </html>

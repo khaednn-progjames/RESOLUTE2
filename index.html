@@ -340,6 +340,16 @@ body::after {
     </a>
 
     <!-- Small tile -->
+    <a class="tile" href="events.html" style="--accent:#FFFFFF">
+      <div class="tile-spacer"></div>
+      <h2 class="tile-title">Events</h2>
+      <div class="tile-foot">
+        <span class="tile-sub" id="eventsTileSub">Countdowns</span>
+        <span class="tile-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- Small tile -->
     <a class="tile" href="misc.html" style="--accent:#FFFFFF">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Miscellaneous</h2>
@@ -403,6 +413,18 @@ body::after {
 
     <button class="set-save" id="settingsSave" type="button">Save</button>
     <div class="set-status" id="settingsStatus"></div>
+
+    <div class="section-divider"></div>
+    <div class="field">
+      <label class="field-label">Backup</label>
+      <div class="field-row">
+        <button class="set-save" id="backupExport" type="button" style="margin-top:0">Download backup</button>
+        <button class="set-save" id="backupImport" type="button" style="margin-top:0">Restore…</button>
+        <input type="file" id="backupFile" accept="application/json,.json" style="display:none">
+      </div>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;line-height:1.5">Downloads everything on this dashboard (goals, notes, finance, water, all of it) as one JSON file. Restore merges it back in on any device.</div>
+      <div class="set-status" id="backupStatus"></div>
+    </div>
   </div>
 </div>
 
@@ -504,6 +526,49 @@ body::after {
     if (kg) $('weight').value = weightUnit === 'lb' ? Math.round(kg * 2.20462) : Math.round(kg);
   }));
   $('sexSeg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => setSex(b.dataset.s)));
+
+  /* ---------- backup: export / restore all localStorage ---------- */
+  function backupStatus(msg) {
+    const s = $('backupStatus'); s.textContent = msg;
+    setTimeout(() => { s.textContent = ''; }, 2600);
+  }
+  $('backupExport').addEventListener('click', () => {
+    const dump = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k === 'dash_unlocked') continue; // don't export the lock session
+      dump[k] = localStorage.getItem(k);
+    }
+    const blob = new Blob([JSON.stringify({ _dashboardBackup: 1, exportedAt: new Date().toISOString(), data: dump }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const d = new Date();
+    a.download = 'dashboard-backup-' + d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    backupStatus('Backup downloaded ✓');
+  });
+  $('backupImport').addEventListener('click', () => $('backupFile').click());
+  $('backupFile').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result));
+        const data = parsed && parsed._dashboardBackup ? parsed.data : null;
+        if (!data || typeof data !== 'object') { backupStatus('Not a dashboard backup file.'); return; }
+        if (!confirm('Restore ' + Object.keys(data).length + ' entries from this backup? Existing entries with the same name get overwritten.')) return;
+        Object.keys(data).forEach((k) => { try { localStorage.setItem(k, data[k]); } catch (err) {} });
+        backupStatus('Restored ✓ — reloading…');
+        setTimeout(() => window.location.reload(), 900);
+      } catch (err) {
+        backupStatus('Could not read that file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
 })();
 </script>
 
@@ -619,6 +684,17 @@ body::after {
     s.linksCount = (loadJSON('links:items', []) || []).length;
     s.notesCount = (loadJSON('notes:index', []) || []).length;
 
+    const events = (loadJSON('events:items', []) || []).slice();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    s.nextEvent = null;
+    events.forEach((ev) => {
+      if (!ev || !ev.date) return;
+      const p = String(ev.date).split('-').map(Number);
+      const days = Math.round((new Date(p[0], (p[1] || 1) - 1, p[2] || 1) - today) / 86400000);
+      if (days < 0) return;
+      if (!s.nextEvent || days < s.nextEvent.days) s.nextEvent = { name: ev.name, days };
+    });
+
     const dailyMap = loadJSON('notes:dailyMap', {});
     const todayId = dailyMap[calKey()];
     const doc = todayId ? loadJSON('notes:doc:' + todayId, null) : null;
@@ -646,6 +722,11 @@ body::after {
     if (s.netWorth > 0) $('financeTileSub').textContent = fmtUsd(s.netWorth) + ' net worth';
     if (s.monthTotal) $('plannerTileSub').textContent = s.monthDone + '/' + s.monthTotal + ' this month';
     if (s.linksCount) $('linksTileSub').textContent = s.linksCount + ' saved link' + (s.linksCount === 1 ? '' : 's');
+    if (s.nextEvent) {
+      $('eventsTileSub').textContent = s.nextEvent.days === 0
+        ? s.nextEvent.name + ' is today!'
+        : s.nextEvent.days + 'd until ' + s.nextEvent.name;
+    }
     const notesSub = $('notesTileSub');
     if (!s.dailyNoteWritten) {
       notesSub.textContent = 'Write your daily note';
