@@ -397,6 +397,18 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
 .fin-ai-verdict-badge.now { background: rgba(107,227,164,0.14); color: var(--success); border: 1px solid rgba(107,227,164,0.35); }
 .fin-ai-verdict-badge.soon { background: rgba(242,192,99,0.14); color: var(--warning); border: 1px solid rgba(242,192,99,0.35); }
 .fin-ai-verdict-badge.not-yet { background: rgba(255,107,107,0.12); color: var(--danger); border: 1px solid rgba(255,107,107,0.32); }
+.fin-ai-hist-entry { padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+.fin-ai-hist-entry:first-child { border-top: 0; padding-top: 0; }
+.fin-ai-hist-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.fin-ai-hist-type {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-tertiary); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 999px; padding: 2px 8px;
+}
+.fin-ai-hist-time { font-size: 10.5px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.fin-ai-hist-body { font-size: 12.5px; color: var(--text-secondary); line-height: 1.5; }
+.fin-ai-hist-body b { color: var(--text-primary); }
+.fin-ai-hist-empty { text-align: center; font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 20px 0; }
 
 /* Custom list rows */
 .custom-item {
@@ -1674,6 +1686,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
         <button class="scan-bank-btn" id="bankScanBtn" type="button" style="width:auto;margin-top:0;padding:9px 16px">Scan an account screenshot</button>
         <button class="scan-bank-btn" id="askSiriusBtn" type="button" style="width:auto;margin-top:0;padding:9px 16px">Ask Sirius about your budget</button>
+        <button class="scan-bank-btn" id="finAiHistoryBtn" type="button" style="width:auto;margin-top:0;padding:9px 16px">Sirius history</button>
       </div>
     </div>
 
@@ -2456,6 +2469,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   function finAiKey() { try { return localStorage.getItem(FIN_AI_KEY_LS) || ''; } catch (e) { return ''; } }
   function finAiEsc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
+  // Permanent record of every Sirius interaction (bank scans, budget Q&A,
+  // budget checks, wishlist scans) — synced across devices like everything else.
+  const FIN_AI_HISTORY_KEY = 'fin:ai_history';
+  const FIN_AI_HISTORY_MAX = 50;
+  function logAiHistory(entry) {
+    const arr = storeGet(FIN_AI_HISTORY_KEY) || [];
+    arr.push(Object.assign({ id: 'h_' + Date.now() + '_' + Math.floor(Math.random() * 9999), ts: Date.now() }, entry));
+    if (arr.length > FIN_AI_HISTORY_MAX) arr.splice(0, arr.length - FIN_AI_HISTORY_MAX);
+    storeSet(FIN_AI_HISTORY_KEY, arr);
+  }
+
   function openFinAiModal() { document.getElementById('finAiModalBg').classList.add('show'); }
   function closeFinAiModal() { document.getElementById('finAiModalBg').classList.remove('show'); }
   document.getElementById('finAiModalClose').addEventListener('click', closeFinAiModal);
@@ -2579,6 +2603,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       logActivity(a.category, a.name, a.balance, 'add');
     });
     renderAllNetWorth();
+    logAiHistory({ type: 'bankscan', accounts: accounts, plan: plan });
 
     const grandAdded = accounts.reduce((s, a) => s + a.balance, 0);
     const rowsHtml = accounts.map((a) =>
@@ -2679,7 +2704,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       const json = await res.json();
       if (json.error) { finAiRenderError(json.error.message || 'Something went wrong.'); return; }
       const reply = (json.content && json.content[0] && json.content[0].text) || '';
-      document.getElementById('finAiModalBody').innerHTML = '<div class="fin-ai-answer">' + finAiEsc(reply.trim()) + '</div>';
+      const answer = reply.trim();
+      document.getElementById('finAiModalBody').innerHTML = '<div class="fin-ai-answer">' + finAiEsc(answer) + '</div>';
+      logAiHistory({ type: 'ask', question: question, answer: answer });
     } catch (e) {
       finAiRenderError(e.message || String(e));
     }
@@ -2753,6 +2780,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       document.getElementById('finAiModalBody').innerHTML =
         rowsHtml +
         (summary ? '<div style="font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-tertiary);margin:16px 0 6px">Sirius says</div><div class="fin-ai-answer">' + finAiEsc(summary) + '</div>' : '');
+      logAiHistory({ type: 'budget', verdicts: verdicts, summary: summary });
     } catch (e) {
       finAiRenderError(e.message || String(e));
     }
@@ -2840,6 +2868,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     items.forEach((it) => { arr.push({ name: it.name, amount: it.price, ts: Date.now() }); });
     storeSet('wishlist', arr);
     renderWishlist();
+    logAiHistory({ type: 'wishscan', items: items });
 
     const rowsHtml = items.map((it) =>
       '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid rgba(255,255,255,0.06)">' +
@@ -2854,6 +2883,43 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       rowsHtml;
   }
   document.getElementById('wishScanBtn').addEventListener('click', openWishScanModal);
+
+  // ============================================================
+  // SIRIUS HISTORY — a read-only log of every AI interaction above,
+  // so answers and check results survive closing the popup.
+  // ============================================================
+  const FIN_AI_TYPE_LABELS = { bankscan: 'Account scan', ask: 'Ask Sirius', budget: 'Budget check', wishscan: 'Item scan' };
+
+  function renderAiHistoryEntry(entry) {
+    let body = '';
+    if (entry.type === 'ask') {
+      body = '<div><b>Q:</b> ' + finAiEsc(entry.question) + '</div><div style="margin-top:4px">' + finAiEsc(entry.answer) + '</div>';
+    } else if (entry.type === 'budget') {
+      const list = (entry.verdicts || []).map((v) => finAiEsc(v.name) + ' — <b>' + finAiEsc(String(v.verdict || '').replace('_', ' ')) + '</b>').join('<br>');
+      body = list + (entry.summary ? '<div style="margin-top:6px">' + finAiEsc(entry.summary) + '</div>' : '');
+    } else if (entry.type === 'bankscan') {
+      const list = (entry.accounts || []).map((a) => finAiEsc(a.name) + ' ' + fmtMoney(a.balance) + ' (' + finAiEsc(FIN_AI_CAT_LABELS[a.category] || 'Other') + ')').join('<br>');
+      body = list + (entry.plan ? '<div style="margin-top:6px">' + finAiEsc(entry.plan) + '</div>' : '');
+    } else if (entry.type === 'wishscan') {
+      body = (entry.items || []).map((it) => finAiEsc(it.name) + ' ' + fmtMoney(it.price)).join('<br>');
+    }
+    return '<div class="fin-ai-hist-entry">' +
+      '<div class="fin-ai-hist-head"><span class="fin-ai-hist-type">' + (FIN_AI_TYPE_LABELS[entry.type] || entry.type) + '</span><span class="fin-ai-hist-time">' + fmtActivityDate(entry.ts) + '</span></div>' +
+      '<div class="fin-ai-hist-body">' + body + '</div>' +
+    '</div>';
+  }
+
+  function openFinAiHistoryModal() {
+    document.getElementById('finAiModalTitle').textContent = 'Sirius history';
+    openFinAiModal();
+    const hist = (storeGet(FIN_AI_HISTORY_KEY) || []).slice().reverse();
+    if (hist.length === 0) {
+      document.getElementById('finAiModalBody').innerHTML = '<div class="fin-ai-hist-empty">Nothing yet — ask Sirius a question, scan a screenshot, or run a budget check.</div>';
+      return;
+    }
+    document.getElementById('finAiModalBody').innerHTML = hist.map(renderAiHistoryEntry).join('');
+  }
+  document.getElementById('finAiHistoryBtn').addEventListener('click', openFinAiHistoryModal);
 
   // ============================================================
   // SUBSCRIPTIONS
@@ -3864,7 +3930,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'finance',
-    syncedKeys: ['subs', 'wishlist', 'incoming_orders', 'nw:activity', 'nw:history'],
+    syncedKeys: ['subs', 'wishlist', 'incoming_orders', 'nw:activity', 'nw:history', 'fin:ai_history'],
     syncedPrefixes: ['nw:'],
     onApplied: function () {
       window.dispatchEvent(new Event('storage'));
