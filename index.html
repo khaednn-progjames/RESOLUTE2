@@ -131,8 +131,59 @@ body::after {
 }
 
 /* ===== Header row + gear ===== */
-.hub-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.hub-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
 .hub-head .dash-title { margin: 0; }
+.hub-greeting-wrap { min-width: 0; }
+.hub-greeting {
+  font-size: 13px; font-weight: 600; color: var(--text-tertiary);
+  letter-spacing: 0.02em; margin-bottom: 3px;
+}
+.hub-meta-row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 10px 0 18px;
+}
+.hub-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 12px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.hub-chip .dim { color: var(--text-tertiary); font-weight: 500; }
+
+/* ===== Daily Briefing card ===== */
+.briefing-card {
+  position: relative; overflow: hidden;
+  border-radius: 18px; padding: 18px 20px;
+  margin-bottom: 14px;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(46px) saturate(2.2);
+  -webkit-backdrop-filter: blur(46px) saturate(2.2);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55);
+}
+.briefing-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.briefing-label {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.briefing-btn {
+  padding: 8px 14px; border-radius: 999px; flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: var(--text-primary); font-family: inherit; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.briefing-btn:hover { background: rgba(255,255,255,0.12); }
+.briefing-btn:disabled { opacity: 0.5; cursor: wait; }
+.briefing-body {
+  font-size: 13.5px; color: var(--text-primary); line-height: 1.65;
+  margin-top: 10px; white-space: pre-line;
+}
+.briefing-body.placeholder { color: var(--text-tertiary); font-style: italic; }
+.briefing-body.err { color: #FF8A8A; }
 .gear-btn {
   width: 42px; height: 42px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
@@ -191,13 +242,29 @@ body::after {
 <div class="page">
 
   <div class="hub-head">
-    <h1 class="dash-title">Khaednn's Dashboard</h1>
+    <div class="hub-greeting-wrap">
+      <div class="hub-greeting" id="hubGreeting">Welcome back</div>
+      <h1 class="dash-title">Khaednn's Dashboard</h1>
+    </div>
     <button class="gear-btn" id="settingsOpen" type="button" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
     </button>
+  </div>
+
+  <div class="hub-meta-row">
+    <span class="hub-chip" id="hubDate">—</span>
+    <span class="hub-chip" id="hubWeather" style="display:none"></span>
+  </div>
+
+  <div class="briefing-card">
+    <div class="briefing-head">
+      <span class="briefing-label">Daily Briefing</span>
+      <button class="briefing-btn" id="briefingBtn" type="button">Generate</button>
+    </div>
+    <div class="briefing-body placeholder" id="briefingBody">One tap and Sirius reads today's goals, water, notes, planner, and net worth — then tells you where you stand.</div>
   </div>
 
   <div class="bento">
@@ -207,7 +274,7 @@ body::after {
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Main</h2>
       <div class="tile-foot">
-        <span class="tile-sub">Goals & daily plan</span>
+        <span class="tile-sub" id="mainTileSub">Goals & daily plan</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -217,7 +284,7 @@ body::after {
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Water</h2>
       <div class="tile-foot">
-        <span class="tile-sub">Hydration</span>
+        <span class="tile-sub" id="waterTileSub">Hydration</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -227,7 +294,7 @@ body::after {
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Finance</h2>
       <div class="tile-foot">
-        <span class="tile-sub">Net worth & spending</span>
+        <span class="tile-sub" id="financeTileSub">Net worth & spending</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -247,7 +314,7 @@ body::after {
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Planner</h2>
       <div class="tile-foot">
-        <span class="tile-sub">Monthly goals</span>
+        <span class="tile-sub" id="plannerTileSub">Monthly goals</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -267,7 +334,7 @@ body::after {
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Links</h2>
       <div class="tile-foot">
-        <span class="tile-sub">Saved & sorted</span>
+        <span class="tile-sub" id="linksTileSub">Saved & sorted</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -441,26 +508,233 @@ body::after {
 </script>
 
 <script>
-// Swap the Notes tile subtitle to a reminder until today's Daily Note has been written.
+// ===== Hub live layer: greeting, weather, tile stats, daily briefing =====
 (function () {
   'use strict';
+  const $ = (id) => document.getElementById(id);
   function loadJSON(k, f) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; } catch (e) { return f; } }
-  function todayKey() {
-    const d = new Date();
+  function saveJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+
+  function calKey(d) {
+    d = d || new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
-  function docText(id) {
-    const doc = loadJSON('notes:doc:' + id, null);
-    if (!doc || !Array.isArray(doc.ops)) return '';
-    return doc.ops.map((o) => (typeof o.insert === 'string' ? o.insert : '')).join('');
+  // Goals use the 6 AM rollover (same as main.html / topbar.js).
+  function activeGoalsKey() {
+    const now = new Date();
+    const d = new Date(now);
+    if (now.getHours() < 6) d.setDate(d.getDate() - 1);
+    return 'goals:' + calKey(d);
   }
-  const dailyMap = loadJSON('notes:dailyMap', {});
-  const todayId = dailyMap[todayKey()];
-  const written = !!(todayId && docText(todayId).trim().length > 0);
-  if (!written) {
-    const sub = document.getElementById('notesTileSub');
-    if (sub) { sub.textContent = 'Write your daily note'; sub.classList.add('reminder'); }
+  function fmtUsd(n) {
+    return '$' + (Number(n) || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
   }
+
+  /* ---------- greeting + date ---------- */
+  const h = new Date().getHours();
+  let greet;
+  if (h < 5) greet = 'Up late';
+  else if (h < 12) greet = 'Good morning';
+  else if (h < 17) greet = 'Good afternoon';
+  else if (h < 22) greet = 'Good evening';
+  else greet = 'Winding down';
+  $('hubGreeting').textContent = greet + ' — let’s make it count.';
+  $('hubDate').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+
+  /* ---------- weather (Open-Meteo, free, no key) ---------- */
+  const WEATHER_CACHE_KEY = 'hub:weather';
+  const WMO = [
+    [0, '☀️', 'Clear'], [1, '🌤', 'Mostly clear'], [2, '⛅', 'Partly cloudy'], [3, '☁️', 'Overcast'],
+    [45, '🌫', 'Fog'], [48, '🌫', 'Fog'],
+    [51, '🌦', 'Drizzle'], [53, '🌦', 'Drizzle'], [55, '🌦', 'Drizzle'], [56, '🌦', 'Drizzle'], [57, '🌦', 'Drizzle'],
+    [61, '🌧', 'Rain'], [63, '🌧', 'Rain'], [65, '🌧', 'Heavy rain'], [66, '🌧', 'Freezing rain'], [67, '🌧', 'Freezing rain'],
+    [71, '❄️', 'Snow'], [73, '❄️', 'Snow'], [75, '❄️', 'Heavy snow'], [77, '❄️', 'Snow'],
+    [80, '🌧', 'Showers'], [81, '🌧', 'Showers'], [82, '🌧', 'Heavy showers'],
+    [85, '🌨', 'Snow showers'], [86, '🌨', 'Snow showers'],
+    [95, '⛈', 'Thunderstorm'], [96, '⛈', 'Thunderstorm'], [99, '⛈', 'Thunderstorm'],
+  ];
+  function wmoLookup(code) {
+    let best = ['🌡', 'Weather'];
+    for (const [c, ic, label] of WMO) { if (code >= c) best = [ic, label]; }
+    return best;
+  }
+  function showWeather(w) {
+    const [ic, label] = wmoLookup(w.code);
+    const el = $('hubWeather');
+    el.innerHTML = '';
+    el.append(ic + ' ' + Math.round(w.temp) + '°F');
+    const dim = document.createElement('span');
+    dim.className = 'dim';
+    dim.textContent = label;
+    el.append(' ', dim);
+    el.style.display = '';
+  }
+  async function fetchWeather(lat, lon) {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat.toFixed(3) +
+      '&longitude=' + lon.toFixed(3) + '&current=temperature_2m,weather_code&temperature_unit=fahrenheit';
+    const res = await fetch(url);
+    const json = await res.json();
+    if (!json.current) throw new Error('no data');
+    const w = { temp: json.current.temperature_2m, code: json.current.weather_code, lat, lon, ts: Date.now() };
+    saveJSON(WEATHER_CACHE_KEY, w);
+    showWeather(w);
+  }
+  (function initWeather() {
+    const cached = loadJSON(WEATHER_CACHE_KEY, null);
+    // Show cached instantly (if under 12h old), refresh in background.
+    if (cached && Date.now() - cached.ts < 12 * 3600 * 1000) showWeather(cached);
+    if (cached && Date.now() - cached.ts < 30 * 60 * 1000) return; // fresh enough
+    if (cached) { fetchWeather(cached.lat, cached.lon).catch(() => {}); return; }
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude).catch(() => {}),
+      () => {}, { timeout: 8000, maximumAge: 3600000 }
+    );
+  })();
+
+  /* ---------- live tile stats ---------- */
+  function collectStats() {
+    const s = {};
+    const goals = loadJSON(activeGoalsKey(), []);
+    s.goalsTotal = Array.isArray(goals) ? goals.length : 0;
+    s.goalsDone = s.goalsTotal ? goals.filter((g) => g && g.done).length : 0;
+    s.goalTitles = (Array.isArray(goals) ? goals : []).map((g) => (g && g.text) + (g && g.done ? ' (done)' : '')).slice(0, 12);
+
+    const water = loadJSON('po_water_v1', null);
+    s.waterToday = water && water.logs ? (water.logs[calKey()] || 0) : 0;
+
+    let nw = 0;
+    ['bank', 'stocks', 'crypto', 'other'].forEach((c) => {
+      (loadJSON('nw:' + c, []) || []).forEach((it) => { nw += Number(it.amount) || 0; });
+    });
+    s.netWorth = nw;
+
+    const now = new Date();
+    const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    const monthGoals = loadJSON('planner:' + monthKey, []);
+    s.monthTotal = monthGoals.length;
+    s.monthDone = monthGoals.filter((g) => g && g.done).length;
+    s.monthTitles = monthGoals.map((g) => (g && g.text) + (g && g.done ? ' (done)' : '')).slice(0, 12);
+
+    s.linksCount = (loadJSON('links:items', []) || []).length;
+    s.notesCount = (loadJSON('notes:index', []) || []).length;
+
+    const dailyMap = loadJSON('notes:dailyMap', {});
+    const todayId = dailyMap[calKey()];
+    const doc = todayId ? loadJSON('notes:doc:' + todayId, null) : null;
+    const txt = doc && Array.isArray(doc.ops) ? doc.ops.map((o) => (typeof o.insert === 'string' ? o.insert : '')).join('') : '';
+    s.dailyNoteWritten = txt.trim().length > 0;
+
+    const wish = loadJSON('wishlist', []) || [];
+    s.wishCount = wish.length;
+    s.wishTotal = wish.reduce((t, it) => t + (Number(it.amount) || 0), 0);
+
+    const subs = loadJSON('subs', []) || [];
+    s.subsMonthly = subs.reduce((t, it) => {
+      const a = Number(it.amount) || 0;
+      if (it.period === 'yearly') return t + a / 12;
+      if (it.period === 'weekly') return t + a * 4.345;
+      return t + a;
+    }, 0);
+    return s;
+  }
+
+  function renderTileStats() {
+    const s = collectStats();
+    if (s.goalsTotal) $('mainTileSub').textContent = s.goalsDone + '/' + s.goalsTotal + ' goals done today';
+    if (s.waterToday) $('waterTileSub').textContent = s.waterToday + ' logged today';
+    if (s.netWorth > 0) $('financeTileSub').textContent = fmtUsd(s.netWorth) + ' net worth';
+    if (s.monthTotal) $('plannerTileSub').textContent = s.monthDone + '/' + s.monthTotal + ' this month';
+    if (s.linksCount) $('linksTileSub').textContent = s.linksCount + ' saved link' + (s.linksCount === 1 ? '' : 's');
+    const notesSub = $('notesTileSub');
+    if (!s.dailyNoteWritten) {
+      notesSub.textContent = 'Write your daily note';
+      notesSub.classList.add('reminder');
+    } else {
+      notesSub.classList.remove('reminder');
+      notesSub.textContent = s.notesCount ? s.notesCount + ' notes · daily ✓' : 'Ideas & docs';
+    }
+  }
+  renderTileStats();
+  window.addEventListener('storage', renderTileStats);
+  window.addEventListener('focus', renderTileStats);
+  setInterval(renderTileStats, 30 * 1000);
+
+  /* ---------- Sirius Daily Briefing ---------- */
+  const BRIEFING_CACHE_KEY = 'hub:briefing';
+  const SIRIUS_KEY_LS = 'nova_lite_api_key';
+
+  function showBriefing(text) {
+    const body = $('briefingBody');
+    body.classList.remove('placeholder', 'err');
+    body.textContent = text;
+    $('briefingBtn').textContent = 'Regenerate';
+  }
+  (function initBriefing() {
+    const cached = loadJSON(BRIEFING_CACHE_KEY, null);
+    if (cached && cached.date === calKey()) showBriefing(cached.text);
+  })();
+
+  async function generateBriefing() {
+    const key = (function () { try { return localStorage.getItem(SIRIUS_KEY_LS) || ''; } catch (e) { return ''; } })();
+    const body = $('briefingBody');
+    const btn = $('briefingBtn');
+    if (!key) {
+      body.classList.add('err');
+      body.classList.remove('placeholder');
+      body.textContent = 'No API key yet — open the Sirius tile and paste your Anthropic key there first (it’s shared across the whole dashboard).';
+      return;
+    }
+    btn.disabled = true;
+    body.classList.remove('err');
+    body.classList.add('placeholder');
+    body.textContent = 'Sirius is reading your dashboard…';
+
+    const s = collectStats();
+    const ctx = [
+      'Time: ' + new Date().toLocaleString(undefined, { weekday: 'long', hour: 'numeric', minute: '2-digit' }),
+      'Today’s goals: ' + (s.goalsTotal ? s.goalsDone + '/' + s.goalsTotal + ' done — ' + s.goalTitles.join('; ') : 'none set yet'),
+      'Water logged today: ' + s.waterToday,
+      'Daily note written: ' + (s.dailyNoteWritten ? 'yes' : 'not yet'),
+      'This month’s planner: ' + (s.monthTotal ? s.monthDone + '/' + s.monthTotal + ' done — ' + s.monthTitles.join('; ') : 'nothing planned'),
+      'Net worth: ' + fmtUsd(s.netWorth),
+      'Subscriptions: ' + fmtUsd(s.subsMonthly) + '/mo',
+      'Wishlist: ' + s.wishCount + ' items totaling ' + fmtUsd(s.wishTotal),
+    ].join('\n');
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-8',
+          max_tokens: 512,
+          system: 'You are Sirius, the user’s personal mentor, writing their daily dashboard briefing. ' +
+            'Given the live snapshot of their day below, write a short, punchy briefing: where they stand, the single most important thing to do next, and one concrete nudge. ' +
+            'Direct, warm, zero fluff, no greetings, no markdown, no bullet lists — just 3-5 plain sentences.',
+          messages: [{ role: 'user', content: ctx }],
+        }),
+      });
+      const json = await res.json();
+      if (json.error) throw new Error(json.error.message || 'Something went wrong.');
+      const text = ((json.content && json.content[0] && json.content[0].text) || '').trim();
+      if (!text) throw new Error('Empty reply — try again.');
+      saveJSON(BRIEFING_CACHE_KEY, { date: calKey(), text });
+      showBriefing(text);
+    } catch (e) {
+      body.classList.add('err');
+      body.classList.remove('placeholder');
+      body.textContent = e.message || String(e);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  $('briefingBtn').addEventListener('click', generateBriefing);
 })();
 </script>
 </body>
