@@ -91,8 +91,7 @@
 }
 .topbar-finance-btn:hover { background: rgba(255, 255, 255, 0.08); }
 .topbar-finance-icon {
-  font-size: 20px; line-height: 1;
-  filter: grayscale(100%) brightness(1.4);
+  font-size: 10px; font-weight: 800; letter-spacing: 0.04em;
   opacity: 0.85;
 }
 
@@ -117,18 +116,8 @@
   -webkit-tap-highlight-color: transparent;
   transition: color 0.15s;
 }
-.bottombar-tab-icon {
-  font-size: 24px; line-height: 1;
-  filter: grayscale(100%) brightness(1.2);
-  opacity: 0.55;
-  transition: opacity 0.15s, filter 0.15s, transform 0.10s;
-}
 .bottombar-tab.active {
   color: #FAFAFA;
-}
-.bottombar-tab.active .bottombar-tab-icon {
-  filter: grayscale(100%) brightness(1.6);
-  opacity: 1;
 }
 .bottombar-tab:active .bottombar-tab-icon { transform: scale(0.92); }
 
@@ -143,8 +132,6 @@ body.has-bottombar {
   .topbar-pill-count { font-size: 12px; }
   .topbar-water-add { width: 40px; font-size: 18px; }
   .topbar-finance-btn { width: 40px; height: 38px; }
-  .topbar-finance-icon { font-size: 18px; }
-  .bottombar-tab-icon { font-size: 22px; }
   .bottombar-tab { font-size: 10px; }
 }
 
@@ -205,7 +192,7 @@ body.topbar-modal-open {
     <button class="topbar-water-add" id="topbarWaterAdd" aria-label="Log one drink" type="button">+</button>
   </div>
   <a href="finance.html" class="topbar-finance-btn" id="topbarFinance" aria-label="Finance">
-    <span class="topbar-finance-icon">📊</span>
+    <span class="topbar-finance-icon">FIN</span>
   </a>
 </header>
 `;
@@ -213,7 +200,6 @@ body.topbar-modal-open {
   const bottombarHtml = `
 <nav class="bottombar" id="bottombar" role="navigation" aria-label="Main tabs">
   <a href="index.html" class="bottombar-tab" data-page="main">
-    <span class="bottombar-tab-icon">🏠</span>
     <span>Main</span>
   </a>
 </nav>

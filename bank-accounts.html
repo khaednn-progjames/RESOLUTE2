@@ -103,7 +103,6 @@ body::after {
 .inst-block:last-child { margin-bottom: 0; }
 .inst-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
 .inst-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.inst-name .mark { font-size: 16px; }
 .disconnect-btn {
   font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; padding: 6px 10px; border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.10); background: transparent; color: var(--text-tertiary); cursor: pointer;
@@ -176,7 +175,7 @@ body::after {
       '<div class="ba-empty">' +
       '<div class="ba-empty-title">No banks connected</div>' +
       '<div class="ba-empty-sub">Securely link a bank account with Plaid to see real, live balances here. Your login credentials go straight to your bank/Plaid — never to this app.</div>' +
-      '<button class="connect-btn" id="connectBtn" type="button">🏦 Connect a bank</button>' +
+      '<button class="connect-btn" id="connectBtn" type="button">Connect a bank</button>' +
       '</div>';
     $('connectBtn').addEventListener('click', startLink);
   }
@@ -186,12 +185,12 @@ body::after {
     let html = '';
     items.forEach(it => {
       if (it.error) {
-        html += '<div class="inst-block"><div class="inst-head"><div class="inst-name"><span class="mark">🏦</span>' + esc(it.institution_name || 'Bank') + '</div>' +
+        html += '<div class="inst-block"><div class="inst-head"><div class="inst-name">' + esc(it.institution_name || 'Bank') + '</div>' +
           '<button class="disconnect-btn" data-item="' + esc(it.item_id) + '">Disconnect</button></div>' +
           '<div class="ba-err">Couldn\'t load this bank: ' + esc(it.error) + '</div></div>';
         return;
       }
-      html += '<div class="inst-block"><div class="inst-head"><div class="inst-name"><span class="mark">🏦</span>' + esc(it.institution_name || 'Bank') + '</div>' +
+      html += '<div class="inst-block"><div class="inst-head"><div class="inst-name">' + esc(it.institution_name || 'Bank') + '</div>' +
         '<button class="disconnect-btn" data-item="' + esc(it.item_id) + '">Disconnect</button></div>';
       (it.accounts || []).forEach(a => {
         const bal = a.balances || {};
@@ -250,7 +249,7 @@ body::after {
     try {
       const res = await fetch('/api/plaid-link-token', { method: 'POST' });
       const json = await res.json();
-      if (json.error) { showError('Could not start Plaid Link. ', esc(json.error)); if (btn) { btn.disabled = false; btn.textContent = '🏦 Connect a bank'; } return; }
+      if (json.error) { showError('Could not start Plaid Link. ', esc(json.error)); if (btn) { btn.disabled = false; btn.textContent = 'Connect a bank'; } return; }
 
       const handler = Plaid.create({
         token: json.link_token,
@@ -267,12 +266,12 @@ body::after {
           } catch (e) { showError('Could not finish connecting. ', esc(String(e))); }
           loadBalances();
         },
-        onExit: () => { if (btn) { btn.disabled = false; btn.textContent = btn.id === 'connectMoreBtn' ? '+ Connect another bank' : '🏦 Connect a bank'; } },
+        onExit: () => { if (btn) { btn.disabled = false; btn.textContent = btn.id === 'connectMoreBtn' ? '+ Connect another bank' : 'Connect a bank'; } },
       });
       handler.open();
     } catch (e) {
       showError('Could not start Plaid Link. ', esc(String(e)));
-      if (btn) { btn.disabled = false; btn.textContent = '🏦 Connect a bank'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Connect a bank'; }
     }
   }
 

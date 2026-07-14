@@ -120,7 +120,6 @@ body::after {
   font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
   color: var(--text-tertiary); display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
 }
-.section-title .emoji { font-size: 13px; }
 .section-title .cnt { font-family: var(--font-mono); color: var(--text-tertiary); }
 .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.10), transparent); }
 
@@ -198,16 +197,16 @@ body::after {
   const STORE_KEY = 'links:items';
 
   const CATEGORIES = [
-    { id: 'video',    label: 'Video',      emoji: '🎥', test: h => /(^|\.)(youtube\.com|youtu\.be|vimeo\.com|twitch\.tv|netflix\.com)$/.test(h) },
-    { id: 'social',   label: 'Social',     emoji: '💬', test: h => /(^|\.)(twitter\.com|x\.com|instagram\.com|facebook\.com|threads\.net|linkedin\.com|reddit\.com|tiktok\.com|mastodon\.social)$/.test(h) },
-    { id: 'code',     label: 'Code',       emoji: '💻', test: h => /(^|\.)(github\.com|gitlab\.com|bitbucket\.org|stackoverflow\.com|npmjs\.com|developer\.mozilla\.org|codepen\.io|vercel\.com|codesandbox\.io)$/.test(h) },
-    { id: 'docs',     label: 'Docs & Notes', emoji: '📄', test: h => /(^|\.)(notion\.so|docs\.google\.com|drive\.google\.com|dropbox\.com|evernote\.com|onedrive\.live\.com|coda\.io)$/.test(h) },
-    { id: 'shopping', label: 'Shopping',   emoji: '🛍️', test: h => /(^|\.)(amazon\.[a-z.]+|ebay\.com|etsy\.com|aliexpress\.com|target\.com|walmart\.com)$/.test(h) },
-    { id: 'music',    label: 'Music',      emoji: '🎵', test: h => /(^|\.)(spotify\.com|soundcloud\.com|music\.apple\.com|bandcamp\.com)$/.test(h) },
-    { id: 'reading',  label: 'Reading & News', emoji: '📰', test: h => /(^|\.)(medium\.com|substack\.com|nytimes\.com|wikipedia\.org|bbc\.com|theverge\.com|wsj\.com|news\.ycombinator\.com)$/.test(h) },
-    { id: 'design',   label: 'Design',     emoji: '🎨', test: h => /(^|\.)(figma\.com|dribbble\.com|behance\.net|canva\.com)$/.test(h) },
-    { id: 'ai',       label: 'AI Tools',   emoji: '🤖', test: h => /(^|\.)(openai\.com|anthropic\.com|claude\.ai|chatgpt\.com|huggingface\.co|perplexity\.ai)$/.test(h) },
-    { id: 'other',    label: 'Other',      emoji: '🔗', test: () => true },
+    { id: 'video',    label: 'Video',      test: h => /(^|\.)(youtube\.com|youtu\.be|vimeo\.com|twitch\.tv|netflix\.com)$/.test(h) },
+    { id: 'social',   label: 'Social',     test: h => /(^|\.)(twitter\.com|x\.com|instagram\.com|facebook\.com|threads\.net|linkedin\.com|reddit\.com|tiktok\.com|mastodon\.social)$/.test(h) },
+    { id: 'code',     label: 'Code',       test: h => /(^|\.)(github\.com|gitlab\.com|bitbucket\.org|stackoverflow\.com|npmjs\.com|developer\.mozilla\.org|codepen\.io|vercel\.com|codesandbox\.io)$/.test(h) },
+    { id: 'docs',     label: 'Docs & Notes', test: h => /(^|\.)(notion\.so|docs\.google\.com|drive\.google\.com|dropbox\.com|evernote\.com|onedrive\.live\.com|coda\.io)$/.test(h) },
+    { id: 'shopping', label: 'Shopping',   test: h => /(^|\.)(amazon\.[a-z.]+|ebay\.com|etsy\.com|aliexpress\.com|target\.com|walmart\.com)$/.test(h) },
+    { id: 'music',    label: 'Music',      test: h => /(^|\.)(spotify\.com|soundcloud\.com|music\.apple\.com|bandcamp\.com)$/.test(h) },
+    { id: 'reading',  label: 'Reading & News', test: h => /(^|\.)(medium\.com|substack\.com|nytimes\.com|wikipedia\.org|bbc\.com|theverge\.com|wsj\.com|news\.ycombinator\.com)$/.test(h) },
+    { id: 'design',   label: 'Design',     test: h => /(^|\.)(figma\.com|dribbble\.com|behance\.net|canva\.com)$/.test(h) },
+    { id: 'ai',       label: 'AI Tools',   test: h => /(^|\.)(openai\.com|anthropic\.com|claude\.ai|chatgpt\.com|huggingface\.co|perplexity\.ai)$/.test(h) },
+    { id: 'other',    label: 'Other',      test: () => true },
   ];
   const CAT_BY_ID = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
 
@@ -250,7 +249,7 @@ body::after {
     }
     CATEGORIES.forEach(c => {
       const opt = document.createElement('option');
-      opt.value = c.id; opt.textContent = c.emoji + ' ' + c.label;
+      opt.value = c.id; opt.textContent = c.label;
       if (c.id === selected) opt.selected = true;
       sel.appendChild(opt);
     });
@@ -273,7 +272,7 @@ body::after {
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'chip' + (activeChip === c.id ? ' on' : '');
-      chip.innerHTML = c.emoji + ' ' + c.label + ' <span class="n">' + n + '</span>';
+      chip.innerHTML = c.label + ' <span class="n">' + n + '</span>';
       chip.addEventListener('click', () => { activeChip = activeChip === c.id ? 'all' : c.id; render(); });
       row.appendChild(chip);
     });
@@ -312,7 +311,7 @@ body::after {
       section.className = 'section';
       const title = document.createElement('div');
       title.className = 'section-title';
-      title.innerHTML = '<span class="emoji">' + c.emoji + '</span><span>' + c.label + '</span><span class="cnt">' + list.length + '</span>';
+      title.innerHTML = '<span>' + c.label + '</span><span class="cnt">' + list.length + '</span>';
       section.appendChild(title);
 
       list.forEach(it => {

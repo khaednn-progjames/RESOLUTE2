@@ -1303,7 +1303,7 @@ img, video, canvas, svg { max-width: 100%; }
         <span class="wt-unit" id="wtUnit">kg</span>
       </div>
       <div class="wt-delta hidden" id="wtDelta"></div>
-      <div class="wt-streak hidden" id="wtStreak">🔥<span id="wtStreakNum">0 day streak</span></div>
+      <div class="wt-streak hidden" id="wtStreak"><span id="wtStreakNum">0 day streak</span></div>
 
       <div class="wt-empty" id="wtEmpty">Log your first weight to start tracking.</div>
 
@@ -3609,9 +3609,9 @@ img, video, canvas, svg { max-width: 100%; }
   </div>
   <div class="nv-body" id="nvBody"></div>
   <div class="nv-quick">
-    <button class="nv-chip" data-q="Give me an overview of how everything is going — bodyweight trend, training consistency, and what to focus on next.">📊 Overview</button>
-    <button class="nv-chip" data-q="How is my bodyweight trending and am I on track?">⚖️ Weight</button>
-    <button class="nv-chip" data-q="Look at my recent workouts — am I progressing and what should I push next?">💪 Lifts</button>
+    <button class="nv-chip" data-q="Give me an overview of how everything is going — bodyweight trend, training consistency, and what to focus on next.">Overview</button>
+    <button class="nv-chip" data-q="How is my bodyweight trending and am I on track?">Weight</button>
+    <button class="nv-chip" data-q="Look at my recent workouts — am I progressing and what should I push next?">Lifts</button>
   </div>
   <div class="nv-foot">
     <input class="nv-input" id="nvInput" type="text" placeholder="Ask Sirius…" autocomplete="off">
@@ -3679,7 +3679,7 @@ img, video, canvas, svg { max-width: 100%; }
     text = (text||'').trim(); if (!text || busy) return;
     const key = savedKey();
     addMsg('user', md(text));
-    if (!key){ addMsg('coach', md("Paste your **Anthropic API key** on the Sirius page first (the 🧠 tile on the home screen) — it's saved in this browser and I'll use it here too.")); return; }
+    if (!key){ addMsg('coach', md("Paste your **Anthropic API key** on the Sirius page first (the tile on the home screen) — it's saved in this browser and I'll use it here too.")); return; }
     busy = true;
     const loading = addMsg('coach', '<span class="nv-dots"><i></i><i></i><i></i></span>');
     try {
