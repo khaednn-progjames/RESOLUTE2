@@ -393,10 +393,7 @@ body.topbar-modal-open {
     return !isFinancePage() && !isEmbedded();
   }
   function currentPageKey() {
-    const p = (window.location.pathname || '').toLowerCase();
-    if (p.endsWith('health.html')) return 'health';
-    if (p.endsWith('gym.html')) return 'fitness';
-    return 'main'; // index.html, /, or anything else falls back to main
+    return 'main'; // the bottom nav only has one tab today
   }
 
   function injectStyleAndHTML() {
