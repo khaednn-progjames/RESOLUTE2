@@ -774,6 +774,23 @@ body::after {
       (loadJSON('nw:' + c, []) || []).forEach((it) => { nw += Number(it.amount) || 0; });
     });
     s.netWorth = nw;
+    s.cryptoTotal = (loadJSON('nw:crypto', []) || []).reduce((t, it) => t + (Number(it.amount) || 0), 0);
+    s.stocksTotal = (loadJSON('nw:stocks', []) || []).reduce((t, it) => t + (Number(it.amount) || 0), 0);
+
+    // Net worth already gets logged as a { t, v } snapshot series by Finance —
+    // reuse it here for a "how's the portfolio moved lately" briefing signal,
+    // no separate market API needed.
+    const nwHist = loadJSON('nw:history', []) || [];
+    const weekAgoTs = Date.now() - 7 * 86400000;
+    const weekAgoEntry = nwHist.filter((h) => h && h.t <= weekAgoTs).slice(-1)[0];
+    const latestEntry = nwHist[nwHist.length - 1];
+    if (weekAgoEntry && latestEntry) {
+      s.netWorthChange7d = latestEntry.v - weekAgoEntry.v;
+      s.netWorthChangePct7d = weekAgoEntry.v ? (s.netWorthChange7d / weekAgoEntry.v) * 100 : null;
+    } else {
+      s.netWorthChange7d = null;
+      s.netWorthChangePct7d = null;
+    }
 
     const now = new Date();
     const monthKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
@@ -882,9 +899,12 @@ body::after {
       'Daily note written: ' + (s.dailyNoteWritten ? 'yes' : 'not yet'),
       'This month’s planner: ' + (s.monthTotal ? s.monthDone + '/' + s.monthTotal + ' done — ' + s.monthTitles.join('; ') : 'nothing planned'),
       'Net worth: ' + fmtUsd(s.netWorth),
+      s.netWorthChange7d != null ? 'Net worth, past 7 days: ' + (s.netWorthChange7d >= 0 ? '+' : '') + fmtUsd(s.netWorthChange7d) + (s.netWorthChangePct7d != null ? ' (' + s.netWorthChangePct7d.toFixed(1) + '%)' : '') : null,
+      s.cryptoTotal > 0 ? 'Crypto holdings: ' + fmtUsd(s.cryptoTotal) : null,
+      s.stocksTotal > 0 ? 'Stocks/investments: ' + fmtUsd(s.stocksTotal) : null,
       'Subscriptions: ' + fmtUsd(s.subsMonthly) + '/mo',
       'Wishlist: ' + s.wishCount + ' items totaling ' + fmtUsd(s.wishTotal),
-    ].join('\n');
+    ].filter(Boolean).join('\n');
 
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -900,6 +920,7 @@ body::after {
           max_tokens: 512,
           system: 'You are Sirius, the user’s personal mentor, writing their daily dashboard briefing. ' +
             'Given the live snapshot of their day below, write a short, punchy briefing: where they stand, the single most important thing to do next, and one concrete nudge. ' +
+            'If a 7-day net worth change or crypto/stock holdings are included, weave in a brief, specific comment on that movement — only when it is actually notable, otherwise skip it rather than forcing a mention. ' +
             'Direct, warm, zero fluff, no greetings, no markdown, no bullet lists — just 3-5 plain sentences.',
           messages: [{ role: 'user', content: ctx }],
         }),
