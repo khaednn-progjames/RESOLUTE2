@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
+<script src="sirius-usage.js" defer></script>
 <style>
 :root {
   --bg: #050506;
@@ -652,6 +653,7 @@ main {
       }),
     });
     const json = await res.json();
+    if (typeof logSiriusUsage === 'function') logSiriusUsage('health-meal-scan', json.usage);
     if (json.error) throw new Error(json.error.message || 'Something went wrong.');
     const reply = (json.content && json.content[0] && json.content[0].text) || '';
     const name = ((reply.match(/NAME:\s*(.+)/i) || [])[1] || 'Meal').trim();

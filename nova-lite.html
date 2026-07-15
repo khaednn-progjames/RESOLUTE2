@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
+<script src="sirius-usage.js" defer></script>
 <!-- ============================================================
  * NOVA LITE — a simple, drop-in AI mentor for ANY dashboard.
  * Single self-contained file. No backend, no build step.
@@ -330,6 +331,7 @@ body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; color: 
         }),
       });
       const json = await res.json();
+      if (typeof logSiriusUsage === 'function') logSiriusUsage('sirius-chat', json.usage);
       if (json.error){
         loading.querySelector('div:last-child').innerHTML = render('- ' + (json.error.message || 'Something went wrong — check your API key.'));
         activeSession.messages.pop(); // don't keep the user message queued against a failed turn

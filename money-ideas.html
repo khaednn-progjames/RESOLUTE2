@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
+<script src="sirius-usage.js" defer></script>
 
 <style>
 /* ===== Shared design tokens (same as the rest of the dashboard) ===== */
@@ -369,6 +370,7 @@ body::after {
         }),
       });
       const json = await res.json();
+      if (typeof logSiriusUsage === 'function') logSiriusUsage('money-ideas', json.usage);
       if (json.error) {
         loading.querySelector('.bubble').innerHTML = renderBody('- ' + (json.error.message || 'Something went wrong — check your API key.'));
         loading.querySelector('.msg-actions').remove();

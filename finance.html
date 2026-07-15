@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
+<script src="sirius-usage.js" defer></script>
 <style>
 :root {
   --bg: #0A0A0B;
@@ -2688,6 +2689,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         }),
       });
       const json = await res.json();
+      if (typeof logSiriusUsage === 'function') logSiriusUsage('finance-bank-scan', json.usage);
       if (json.error) { finAiRenderError(json.error.message || 'Something went wrong.'); return; }
       const reply = (json.content && json.content[0] && json.content[0].text) || '';
       const accounts = [];
@@ -2836,6 +2838,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         }),
       });
       const json = await res.json();
+      if (typeof logSiriusUsage === 'function') logSiriusUsage('finance-ask-sirius', json.usage);
       if (json.error) {
         askSiriusMessages.pop();
         renderAskSiriusModal(false, json.error.message || 'Something went wrong.');
@@ -2899,6 +2902,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         }),
       });
       const json = await res.json();
+      if (typeof logSiriusUsage === 'function') logSiriusUsage('finance-budget-check', json.usage);
       if (json.error) { finAiRenderError(json.error.message || 'Something went wrong.'); return; }
       const reply = (json.content && json.content[0] && json.content[0].text) || '';
       const verdicts = [];
@@ -2986,6 +2990,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         }),
       });
       const json = await res.json();
+      if (typeof logSiriusUsage === 'function') logSiriusUsage('finance-wish-scan', json.usage);
       if (json.error) { finAiRenderError(json.error.message || 'Something went wrong.'); return; }
       const reply = (json.content && json.content[0] && json.content[0].text) || '';
       const items = [];
@@ -4213,6 +4218,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         }),
       });
       const json = await res.json();
+      if (typeof logSiriusUsage === 'function') logSiriusUsage('finance-receipt-scan', json.usage);
       if (json.error) { finAiRenderError(json.error.message || 'Something went wrong.'); return; }
       const reply = (json.content && json.content[0] && json.content[0].text) || '';
       const merchant = (reply.match(/MERCHANT:\s*(.+)/i) || [])[1];

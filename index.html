@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
+<script src="sirius-usage.js" defer></script>
 
 <style>
 /* ===== Shared design tokens (same as the rest of the dashboard) ===== */
@@ -426,6 +427,23 @@ body::after {
       <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;line-height:1.5">Downloads everything on this dashboard (goals, notes, finance, water, all of it) as one JSON file. Restore merges it back in on any device.</div>
       <div class="set-status" id="backupStatus"></div>
     </div>
+
+    <div class="section-divider"></div>
+    <div class="field">
+      <label class="field-label">Sirius usage</label>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px">
+        <div style="flex:1; min-width:110px; padding:12px 14px; border-radius:11px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.18)">
+          <div style="font-size:20px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums" id="siriusUsageTotal">$0.00</div>
+          <div style="font-size:9.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); margin-top:4px">All time est.</div>
+        </div>
+        <div style="flex:1; min-width:110px; padding:12px 14px; border-radius:11px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.18)">
+          <div style="font-size:20px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums" id="siriusUsage30">$0.00</div>
+          <div style="font-size:9.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); margin-top:4px">Last 30 days</div>
+        </div>
+      </div>
+      <div id="siriusUsageBreakdown" style="font-size:11.5px; color:var(--text-tertiary); line-height:1.8"></div>
+      <div style="font-size:10.5px; color:var(--text-tertiary); margin-top:8px; line-height:1.5">Rough estimate from token counts across every Sirius feature on this dashboard, priced at Opus rates. Local to this browser, not synced.</div>
+    </div>
   </div>
 </div>
 
@@ -510,7 +528,17 @@ body::after {
   }
 
   /* ---------- open / close ---------- */
-  function open() { populate(); $('settingsBg').classList.add('show'); }
+  function renderSiriusUsage() {
+    if (typeof siriusUsageSummary !== 'function') return;
+    const s = siriusUsageSummary();
+    $('siriusUsageTotal').textContent = '$' + s.totalCost.toFixed(2);
+    $('siriusUsage30').textContent = '$' + s.cost30.toFixed(2);
+    const rows = Object.keys(s.byFeature).sort((a, b) => s.byFeature[b] - s.byFeature[a]);
+    $('siriusUsageBreakdown').innerHTML = rows.length
+      ? rows.map((f) => '<div style="display:flex; justify-content:space-between"><span>' + f + '</span><span>$' + s.byFeature[f].toFixed(2) + '</span></div>').join('')
+      : 'No Sirius calls logged yet.';
+  }
+  function open() { populate(); renderSiriusUsage(); $('settingsBg').classList.add('show'); }
   function close() { $('settingsBg').classList.remove('show'); }
   $('settingsOpen').addEventListener('click', open);
   $('settingsClose').addEventListener('click', close);
@@ -809,6 +837,7 @@ body::after {
         }),
       });
       const json = await res.json();
+      if (typeof logSiriusUsage === 'function') logSiriusUsage('daily-briefing', json.usage);
       if (json.error) throw new Error(json.error.message || 'Something went wrong.');
       const text = ((json.content && json.content[0] && json.content[0].text) || '').trim();
       if (!text) throw new Error('Empty reply — try again.');

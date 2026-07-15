@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#0a0a0b">
 <title>Progressive Overload Coach</title>
 <script src="topbar.js" defer></script>
+<script src="sirius-usage.js" defer></script>
 
 <!-- =============================================================
      EDIT THIS BLOCK TO MAKE THE APP YOURS.
@@ -3689,6 +3690,7 @@ img, video, canvas, svg { max-width: 100%; }
         body: JSON.stringify({ model:'claude-opus-4-8', max_tokens:1024, system: SYS + gymContext(), messages:[{role:'user', content:text}] }),
       });
       const json = await res.json();
+      if (typeof logSiriusUsage === 'function') logSiriusUsage('gym-coach', json.usage);
       if (json.error){ loading.innerHTML = md('- ' + (json.error.message || 'Something went wrong — check your API key.')); busy=false; return; }
       const reply = (json.content && json.content[0] && json.content[0].text) || 'Hmm, no reply.';
       loading.innerHTML = md(reply);

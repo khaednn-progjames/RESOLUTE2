@@ -10,6 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
+<script src="sirius-usage.js" defer></script>
 <style>
 :root {
   --text-primary: #FAFAFA;
@@ -1363,6 +1364,7 @@ body::after {
       })
     });
     const data = await res.json();
+    if (typeof logSiriusUsage === 'function') logSiriusUsage('main-goal-polish', data.usage);
     const content = (data && data.content && data.content[0] && data.content[0].text) || '';
     const arr = JSON.parse(content);
     if (!Array.isArray(arr) || arr.length < 1 || typeof arr[0] !== 'string') throw new Error('bad response');

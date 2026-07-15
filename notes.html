@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
+<script src="sirius-usage.js" defer></script>
 
 <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
@@ -1256,7 +1257,7 @@ body::after {
     $('siriusModalBody').innerHTML = '<div class="sirius-err">' + siriusEsc(msg) + '</div>';
   }
 
-  async function callSirius(systemPrompt, userText) {
+  async function callSirius(systemPrompt, userText, feature) {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -1273,6 +1274,7 @@ body::after {
       }),
     });
     const json = await res.json();
+    if (typeof logSiriusUsage === 'function') logSiriusUsage(feature || 'notes', json.usage);
     if (json.error) throw new Error(json.error.message || 'Something went wrong.');
     return (json.content && json.content[0] && json.content[0].text) || '';
   }
@@ -1297,7 +1299,7 @@ body::after {
       "Format every suggestion as a '- ' bullet point, one short sentence each, no preamble. Give 6-8 suggestions.\n\n" +
       "Existing note titles: " + (existingTitles.length ? existingTitles.join(', ') : '(no notes yet)');
 
-    callSirius(system, 'Give me ideas for notes to write.').then(reply => {
+    callSirius(system, 'Give me ideas for notes to write.', 'notes-ideas').then(reply => {
       const ideas = bulletLines(reply);
       if (ideas.length === 0) { renderSiriusError('Sirius didn\'t return any ideas — try again.'); return; }
       $('siriusModalBody').innerHTML = ideas.map((idea, i) =>
@@ -1329,7 +1331,7 @@ body::after {
     const system = "You are Sirius, the user's personal mentor embedded in their notes app. " +
       "Summarize the note below concisely — 2-4 short bullet points capturing the key ideas, formatted as '- ' bullet points. No preamble.";
 
-    callSirius(system, text).then(reply => {
+    callSirius(system, text, 'notes-summarize').then(reply => {
       const lines = bulletLines(reply);
       const html = lines.length
         ? '<ul>' + lines.map(l => '<li>' + siriusEsc(l) + '</li>').join('') + '</ul>'
@@ -1380,7 +1382,7 @@ body::after {
       "CATEGORY: <one category from the list above, exact spelling>\n" +
       "BODY:\n<the compacted note content>";
 
-    callSirius(system, raw).then(reply => {
+    callSirius(system, raw, 'notes-quick-thought').then(reply => {
       const titleMatch = reply.match(/TITLE:\s*(.+)/i);
       const catMatch = reply.match(/CATEGORY:\s*(.+)/i);
       const bodyMatch = reply.match(/BODY:\s*([\s\S]*)/i);
@@ -1480,7 +1482,7 @@ body::after {
       "then 3-5 '- ' bullet points: what worked, what slipped, and the single most important focus for next week. " +
       "Honest but encouraging, no fluff, no headers, no greeting.";
 
-    callSirius(system, collectWeekContext()).then(reply => {
+    callSirius(system, collectWeekContext(), 'notes-weekly-review').then(reply => {
       const title = 'Weekly Review — ' + new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
       const id = newId();
       const idx2 = loadIndex();
@@ -1812,7 +1814,7 @@ body::after {
       "Existing backlog: " + (existing.length ? existing.join(', ') : '(empty)') + "\n" +
       "Previously suggested (do not repeat): " + (seen.length ? seen.join(', ') : '(none yet)');
 
-    callSirius(system, 'Give me new dashboard feature ideas.').then(reply => {
+    callSirius(system, 'Give me new dashboard feature ideas.', 'notes-brainstorm').then(reply => {
       const suggestions = bulletLines(reply);
       if (suggestions.length === 0) { renderSiriusError('Sirius didn\'t return any ideas — try again.'); return; }
       rememberSeen(suggestions);
@@ -1849,7 +1851,7 @@ body::after {
       "Expand the idea into 2-3 concise sentences: what it does, why it's useful, and a rough approach for how it could work. " +
       "No preamble, no bullet points, no markdown — just the expanded description as plain text, written to directly replace the original one-liner.";
 
-    callSirius(system, 'Idea to expand: ' + entry.text).then(reply => {
+    callSirius(system, 'Idea to expand: ' + entry.text, 'notes-expand-idea').then(reply => {
       const all = loadIdeas();
       const e2 = all.find(x => x.id === id);
       if (e2) { e2.text = reply.trim(); saveIdeas(all); renderIdeas(); }
