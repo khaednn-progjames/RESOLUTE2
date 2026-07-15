@@ -536,6 +536,64 @@ main {
 .meal-del { border: 0; background: transparent; color: var(--text-tertiary); font-size: 17px; cursor: pointer; padding: 0 4px; opacity: 0.5; transition: opacity 0.2s, color 0.2s; }
 .meal-row:hover .meal-del { opacity: 1; }
 .meal-del:hover { color: #FF6B6B; }
+
+/* Grocery suggestion banner shown after a meal scan */
+.grocery-suggest {
+  display: none; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 10px; padding: 10px 12px; border-radius: 11px;
+  background: rgba(107,227,164,0.08); border: 1px solid rgba(107,227,164,0.25);
+  font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+}
+.grocery-suggest.show { display: flex; }
+.grocery-suggest b { color: var(--text-primary); }
+.grocery-suggest-btn {
+  border: 0; border-radius: 8px; padding: 6px 11px; cursor: pointer;
+  background: rgba(107,227,164,0.18); color: var(--success); font-family: inherit; font-size: 11.5px; font-weight: 700;
+}
+.grocery-suggest-dismiss { border: 0; background: transparent; color: var(--text-tertiary); font-size: 16px; cursor: pointer; padding: 0 2px; margin-left: auto; }
+
+/* Grocery list */
+.grocery-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.grocery-add-input {
+  flex: 1; min-width: 0; padding: 10px 13px; border: 1px solid rgba(255,255,255,0.08); border-radius: 11px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary); font-family: inherit; font-size: 13.5px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.grocery-add-input::placeholder { color: var(--text-tertiary); }
+.grocery-add-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.grocery-add-btn {
+  padding: 10px 16px; border: 0; border-radius: 11px; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.grocery-list { list-style: none; margin: 0; padding: 0; }
+.grocery-row {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px; margin-bottom: 6px;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); border-radius: 12px;
+  transition: background 0.2s, opacity 0.3s;
+}
+.grocery-row:hover { background: rgba(255,255,255,0.06); }
+.grocery-row.bought { opacity: 0.45; }
+.grocery-row.bought .grocery-name { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
+.grocery-check {
+  appearance: none; -webkit-appearance: none; width: 20px; height: 20px; flex-shrink: 0; margin: 0;
+  border: 1.5px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); border-radius: 6px;
+  position: relative; cursor: pointer; transition: background 0.2s, border-color 0.2s;
+}
+.grocery-check:checked { background: var(--success, #6BE3A4); border-color: var(--success, #6BE3A4); }
+.grocery-check:checked::after {
+  content: ''; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px;
+  border: solid #0A0A0B; border-width: 0 2px 2px 0; transform: rotate(45deg);
+}
+.grocery-name { flex: 1; min-width: 0; font-size: 13.5px; color: var(--text-primary); }
+.grocery-del { border: 0; background: transparent; color: var(--text-tertiary); font-size: 17px; cursor: pointer; padding: 0 4px; opacity: 0.5; transition: opacity 0.2s, color 0.2s; }
+.grocery-row:hover .grocery-del { opacity: 1; }
+.grocery-del:hover { color: #FF6B6B; }
+.grocery-clear-btn {
+  margin-top: 10px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.04);
+  color: var(--text-tertiary); font-family: inherit; font-size: 11.5px; font-weight: 600;
+  padding: 7px 12px; border-radius: 9px; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.grocery-clear-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
 </style>
 </head>
 <body>
@@ -558,7 +616,22 @@ main {
     <button class="meal-snap-btn" id="mealSnapBtn" type="button">📷 Snap a meal</button>
     <input type="file" id="mealFileInput" accept="image/*" capture="environment" style="display:none">
     <div class="meal-status" id="mealStatus"></div>
+    <div class="grocery-suggest" id="grocerySuggest">
+      <span id="grocerySuggestText"></span>
+      <button type="button" class="grocery-suggest-btn" id="grocerySuggestAdd">+ Add to grocery list</button>
+      <button type="button" class="grocery-suggest-dismiss" id="grocerySuggestDismiss" aria-label="Dismiss">×</button>
+    </div>
     <ul class="meal-list" id="mealList"></ul>
+  </div>
+
+  <div class="section-title">Grocery List</div>
+  <div class="stack-card" id="groceryCard">
+    <div class="grocery-add-row">
+      <input type="text" id="groceryAddInput" class="grocery-add-input" placeholder="Add an item…" autocomplete="off">
+      <button type="button" id="groceryAddBtn" class="grocery-add-btn">+ Add</button>
+    </div>
+    <ul class="grocery-list" id="groceryList"></ul>
+    <button type="button" class="grocery-clear-btn" id="groceryClearBtn" style="display:none">Clear checked</button>
   </div>
 
   <section id="water" class="water-embed">
@@ -625,12 +698,14 @@ main {
   async function analyzeMeal(mediaType, base64) {
     const system = "You are Sirius, a nutrition assistant. The user photographed a meal. " +
       "Identify what it is and estimate the full meal's nutrition — be realistic about portion size from the photo. " +
+      "Also guess 2-5 raw ingredients this meal likely used that are worth restocking (e.g. \"chicken breast, rice, black beans\") — skip this if it's clearly takeout/restaurant food with no home restocking to do. " +
       "Respond in EXACTLY this format and nothing else:\n" +
       "NAME: <short name of the meal, e.g. \"Chicken burrito bowl\">\n" +
       "CALORIES: <number>\n" +
       "PROTEIN: <grams, number>\n" +
       "CARBS: <grams, number>\n" +
-      "FAT: <grams, number>";
+      "FAT: <grams, number>\n" +
+      "INGREDIENTS: <comma-separated list, or leave blank after the colon if not applicable>";
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -660,8 +735,92 @@ main {
     const num = (re) => parseFloat((reply.match(re) || [])[1]) || 0;
     const cal = num(/CALORIES:\s*([\d.]+)/i);
     if (!cal) throw new Error("Sirius couldn't read that photo as a meal — try another angle.");
-    return { name, cal, protein: num(/PROTEIN:\s*([\d.]+)/i), carbs: num(/CARBS:\s*([\d.]+)/i), fat: num(/FAT:\s*([\d.]+)/i) };
+    const ingredientsRaw = ((reply.match(/INGREDIENTS:\s*(.*)/i) || [])[1] || '').trim();
+    const ingredients = ingredientsRaw ? ingredientsRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
+    return { name, cal, protein: num(/PROTEIN:\s*([\d.]+)/i), carbs: num(/CARBS:\s*([\d.]+)/i), fat: num(/FAT:\s*([\d.]+)/i), ingredients };
   }
+
+  // ---------- Grocery list (plain checklist; suggestions come from meal scans) ----------
+  const GROCERY_KEY = 'grocery:items';
+  function loadGrocery() { try { return JSON.parse(localStorage.getItem(GROCERY_KEY)) || []; } catch (e) { return []; } }
+  function saveGrocery(arr) { try { localStorage.setItem(GROCERY_KEY, JSON.stringify(arr)); } catch (e) {} }
+  function groceryEsc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  function renderGrocery() {
+    const items = loadGrocery();
+    const list = $('groceryList');
+    list.innerHTML = '';
+    let anyBought = false;
+    items.forEach((it) => {
+      if (it.bought) anyBought = true;
+      const li = document.createElement('li');
+      li.className = 'grocery-row' + (it.bought ? ' bought' : '');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'grocery-check';
+      cb.checked = !!it.bought;
+      cb.addEventListener('change', () => {
+        const all = loadGrocery();
+        const e2 = all.find((x) => x.id === it.id);
+        if (e2) { e2.bought = cb.checked; saveGrocery(all); renderGrocery(); }
+      });
+      const name = document.createElement('div');
+      name.className = 'grocery-name';
+      name.textContent = it.name;
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'grocery-del';
+      del.textContent = '×';
+      del.addEventListener('click', () => { saveGrocery(loadGrocery().filter((x) => x.id !== it.id)); renderGrocery(); });
+      li.append(cb, name, del);
+      list.appendChild(li);
+    });
+    $('groceryClearBtn').style.display = anyBought ? '' : 'none';
+  }
+
+  function addGroceryItems(names) {
+    const items = loadGrocery();
+    const existing = new Set(items.map((x) => x.name.toLowerCase()));
+    names.forEach((n) => {
+      const clean = n.trim();
+      if (!clean || existing.has(clean.toLowerCase())) return;
+      items.push({ id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: clean, bought: false, addedAt: Date.now() });
+      existing.add(clean.toLowerCase());
+    });
+    saveGrocery(items);
+    renderGrocery();
+  }
+
+  $('groceryAddBtn').addEventListener('click', () => {
+    const v = $('groceryAddInput').value.trim();
+    if (!v) return;
+    addGroceryItems([v]);
+    $('groceryAddInput').value = '';
+  });
+  $('groceryAddInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); $('groceryAddBtn').click(); }
+  });
+  $('groceryClearBtn').addEventListener('click', () => {
+    saveGrocery(loadGrocery().filter((x) => !x.bought));
+    renderGrocery();
+  });
+
+  // ---------- Grocery suggestion banner, shown after a meal scan finds likely ingredients ----------
+  let pendingIngredients = [];
+  function showGrocerySuggestion(ingredients) {
+    pendingIngredients = ingredients;
+    $('grocerySuggestText').innerHTML = 'Restock for this meal: <b>' + ingredients.map(groceryEsc).join(', ') + '</b>?';
+    $('grocerySuggest').classList.add('show');
+  }
+  function hideGrocerySuggestion() {
+    pendingIngredients = [];
+    $('grocerySuggest').classList.remove('show');
+  }
+  $('grocerySuggestAdd').addEventListener('click', () => {
+    addGroceryItems(pendingIngredients);
+    hideGrocerySuggestion();
+  });
+  $('grocerySuggestDismiss').addEventListener('click', hideGrocerySuggestion);
 
   $('mealSnapBtn').addEventListener('click', () => {
     if (!apiKey()) {
@@ -688,6 +847,8 @@ main {
         saveMeals(arr);
         render();
         status('Logged: ' + meal.name + ' — ~' + Math.round(meal.cal) + ' cal ✓');
+        if (meal.ingredients && meal.ingredients.length) showGrocerySuggestion(meal.ingredients);
+        else hideGrocerySuggestion();
       } catch (err) {
         status(err.message || String(err), true);
       } finally {
@@ -699,7 +860,8 @@ main {
   });
 
   render();
-  window.addEventListener('storage', render);
+  renderGrocery();
+  window.addEventListener('storage', () => { render(); renderGrocery(); });
 })();
 </script>
 
@@ -709,7 +871,7 @@ document.addEventListener('DOMContentLoaded', function () {
   initCloudSync({
     appKey: 'health',
     syncedKeys: ['po_water_v1'],
-    syncedPrefixes: ['meals:'],
+    syncedPrefixes: ['meals:', 'grocery:'],
     onApplied: function () {
       window.dispatchEvent(new Event('storage'));
     }
