@@ -8,6 +8,12 @@
 <meta name="theme-color" content="#050506">
 <title>Dashboard</title>
 
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dashboard">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
@@ -1003,6 +1009,17 @@ body::after {
   render();
   window.addEventListener('storage', render);
 })();
+</script>
+
+<script>
+// Register the service worker so the dashboard is installable (Add to Home
+// Screen / desktop install). No-ops silently if unsupported or if lock.js
+// is running from a non-secure context where SW registration is blocked.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
