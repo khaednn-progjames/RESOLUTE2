@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Products · Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
+<script src="sirius-usage.js" defer></script>
+
+<style>
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger:  #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  min-height: 100vh; position: relative; overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.30), transparent 55%),
+    radial-gradient(circle at 18% 90%, rgba(220,220,225,0.20), transparent 60%);
+  filter: blur(85px); pointer-events: none; z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px; pointer-events: none; z-index: -1;
+}
+@keyframes drift { 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-22px,14px,0)} }
+
+.page { max-width: 900px; margin: 0 auto; }
+.dash-title {
+  margin: 0 0 14px; font-size: 28px; font-weight: 700; letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+@media (max-width: 480px) { .dash-title { font-size: 22px; } }
+
+.gm-card {
+  position: relative; background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 16px; padding: 20px;
+  margin-bottom: 14px; backdrop-filter: blur(46px) saturate(2.2);
+  -webkit-backdrop-filter: blur(46px) saturate(2.2);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55);
+  overflow: hidden;
+}
+.empty-state { text-align: center; font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 14px 0; }
+
+/* Add row */
+.products-add-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.gm-input {
+  flex: 1; min-width: 200px; padding: 11px 14px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gm-input::placeholder { color: var(--text-tertiary); }
+.gm-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.gm-add {
+  padding: 11px 20px; border: 0; border-radius: 12px; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 22px rgba(0,0,0,0.25); transition: transform 0.1s, filter 0.15s;
+}
+.gm-add:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.gm-add:active { transform: translateY(0); }
+.gm-add:disabled { opacity: 0.55; cursor: wait; transform: none; }
+.products-status { font-size: 12px; color: var(--text-tertiary); margin-top: 10px; line-height: 1.5; }
+.products-status.err { color: var(--danger); }
+
+/* "Spreadsheet" header row — desktop only */
+.products-head-row {
+  display: none; grid-template-columns: 2fr 1fr 1.4fr 30px; gap: 12px; padding: 0 4px 8px;
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary);
+}
+@media (min-width: 720px) { .products-head-row { display: grid; } }
+
+.product-list { list-style: none; margin: 0; padding: 0; }
+.product-row {
+  display: grid; grid-template-columns: 2fr 1fr 1.4fr 30px; grid-template-areas: "main verdict notes del";
+  gap: 12px; align-items: start;
+  padding: 13px 14px; margin-bottom: 8px;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); border-radius: 12px;
+  transition: background 0.2s;
+}
+.product-row:hover { background: rgba(255,255,255,0.06); }
+.product-row.pending { opacity: 0.6; }
+@media (max-width: 719px) { .product-row { grid-template-columns: 1fr 30px; grid-template-areas: "main del" "verdict verdict" "notes notes"; row-gap: 8px; } }
+
+.product-main { min-width: 0; grid-area: main; }
+.product-name {
+  font-size: 14px; font-weight: 600; color: var(--text-primary); outline: none;
+  border-radius: 4px; padding: 1px 4px; margin: -1px -4px 3px;
+}
+.product-name[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); }
+.product-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 10.5px; color: var(--text-tertiary); }
+.product-site {
+  font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); border-radius: 999px; padding: 1px 7px;
+}
+.product-link { color: var(--text-secondary); text-decoration: none; }
+.product-link:hover { color: var(--text-primary); text-decoration: underline; }
+.product-date { font-family: var(--font-mono); }
+
+.product-verdict { display: flex; gap: 5px; grid-area: verdict; }
+.verdict-btn {
+  flex: 1; padding: 7px 8px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03); color: var(--text-tertiary); font-family: inherit; font-size: 11.5px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; white-space: nowrap;
+}
+.verdict-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.verdict-btn.good.on { background: rgba(107,227,164,0.16); color: var(--success); border-color: rgba(107,227,164,0.4); }
+.verdict-btn.bad.on { background: rgba(255,107,107,0.14); color: var(--danger); border-color: rgba(255,107,107,0.4); }
+
+.product-notes {
+  grid-area: notes; font-size: 12.5px; color: var(--text-secondary); outline: none;
+  border-radius: 8px; padding: 7px 9px; min-height: 32px; border: 1px solid transparent;
+}
+.product-notes:empty::before { content: 'Add a note…'; color: var(--text-tertiary); }
+.product-notes[contenteditable="true"]:focus { border-color: rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); }
+
+.product-del {
+  grid-area: del; border: 0; background: transparent; color: var(--text-tertiary); font-size: 18px; cursor: pointer;
+  padding: 0 4px; opacity: 0.5; transition: opacity 0.2s, color 0.2s; justify-self: end;
+}
+.product-row:hover .product-del { opacity: 1; }
+.product-del:hover { color: var(--danger); }
+
+@media (max-width: 480px) {
+  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
+  .gm-card { padding: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1 class="dash-title">Products</h1>
+
+  <div class="gm-card">
+    <div class="products-add-row">
+      <input class="gm-input" id="productUrl" type="url" placeholder="Paste a product link…" autocomplete="off">
+      <button class="gm-add" id="productAddBtn" type="button">+ Add</button>
+    </div>
+    <div class="products-status" id="productsStatus">Sirius reads the page and names the product automatically — mark it good or bad once you've tried it.</div>
+  </div>
+
+  <div class="gm-card">
+    <div class="products-head-row">
+      <span>Product</span><span>Verdict</span><span>Notes</span><span></span>
+    </div>
+    <ul class="product-list" id="productList"></ul>
+    <div class="empty-state" id="productsEmpty">Nothing tracked yet — paste a link above.</div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const STORE_KEY = 'products:items';
+  const KEY_LS = 'nova_lite_api_key'; // shared BYOK Anthropic key
+
+  function loadJSON(k, f) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; } catch (e) { return f; } }
+  function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+  function load() { return loadJSON(STORE_KEY, []); }
+  function save(items) { saveJSON(STORE_KEY, items); }
+  function newId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function apiKey() { try { return localStorage.getItem(KEY_LS) || ''; } catch (e) { return ''; } }
+  function escHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function hostnameOf(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
+
+  function setStatus(msg, isErr) {
+    const el = $('productsStatus');
+    el.textContent = msg;
+    el.classList.toggle('err', !!isErr);
+  }
+
+  async function callSirius(system, userText) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-8',
+        max_tokens: 200,
+        system: system,
+        messages: [{ role: 'user', content: userText }],
+      }),
+    });
+    const json = await res.json();
+    if (json.error) throw new Error(json.error.message || 'Something went wrong.');
+    if (typeof logSiriusUsage === 'function' && json.usage) logSiriusUsage('products', json.usage);
+    return (json.content && json.content[0] && json.content[0].text) || '';
+  }
+
+  async function identifyProduct(url) {
+    let meta = null;
+    try {
+      const res = await fetch('/api/fetch-url?url=' + encodeURIComponent(url));
+      meta = await res.json();
+    } catch (e) { /* fall through — Sirius can still guess from the raw URL */ }
+
+    const context = meta && (meta.title || meta.description)
+      ? 'Page title: ' + (meta.title || '(none)') + '\nDescription: ' + (meta.description || '(none)') + '\nSite: ' + (meta.siteName || '(unknown)')
+      : 'No page metadata could be fetched (the site likely blocks automated requests) — infer as best you can from the URL structure alone.';
+
+    const system = "You are Sirius, identifying what a saved product link is for in a personal purchase-tracking spreadsheet. " +
+      "Given a URL and whatever page metadata was fetched, respond with ONLY a short, clean product name — no marketing language, no site name, no trailing punctuation, 2-8 words. " +
+      "If you truly cannot tell what it is, respond with exactly: Unknown product";
+    const reply = await callSirius(system, 'URL: ' + url + '\n' + context);
+    return {
+      title: (reply || 'Unknown product').trim().replace(/^["']|["']$/g, ''),
+      siteName: (meta && meta.siteName) || hostnameOf(url),
+    };
+  }
+
+  function render() {
+    const items = load().slice().sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+    const list = $('productList');
+    list.innerHTML = '';
+    $('productsEmpty').style.display = items.length ? 'none' : '';
+
+    items.forEach((it) => {
+      const li = document.createElement('li');
+      li.className = 'product-row' + (it.pending ? ' pending' : '');
+
+      const main = document.createElement('div');
+      main.className = 'product-main';
+      const name = document.createElement('div');
+      name.className = 'product-name';
+      name.textContent = it.pending ? 'Sirius is looking…' : (it.title || 'Unknown product');
+      if (!it.pending) {
+        name.contentEditable = 'true';
+        name.addEventListener('blur', () => {
+          const all = load();
+          const e2 = all.find((x) => x.id === it.id);
+          if (e2) { e2.title = name.textContent.trim() || 'Unknown product'; save(all); }
+        });
+        name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); name.blur(); } });
+      }
+      const meta = document.createElement('div');
+      meta.className = 'product-meta';
+      const site = document.createElement('span');
+      site.className = 'product-site';
+      site.textContent = it.siteName || hostnameOf(it.url) || 'link';
+      const link = document.createElement('a');
+      link.className = 'product-link';
+      link.href = it.url; link.target = '_blank'; link.rel = 'noopener';
+      link.textContent = 'Open ↗';
+      const date = document.createElement('span');
+      date.className = 'product-date';
+      date.textContent = it.addedAt ? new Date(it.addedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+      meta.append(site, link, date);
+      main.append(name, meta);
+
+      const verdict = document.createElement('div');
+      verdict.className = 'product-verdict';
+      ['good', 'bad'].forEach((v) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'verdict-btn ' + v + (it.verdict === v ? ' on' : '');
+        btn.textContent = v === 'good' ? '👍 Good' : '👎 Bad';
+        btn.addEventListener('click', () => {
+          const all = load();
+          const e2 = all.find((x) => x.id === it.id);
+          if (e2) { e2.verdict = e2.verdict === v ? null : v; save(all); render(); }
+        });
+        verdict.appendChild(btn);
+      });
+
+      const notes = document.createElement('div');
+      notes.className = 'product-notes';
+      notes.contentEditable = 'true';
+      notes.textContent = it.notes || '';
+      notes.addEventListener('blur', () => {
+        const all = load();
+        const e2 = all.find((x) => x.id === it.id);
+        if (e2) { e2.notes = notes.textContent.trim(); save(all); }
+      });
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'product-del';
+      del.textContent = '×';
+      del.addEventListener('click', () => { save(load().filter((x) => x.id !== it.id)); render(); });
+
+      li.append(main, verdict, notes, del);
+      list.appendChild(li);
+    });
+  }
+
+  async function addProduct() {
+    const input = $('productUrl');
+    const url = input.value.trim();
+    if (!url) return;
+    let parsed;
+    try { parsed = new URL(url); } catch (e) { setStatus('That doesn\'t look like a valid link.', true); return; }
+    if (!apiKey()) { setStatus('No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
+
+    const id = newId();
+    const items = load();
+    items.unshift({ id, url: parsed.toString(), title: '', siteName: hostnameOf(url), verdict: null, notes: '', addedAt: Date.now(), pending: true });
+    save(items);
+    input.value = '';
+    setStatus('Sirius is figuring out what that link goes to…');
+    $('productAddBtn').disabled = true;
+    render();
+
+    try {
+      const info = await identifyProduct(parsed.toString());
+      const all = load();
+      const entry = all.find((x) => x.id === id);
+      if (entry) { entry.title = info.title; entry.siteName = info.siteName; entry.pending = false; save(all); }
+      setStatus('Added — mark it good or bad once you\'ve tried it.');
+    } catch (e) {
+      const all = load();
+      const entry = all.find((x) => x.id === id);
+      if (entry) { entry.title = 'Unknown product'; entry.pending = false; save(all); }
+      setStatus(e.message || 'Could not reach Sirius — you can rename it manually.', true);
+    } finally {
+      $('productAddBtn').disabled = false;
+      render();
+    }
+  }
+  $('productAddBtn').addEventListener('click', addProduct);
+  $('productUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') addProduct(); });
+
+  render();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof initCloudSync !== 'function') return;
+    initCloudSync({
+      appKey: 'products',
+      syncedPrefixes: ['products:'],
+      onApplied: render,
+    });
+  });
+})();
+</script>
+</body>
+</html>
