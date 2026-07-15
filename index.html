@@ -290,11 +290,11 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="supplements.html" style="--accent:#FFFFFF">
+    <a class="tile" href="health.html" style="--accent:#FFFFFF">
       <div class="tile-spacer"></div>
-      <h2 class="tile-title">Supplements</h2>
+      <h2 class="tile-title">Health</h2>
       <div class="tile-foot">
-        <span class="tile-sub" id="stackTileSub">Daily stack</span>
+        <span class="tile-sub" id="healthTileSub">Meals & water</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -678,11 +678,9 @@ body::after {
     const water = loadJSON('po_water_v1', null);
     s.waterToday = water && water.logs ? (water.logs[calKey()] || 0) : 0;
 
-    // Supplement stack uses the same 6 AM rollover date as goals.
-    const stackItems = loadJSON('stack:items', []) || [];
-    const takenMap = loadJSON('stack:taken:' + activeGoalsKey().slice('goals:'.length), {}) || {};
-    s.stackTotal = stackItems.length;
-    s.stackTaken = stackItems.filter((it) => it && takenMap[it.id]).length;
+    const meals = loadJSON('meals:' + calKey(), []) || [];
+    s.mealsToday = meals.length;
+    s.caloriesToday = meals.reduce((sum, m) => sum + (Number(m && m.cal) || 0), 0);
 
     let nw = 0;
     ['bank', 'stocks', 'crypto', 'other'].forEach((c) => {
@@ -735,7 +733,7 @@ body::after {
     const s = collectStats();
     if (s.goalsTotal) $('mainTileSub').textContent = s.goalsDone + '/' + s.goalsTotal + ' goals done today';
     if (s.waterToday) $('waterTileSub').textContent = s.waterToday + ' logged today';
-    if (s.stackTotal) $('stackTileSub').textContent = s.stackTaken + '/' + s.stackTotal + ' taken today';
+    if (s.mealsToday) $('healthTileSub').textContent = s.mealsToday + (s.mealsToday === 1 ? ' meal' : ' meals') + ' · ' + Math.round(s.caloriesToday) + ' cal today';
     if (s.netWorth > 0) $('financeTileSub').textContent = fmtUsd(s.netWorth) + ' net worth';
     if (s.monthTotal) $('plannerTileSub').textContent = s.monthDone + '/' + s.monthTotal + ' this month';
     if (s.linksCount) $('linksTileSub').textContent = s.linksCount + ' saved link' + (s.linksCount === 1 ? '' : 's');
