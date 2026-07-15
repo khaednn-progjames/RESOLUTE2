@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Skills · Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
+
+<style>
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger:  #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  min-height: 100vh; position: relative; overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.30), transparent 55%),
+    radial-gradient(circle at 18% 90%, rgba(220,220,225,0.20), transparent 60%);
+  filter: blur(85px); pointer-events: none; z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px; pointer-events: none; z-index: -1;
+}
+@keyframes drift { 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-22px,14px,0)} }
+
+.page { max-width: 720px; margin: 0 auto; }
+.dash-title {
+  margin: 0 0 14px; font-size: 28px; font-weight: 700; letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+@media (max-width: 480px) { .dash-title { font-size: 22px; } }
+
+.gm-card {
+  position: relative; background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 16px; padding: 18px 20px;
+  margin-bottom: 14px; backdrop-filter: blur(46px) saturate(2.2);
+  -webkit-backdrop-filter: blur(46px) saturate(2.2);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55);
+  overflow: hidden;
+}
+.empty-state { text-align: center; font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 20px 0; }
+
+.skill-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.skill-name { font-size: 16px; font-weight: 700; color: var(--text-primary); outline: none; border-radius: 4px; padding: 1px 4px; margin: -1px -4px; }
+.skill-name[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); }
+.skill-del { border: 0; background: transparent; color: var(--text-tertiary); font-size: 18px; cursor: pointer; padding: 0 4px; opacity: 0.5; transition: opacity 0.2s, color 0.2s; flex-shrink: 0; }
+.skill-del:hover { opacity: 1; color: var(--danger); }
+
+.skill-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.skill-stat { flex: 1; min-width: 90px; padding: 10px 12px; border-radius: 11px; background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); }
+.skill-stat .n { font-size: 18px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; line-height: 1; }
+.skill-stat .l { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 5px; }
+.skill-projection { font-size: 11.5px; color: var(--text-tertiary); line-height: 1.5; margin-bottom: 12px; }
+.skill-log-row { display: flex; gap: 8px; }
+.skill-log-input {
+  flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.skill-log-input::placeholder { color: var(--text-tertiary); }
+.skill-log-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.skill-log-btn {
+  padding: 9px 16px; border: 0; border-radius: 10px; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  transition: transform 0.1s, filter 0.15s;
+}
+.skill-log-btn:hover { filter: brightness(1.06); }
+.skill-log-btn:active { transform: translateY(1px); }
+
+.gm-input-wrap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.gm-input {
+  flex: 1; min-width: 140px; padding: 11px 14px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gm-input::placeholder { color: var(--text-tertiary); }
+.gm-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.gm-add {
+  padding: 11px 20px; border: 0; border-radius: 12px; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 8px rgba(0,0,0,0.35), 0 8px 22px rgba(0,0,0,0.25);
+  transition: transform 0.1s, filter 0.15s;
+}
+.gm-add:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.gm-add:active { transform: translateY(0); }
+
+@media (max-width: 480px) {
+  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
+  .gm-card { padding: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1 class="dash-title">Skills</h1>
+
+  <div class="gm-card">
+    <div class="gm-input-wrap">
+      <input class="gm-input" id="skillName" type="text" placeholder="A skill you're learning (e.g. Spanish, guitar, Python)…" autocomplete="off">
+      <button class="gm-add" id="skillAddBtn" type="button">+ Add</button>
+    </div>
+  </div>
+
+  <div id="skillList"></div>
+  <div class="gm-card empty-state" id="skillEmpty">No skills yet — add one above and start logging practice time.</div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const ITEMS_KEY = 'skills:items';
+  const SESSIONS_KEY = 'skills:sessions';
+
+  function loadJSON(k, f) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; } catch (e) { return f; } }
+  function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+  function loadSkills() { return loadJSON(ITEMS_KEY, []); }
+  function saveSkills(arr) { saveJSON(ITEMS_KEY, arr); }
+  function loadSessions() { return loadJSON(SESSIONS_KEY, []); }
+  function saveSessions(arr) { saveJSON(SESSIONS_KEY, arr); }
+  function newId() { return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function dayKey(ts) { const d = new Date(ts); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
+  function skillSessions(skillId) { return loadSessions().filter((s) => s.skillId === skillId); }
+
+  function totalMinutes(skillId) {
+    return skillSessions(skillId).reduce((sum, s) => sum + (Number(s.minutes) || 0), 0);
+  }
+
+  function computeStreak(skillId) {
+    const days = new Set(skillSessions(skillId).map((s) => dayKey(s.ts)));
+    let streak = 0;
+    for (let i = 0; ; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const key = dayKey(d.getTime());
+      if (i === 0 && !days.has(key)) continue; // today not logged yet doesn't break an earned streak
+      if (days.has(key)) streak++; else break;
+      if (i > 400) break;
+    }
+    return streak;
+  }
+
+  function last7DaysMinutes(skillId) {
+    const cutoff = Date.now() - 7 * 86400000;
+    return skillSessions(skillId).filter((s) => s.ts >= cutoff).reduce((sum, s) => sum + (Number(s.minutes) || 0), 0);
+  }
+
+  function projection(skillId) {
+    const totalMin = totalMinutes(skillId);
+    const totalHrs = totalMin / 60;
+    const weekMin = last7DaysMinutes(skillId);
+    if (weekMin <= 0) return 'Log a session to see a pace projection.';
+    const perDay = weekMin / 7;
+    const nextMilestone = (Math.floor(totalHrs / 10) + 1) * 10;
+    const hoursNeeded = nextMilestone - totalHrs;
+    const daysNeeded = Math.ceil((hoursNeeded * 60) / perDay);
+    return 'At your recent pace (~' + Math.round(perDay) + ' min/day), ~' + daysNeeded + ' days to ' + nextMilestone + ' hours.';
+  }
+
+  function render() {
+    const skills = loadSkills();
+    const list = $('skillList');
+    list.innerHTML = '';
+    $('skillEmpty').style.display = skills.length ? 'none' : '';
+
+    skills.forEach((sk) => {
+      const totalMin = totalMinutes(sk.id);
+      const card = document.createElement('div');
+      card.className = 'gm-card';
+
+      const head = document.createElement('div');
+      head.className = 'skill-head';
+      const name = document.createElement('div');
+      name.className = 'skill-name';
+      name.textContent = sk.name;
+      name.contentEditable = 'true';
+      name.addEventListener('blur', () => {
+        const all = loadSkills();
+        const e2 = all.find((x) => x.id === sk.id);
+        if (e2) { e2.name = name.textContent.trim(); saveSkills(all); }
+      });
+      name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); name.blur(); } });
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'skill-del';
+      del.textContent = '×';
+      del.addEventListener('click', () => {
+        saveSkills(loadSkills().filter((x) => x.id !== sk.id));
+        saveSessions(loadSessions().filter((s) => s.skillId !== sk.id));
+        render();
+      });
+      head.append(name, del);
+
+      const stats = document.createElement('div');
+      stats.className = 'skill-stats';
+      stats.innerHTML =
+        '<div class="skill-stat"><div class="n">' + (totalMin / 60).toFixed(1) + 'h</div><div class="l">Total logged</div></div>' +
+        '<div class="skill-stat"><div class="n">' + computeStreak(sk.id) + '</div><div class="l">Day streak</div></div>' +
+        '<div class="skill-stat"><div class="n">' + Math.round(last7DaysMinutes(sk.id) / 60 * 10) / 10 + 'h</div><div class="l">Last 7 days</div></div>';
+
+      const proj = document.createElement('div');
+      proj.className = 'skill-projection';
+      proj.textContent = projection(sk.id);
+
+      const logRow = document.createElement('div');
+      logRow.className = 'skill-log-row';
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = '1';
+      input.className = 'skill-log-input';
+      input.placeholder = 'Minutes practiced just now…';
+      const logBtn = document.createElement('button');
+      logBtn.type = 'button';
+      logBtn.className = 'skill-log-btn';
+      logBtn.textContent = '+ Log session';
+      function logSession() {
+        const minutes = parseInt(input.value, 10);
+        if (!minutes || minutes <= 0) return;
+        const sessions = loadSessions();
+        sessions.push({ id: newId(), skillId: sk.id, minutes: minutes, ts: Date.now() });
+        saveSessions(sessions);
+        input.value = '';
+        render();
+      }
+      logBtn.addEventListener('click', logSession);
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') logSession(); });
+      logRow.append(input, logBtn);
+
+      card.append(head, stats, proj, logRow);
+      list.appendChild(card);
+    });
+  }
+
+  function addSkill() {
+    const name = $('skillName').value.trim();
+    if (!name) return;
+    const skills = loadSkills();
+    skills.push({ id: newId(), name: name, addedAt: Date.now() });
+    saveSkills(skills);
+    $('skillName').value = '';
+    render();
+  }
+  $('skillAddBtn').addEventListener('click', addSkill);
+  $('skillName').addEventListener('keydown', (e) => { if (e.key === 'Enter') addSkill(); });
+
+  render();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof initCloudSync !== 'function') return;
+    initCloudSync({
+      appKey: 'skills',
+      syncedPrefixes: ['skills:'],
+      onApplied: render,
+    });
+  });
+})();
+</script>
+</body>
+</html>

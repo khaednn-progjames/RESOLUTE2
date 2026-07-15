@@ -652,6 +652,7 @@ body.topbar-modal-open {
     { group: 'Pages', ic: '📦', label: 'USPS Tracking',   sub: 'packages',           href: 'usps-tracking.html', kw: 'usps packages tracking mail shipping' },
     { group: 'Pages', ic: '🤖', label: 'Iron Condor Bot', sub: 'options bot',        href: 'iron-condor.html',  kw: 'trading options bot spy tastytrade' },
     { group: 'Pages', ic: '🔧', label: 'Maintenance',     sub: 'recurring due-dates', href: 'maintenance.html', kw: 'maintenance oil change filter reminder recurring due car home' },
+    { group: 'Pages', ic: '🎯', label: 'Skills',          sub: 'practice streaks',   href: 'skills.html',       kw: 'skills learning language practice streak instrument' },
     { group: 'Actions', ic: '➕', label: 'Log a drink of water', sub: 'instant', action: 'water',  kw: 'water add drink log +1' },
     { group: 'Actions', ic: '📅', label: "Open today's Daily Note", sub: 'notes', href: 'notes.html#daily', kw: 'daily note today journal write' },
     { group: 'Actions', ic: '💭', label: 'Capture a Quick Thought', sub: 'notes', href: 'notes.html#quick', kw: 'quick thought capture brain dump' },
