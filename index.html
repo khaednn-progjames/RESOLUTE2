@@ -324,7 +324,7 @@ body::after {
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Planner</h2>
       <div class="tile-foot">
-        <span class="tile-sub" id="plannerTileSub">Monthly goals</span>
+        <span class="tile-sub" id="plannerTileSub">Goals & events</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -349,15 +349,6 @@ body::after {
       </div>
     </a>
 
-    <!-- Small tile -->
-    <a class="tile" href="events.html" style="--accent:#FFFFFF">
-      <div class="tile-spacer"></div>
-      <h2 class="tile-title">Events</h2>
-      <div class="tile-foot">
-        <span class="tile-sub" id="eventsTileSub">Countdowns</span>
-        <span class="tile-arrow">→</span>
-      </div>
-    </a>
 
     <!-- Small tile -->
     <a class="tile" href="misc.html" style="--accent:#FFFFFF">
@@ -735,13 +726,14 @@ body::after {
     if (s.waterToday) $('waterTileSub').textContent = s.waterToday + ' logged today';
     if (s.mealsToday) $('healthTileSub').textContent = s.mealsToday + (s.mealsToday === 1 ? ' meal' : ' meals') + ' · ' + Math.round(s.caloriesToday) + ' cal today';
     if (s.netWorth > 0) $('financeTileSub').textContent = fmtUsd(s.netWorth) + ' net worth';
-    if (s.monthTotal) $('plannerTileSub').textContent = s.monthDone + '/' + s.monthTotal + ' this month';
-    if (s.linksCount) $('linksTileSub').textContent = s.linksCount + ' saved link' + (s.linksCount === 1 ? '' : 's');
     if (s.nextEvent) {
-      $('eventsTileSub').textContent = s.nextEvent.days === 0
+      $('plannerTileSub').textContent = s.nextEvent.days === 0
         ? s.nextEvent.name + ' is today!'
         : s.nextEvent.days + 'd until ' + s.nextEvent.name;
+    } else if (s.monthTotal) {
+      $('plannerTileSub').textContent = s.monthDone + '/' + s.monthTotal + ' this month';
     }
+    if (s.linksCount) $('linksTileSub').textContent = s.linksCount + ' saved link' + (s.linksCount === 1 ? '' : 's');
     const notesSub = $('notesTileSub');
     if (!s.dailyNoteWritten) {
       notesSub.textContent = 'Write your daily note';

@@ -150,6 +150,70 @@ body::after {
 .gm-add:hover { filter: brightness(1.06); transform: translateY(-1px); }
 .gm-add:active { transform: translateY(0); }
 
+/* Tab switcher: Goals / Events */
+.planner-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.planner-tab {
+  flex: 1; padding: 10px 14px; border-radius: 11px; border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04); color: var(--text-tertiary); font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.planner-tab:hover { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+.planner-tab.active { background: rgba(255,255,255,0.14); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
+
+/* Cross-view "next event" banner shown inside the Goals tab */
+.next-event-pill {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
+  padding: 10px 13px; margin-bottom: 16px; border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05);
+  color: var(--text-secondary); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.next-event-pill:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
+.next-event-pill b { color: var(--text-primary); font-weight: 700; }
+.next-event-pill .arrow { opacity: 0.6; flex-shrink: 0; }
+
+/* Events list (merged from the former standalone Events page) */
+.event-list { list-style: none; margin: 0; padding: 0; }
+.event-row {
+  display: flex; align-items: center; gap: 14px; padding: 14px;
+  margin-bottom: 8px; background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 12px;
+  transition: background 0.2s, opacity 0.3s;
+}
+.event-row:hover { background: rgba(255,255,255,0.06); }
+.event-row.past { opacity: 0.4; }
+.event-count {
+  flex-shrink: 0; min-width: 74px; text-align: center;
+  padding: 9px 8px; border-radius: 10px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10);
+}
+.event-count .n {
+  display: block; font-size: 21px; font-weight: 700; line-height: 1;
+  color: var(--text-primary); font-variant-numeric: tabular-nums; letter-spacing: -0.03em;
+}
+.event-count .u {
+  display: block; font-size: 8.5px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-tertiary); margin-top: 4px;
+}
+.event-row.soon .event-count { background: rgba(242,192,99,0.12); border-color: rgba(242,192,99,0.35); }
+.event-row.soon .event-count .n { color: #F2C063; }
+.event-row.today-row .event-count { background: rgba(107,227,164,0.14); border-color: rgba(107,227,164,0.4); }
+.event-row.today-row .event-count .n { color: var(--success); font-size: 14px; line-height: 1.5; }
+.event-main { flex: 1; min-width: 0; }
+.event-name { font-size: 15px; font-weight: 600; color: var(--text-primary); outline: none; border-radius: 4px; padding: 1px 4px; margin: -1px -4px; }
+.event-name[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); }
+.event-date { font-size: 11.5px; color: var(--text-tertiary); font-family: var(--font-mono); margin-top: 3px; }
+.event-del {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 18px; cursor: pointer; padding: 0 4px;
+  opacity: 0.5; transition: opacity 0.2s, color 0.2s; flex-shrink: 0;
+}
+.event-row:hover .event-del { opacity: 1; }
+.event-del:hover { color: var(--danger); }
+input.gm-input[type="date"] { flex: 0 1 175px; color-scheme: dark; }
+
 /* Mini strip: quick jump across the surrounding months */
 .month-strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 4px; }
 .month-strip::-webkit-scrollbar { display: none; }
@@ -177,37 +241,59 @@ body::after {
 
   <h1 class="dash-title">Planner</h1>
 
-  <div class="gm-card">
-    <div class="month-strip" id="monthStrip"></div>
+  <div class="planner-tabs" id="plannerTabs">
+    <button type="button" class="planner-tab active" data-view="goals">Goals</button>
+    <button type="button" class="planner-tab" data-view="events">Events</button>
   </div>
 
-  <div class="gm-card">
-    <div class="month-nav">
-      <button class="month-nav-btn" id="prevMonthBtn" type="button" aria-label="Previous month">‹</button>
-      <div class="month-nav-label" id="monthLabel">—</div>
-      <button class="month-nav-btn" id="nextMonthBtn" type="button" aria-label="Next month">›</button>
-      <button class="month-today-btn" id="todayBtn" type="button" style="display:none">Today</button>
+  <div id="goalsView">
+    <div class="gm-card">
+      <div class="month-strip" id="monthStrip"></div>
     </div>
 
-    <div class="gm-header">
-      <div class="gm-header-left">
-        <div class="gm-eyebrow">Goals this month</div>
-        <div class="gm-progress-row">
-          <span class="gm-progress-num" id="doneNum">0</span>
-          <span class="gm-progress-total" id="totalNum">/ 0</span>
-          <span class="gm-progress-label">done</span>
-        </div>
+    <div class="gm-card">
+      <div class="month-nav">
+        <button class="month-nav-btn" id="prevMonthBtn" type="button" aria-label="Previous month">‹</button>
+        <div class="month-nav-label" id="monthLabel">—</div>
+        <button class="month-nav-btn" id="nextMonthBtn" type="button" aria-label="Next month">›</button>
+        <button class="month-today-btn" id="todayBtn" type="button" style="display:none">Today</button>
       </div>
-      <span class="gm-streak" id="daysLeftPill" style="display:none"></span>
+
+      <button type="button" class="next-event-pill" id="nextEventPill" style="display:none"></button>
+
+      <div class="gm-header">
+        <div class="gm-header-left">
+          <div class="gm-eyebrow">Goals this month</div>
+          <div class="gm-progress-row">
+            <span class="gm-progress-num" id="doneNum">0</span>
+            <span class="gm-progress-total" id="totalNum">/ 0</span>
+            <span class="gm-progress-label">done</span>
+          </div>
+        </div>
+        <span class="gm-streak" id="daysLeftPill" style="display:none"></span>
+      </div>
+      <div class="gm-bar" id="gmBar"></div>
+
+      <ul class="goal-list" id="goalList"></ul>
+      <div class="empty-state" id="emptyState">No goals for this month yet — add one below.</div>
+
+      <div class="gm-input-wrap">
+        <input class="gm-input" id="goalInput" type="text" placeholder="Add a goal for this month…" autocomplete="off">
+        <button class="gm-add" id="goalAddBtn" type="button">+ Add</button>
+      </div>
     </div>
-    <div class="gm-bar" id="gmBar"></div>
+  </div>
 
-    <ul class="goal-list" id="goalList"></ul>
-    <div class="empty-state" id="emptyState">No goals for this month yet — add one below.</div>
+  <div id="eventsView" style="display:none">
+    <div class="gm-card">
+      <ul class="event-list" id="eventList"></ul>
+      <div class="empty-state" id="eventsEmpty">Nothing coming up — add a birthday, deadline, or trip below.</div>
 
-    <div class="gm-input-wrap">
-      <input class="gm-input" id="goalInput" type="text" placeholder="Add a goal for this month…" autocomplete="off">
-      <button class="gm-add" id="goalAddBtn" type="button">+ Add</button>
+      <div class="gm-input-wrap">
+        <input class="gm-input" id="eventName" type="text" placeholder="Event (e.g. Mom's birthday)" autocomplete="off">
+        <input class="gm-input" id="eventDate" type="date">
+        <button class="gm-add" id="eventAddBtn" type="button">+ Add</button>
+      </div>
     </div>
   </div>
 
@@ -225,6 +311,16 @@ body::after {
   }
   function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
   function newId() { return 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function escHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+  // ---------- Tabs: Goals / Events ----------
+  function setView(view) {
+    $('goalsView').style.display = view === 'goals' ? '' : 'none';
+    $('eventsView').style.display = view === 'events' ? '' : 'none';
+    document.querySelectorAll('.planner-tab').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+  }
+  document.querySelectorAll('.planner-tab').forEach((b) => b.addEventListener('click', () => setView(b.dataset.view)));
+  $('nextEventPill').addEventListener('click', () => setView('events'));
 
   function firstOfMonth(d) { return new Date(d.getFullYear(), d.getMonth(), 1); }
   function monthKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
@@ -255,8 +351,106 @@ body::after {
     }
   }
 
+  // ---------- Events (merged from the former standalone Events page) ----------
+  const EVENTS_KEY = 'events:items';
+  function loadEvents() { return loadJSON(EVENTS_KEY, []); }
+  function saveEvents(items) { saveJSON(EVENTS_KEY, items); }
+
+  function daysUntil(dateStr) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const parts = String(dateStr).split('-').map(Number);
+    const target = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
+    return Math.round((target - today) / 86400000);
+  }
+
+  function nextUpcomingEvent() {
+    let best = null;
+    loadEvents().forEach((it) => {
+      if (!it || !it.date) return;
+      const d = daysUntil(it.date);
+      if (d < 0) return;
+      if (!best || d < best.days) best = { name: it.name, days: d };
+    });
+    return best;
+  }
+
+  function renderNextEventPill() {
+    const pill = $('nextEventPill');
+    const next = nextUpcomingEvent();
+    if (!next) { pill.style.display = 'none'; return; }
+    pill.style.display = 'flex';
+    const when = next.days === 0 ? 'today' : next.days === 1 ? 'tomorrow' : 'in ' + next.days + ' days';
+    pill.innerHTML = '<span>Next up: <b>' + escHtml(next.name) + '</b> — ' + when + '</span><span class="arrow">Events →</span>';
+  }
+
+  function renderEvents() {
+    const items = loadEvents().slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    const list = $('eventList');
+    list.innerHTML = '';
+    $('eventsEmpty').style.display = items.length ? 'none' : '';
+
+    items.forEach((it) => {
+      const days = daysUntil(it.date);
+      const li = document.createElement('li');
+      li.className = 'event-row' + (days < 0 ? ' past' : days === 0 ? ' today-row' : days <= 7 ? ' soon' : '');
+
+      const count = document.createElement('div');
+      count.className = 'event-count';
+      if (days === 0) count.innerHTML = '<span class="n">Today</span>';
+      else if (days < 0) count.innerHTML = '<span class="n">' + Math.abs(days) + '</span><span class="u">days ago</span>';
+      else count.innerHTML = '<span class="n">' + days + '</span><span class="u">' + (days === 1 ? 'day' : 'days') + '</span>';
+
+      const main = document.createElement('div');
+      main.className = 'event-main';
+      const name = document.createElement('div');
+      name.className = 'event-name';
+      name.textContent = it.name;
+      name.contentEditable = 'true';
+      name.addEventListener('blur', () => {
+        const all = loadEvents();
+        const e2 = all.find((x) => x.id === it.id);
+        if (e2) { e2.name = name.textContent.trim(); saveEvents(all); renderNextEventPill(); }
+      });
+      name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); name.blur(); } });
+      const date = document.createElement('div');
+      date.className = 'event-date';
+      const parts = String(it.date).split('-').map(Number);
+      date.textContent = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1)
+        .toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' });
+      main.append(name, date);
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'event-del';
+      del.textContent = '×';
+      del.addEventListener('click', () => {
+        saveEvents(loadEvents().filter((x) => x.id !== it.id));
+        renderEvents();
+        renderNextEventPill();
+      });
+
+      li.append(count, main, del);
+      list.appendChild(li);
+    });
+  }
+
+  function addEvent() {
+    const name = $('eventName').value.trim();
+    const date = $('eventDate').value;
+    if (!name || !date) return;
+    const items = loadEvents();
+    items.push({ id: 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), name, date, addedAt: Date.now() });
+    saveEvents(items);
+    $('eventName').value = ''; $('eventDate').value = '';
+    renderEvents();
+    renderNextEventPill();
+  }
+  $('eventAddBtn').addEventListener('click', addEvent);
+  $('eventName').addEventListener('keydown', (e) => { if (e.key === 'Enter') addEvent(); });
+
   function render() {
     renderStrip();
+    renderNextEventPill();
     const key = monthKey(viewDate);
     const goals = loadGoals(key);
     const isCurrent = sameMonth(viewDate, new Date());
@@ -347,6 +541,7 @@ body::after {
   $('todayBtn').addEventListener('click', () => { viewDate = firstOfMonth(new Date()); render(); });
 
   render();
+  renderEvents();
 
   document.addEventListener('DOMContentLoaded', function () {
     if (typeof initCloudSync !== 'function') return;
@@ -354,6 +549,13 @@ body::after {
       appKey: 'planner',
       syncedPrefixes: ['planner:'],
       onApplied: render,
+    });
+    // Events kept their own appKey from the former standalone page so
+    // existing synced data carries over with no migration needed.
+    initCloudSync({
+      appKey: 'events',
+      syncedPrefixes: ['events:'],
+      onApplied: function () { renderEvents(); renderNextEventPill(); },
     });
   });
 })();
