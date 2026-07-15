@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="lock.js"></script>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Maintenance · Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
+
+<style>
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger:  #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #050506;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  min-height: 100vh; position: relative; overflow-x: hidden;
+  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.30), transparent 55%),
+    radial-gradient(circle at 18% 90%, rgba(220,220,225,0.20), transparent 60%);
+  filter: blur(85px); pointer-events: none; z-index: -2;
+  animation: drift 36s ease-in-out infinite alternate;
+}
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-size: 3px 3px; pointer-events: none; z-index: -1;
+}
+@keyframes drift { 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-22px,14px,0)} }
+
+.page { max-width: 720px; margin: 0 auto; }
+.dash-title {
+  margin: 0 0 14px; font-size: 28px; font-weight: 700; letter-spacing: -0.025em;
+  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+@media (max-width: 480px) { .dash-title { font-size: 22px; } }
+
+.gm-card {
+  position: relative; background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 16px; padding: 20px;
+  margin-bottom: 14px; backdrop-filter: blur(46px) saturate(2.2);
+  -webkit-backdrop-filter: blur(46px) saturate(2.2);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55);
+  overflow: hidden;
+}
+.empty-state { text-align: center; font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 14px 0; }
+
+.maint-list { list-style: none; margin: 0; padding: 0; }
+.maint-row {
+  display: flex; align-items: center; gap: 14px; padding: 14px;
+  margin-bottom: 8px; background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.18); border-radius: 12px;
+  transition: background 0.2s;
+}
+.maint-row:hover { background: rgba(255,255,255,0.06); }
+.maint-status {
+  flex-shrink: 0; min-width: 78px; text-align: center;
+  padding: 9px 8px; border-radius: 10px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10);
+}
+.maint-status .n { display: block; font-size: 15px; font-weight: 700; line-height: 1.2; color: var(--text-primary); }
+.maint-status .u { display: block; font-size: 8.5px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 3px; }
+.maint-row.overdue .maint-status { background: rgba(255,107,107,0.14); border-color: rgba(255,107,107,0.40); }
+.maint-row.overdue .maint-status .n { color: var(--danger); }
+.maint-row.soon .maint-status { background: rgba(242,192,99,0.12); border-color: rgba(242,192,99,0.35); }
+.maint-row.soon .maint-status .n { color: #F2C063; }
+.maint-main { flex: 1; min-width: 0; }
+.maint-name { font-size: 15px; font-weight: 600; color: var(--text-primary); outline: none; border-radius: 4px; padding: 1px 4px; margin: -1px -4px; }
+.maint-name[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); }
+.maint-meta { font-size: 11.5px; color: var(--text-tertiary); font-family: var(--font-mono); margin-top: 3px; }
+.maint-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.maint-done-btn {
+  padding: 7px 12px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06); color: var(--text-secondary);
+  font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.maint-done-btn:hover { background: rgba(107,227,164,0.14); color: var(--success); border-color: rgba(107,227,164,0.4); }
+.maint-del {
+  border: 0; background: transparent; color: var(--text-tertiary);
+  font-size: 18px; cursor: pointer; padding: 0 4px;
+  opacity: 0.5; transition: opacity 0.2s, color 0.2s;
+}
+.maint-row:hover .maint-del { opacity: 1; }
+.maint-del:hover { color: var(--danger); }
+
+.gm-input-wrap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); }
+.gm-input {
+  flex: 1; min-width: 140px; padding: 11px 14px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gm-input::placeholder { color: var(--text-tertiary); }
+.gm-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.gm-input.maint-interval-num { flex: 0 1 80px; }
+.gm-input.maint-interval-unit { flex: 0 1 110px; cursor: pointer; }
+.gm-add {
+  padding: 11px 20px; border: 0; border-radius: 12px; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 8px rgba(0,0,0,0.35), 0 8px 22px rgba(0,0,0,0.25);
+  transition: transform 0.1s, filter 0.15s;
+}
+.gm-add:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.gm-add:active { transform: translateY(0); }
+
+@media (max-width: 480px) {
+  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
+  .gm-card { padding: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1 class="dash-title">Maintenance</h1>
+
+  <div class="gm-card">
+    <ul class="maint-list" id="maintList"></ul>
+    <div class="empty-state" id="maintEmpty">Nothing tracked yet — add a recurring task below (oil change, air filter, dentist…).</div>
+
+    <div class="gm-input-wrap">
+      <input class="gm-input" id="maintName" type="text" placeholder="Task (e.g. Change air filter)" autocomplete="off">
+      <input class="gm-input maint-interval-num" id="maintIntervalNum" type="number" min="1" placeholder="3">
+      <select class="gm-input maint-interval-unit" id="maintIntervalUnit">
+        <option value="days">Days</option>
+        <option value="weeks">Weeks</option>
+        <option value="months" selected>Months</option>
+        <option value="years">Years</option>
+      </select>
+      <button class="gm-add" id="maintAddBtn" type="button">+ Add</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const STORE_KEY = 'maintenance:items';
+  const UNIT_DAYS = { days: 1, weeks: 7, months: 30, years: 365 };
+
+  function loadJSON(k, f) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; } catch (e) { return f; } }
+  function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+  function load() { return loadJSON(STORE_KEY, []); }
+  function save(items) { saveJSON(STORE_KEY, items); }
+  function newId() { return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function intervalLabel(days) {
+    if (days % 365 === 0) { const n = days / 365; return 'every ' + n + ' ' + (n === 1 ? 'year' : 'years'); }
+    if (days % 30 === 0) { const n = days / 30; return 'every ' + n + ' ' + (n === 1 ? 'month' : 'months'); }
+    if (days % 7 === 0) { const n = days / 7; return 'every ' + n + ' ' + (n === 1 ? 'week' : 'weeks'); }
+    return 'every ' + days + ' ' + (days === 1 ? 'day' : 'days');
+  }
+  function daysUntilDue(it) {
+    if (!it.lastDone) return -Infinity; // never done — due now
+    const dueTs = it.lastDone + it.intervalDays * 86400000;
+    return Math.round((dueTs - Date.now()) / 86400000);
+  }
+  function fmtDate(ts) {
+    return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function render() {
+    const items = load().slice().sort((a, b) => daysUntilDue(a) - daysUntilDue(b));
+    const list = $('maintList');
+    list.innerHTML = '';
+    $('maintEmpty').style.display = items.length ? 'none' : '';
+
+    items.forEach((it) => {
+      const left = daysUntilDue(it);
+      const li = document.createElement('li');
+      li.className = 'maint-row' + (left < 0 ? ' overdue' : left <= 7 ? ' soon' : '');
+
+      const status = document.createElement('div');
+      status.className = 'maint-status';
+      if (!it.lastDone) status.innerHTML = '<span class="n">Never</span><span class="u">done</span>';
+      else if (left < 0) status.innerHTML = '<span class="n">' + Math.abs(left) + 'd</span><span class="u">overdue</span>';
+      else if (left === 0) status.innerHTML = '<span class="n">Today</span><span class="u">due</span>';
+      else status.innerHTML = '<span class="n">' + left + 'd</span><span class="u">left</span>';
+
+      const main = document.createElement('div');
+      main.className = 'maint-main';
+      const name = document.createElement('div');
+      name.className = 'maint-name';
+      name.textContent = it.name;
+      name.contentEditable = 'true';
+      name.addEventListener('blur', () => {
+        const all = load();
+        const e2 = all.find((x) => x.id === it.id);
+        if (e2) { e2.name = name.textContent.trim(); save(all); }
+      });
+      name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); name.blur(); } });
+      const meta = document.createElement('div');
+      meta.className = 'maint-meta';
+      meta.textContent = intervalLabel(it.intervalDays) + (it.lastDone ? ' · last done ' + fmtDate(it.lastDone) : ' · not logged yet');
+      main.append(name, meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'maint-actions';
+      const doneBtn = document.createElement('button');
+      doneBtn.type = 'button';
+      doneBtn.className = 'maint-done-btn';
+      doneBtn.textContent = 'Mark done';
+      doneBtn.addEventListener('click', () => {
+        const all = load();
+        const e2 = all.find((x) => x.id === it.id);
+        if (e2) { e2.lastDone = Date.now(); save(all); render(); }
+      });
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'maint-del';
+      del.textContent = '×';
+      del.addEventListener('click', () => { save(load().filter((x) => x.id !== it.id)); render(); });
+      actions.append(doneBtn, del);
+
+      li.append(status, main, actions);
+      list.appendChild(li);
+    });
+  }
+
+  function addItem() {
+    const name = $('maintName').value.trim();
+    const num = parseInt($('maintIntervalNum').value, 10);
+    const unit = $('maintIntervalUnit').value;
+    if (!name || !num || num <= 0) return;
+    const items = load();
+    items.push({ id: newId(), name, intervalDays: num * (UNIT_DAYS[unit] || 30), lastDone: null, addedAt: Date.now() });
+    save(items);
+    $('maintName').value = ''; $('maintIntervalNum').value = '';
+    render();
+  }
+  $('maintAddBtn').addEventListener('click', addItem);
+  $('maintName').addEventListener('keydown', (e) => { if (e.key === 'Enter') addItem(); });
+  $('maintIntervalNum').addEventListener('keydown', (e) => { if (e.key === 'Enter') addItem(); });
+
+  render();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof initCloudSync !== 'function') return;
+    initCloudSync({
+      appKey: 'maintenance',
+      syncedPrefixes: ['maintenance:'],
+      onApplied: render,
+    });
+  });
+})();
+</script>
+</body>
+</html>
