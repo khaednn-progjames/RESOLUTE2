@@ -418,6 +418,23 @@
 
 .sirius-summary-text { font-size: 13.5px; color: var(--text-primary); line-height: 1.65; }
 .sirius-summary-text ul { margin: 6px 0 0; padding-left: 18px; }
+.sirius-feed { max-height: 320px; overflow-y: auto; margin-bottom: 10px; }
+.sirius-textarea {
+  width: 100%; padding: 12px 14px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  background: rgba(0,0,0,0.28); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  resize: vertical; transition: border-color 0.2s, background 0.2s;
+}
+.sirius-textarea::placeholder { color: var(--text-tertiary); }
+.sirius-textarea:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.sirius-followup-q {
+  font-size: 13px; color: var(--text-secondary); background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 9px 12px 10px;
+  margin: 12px 0 10px; line-height: 1.5;
+}
+.sirius-followup-q::before {
+  content: 'You'; display: block; font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 4px;
+}
 .sirius-insert-btn {
   width: 100%; margin-top: 14px; padding: 11px; border: 0; border-radius: 11px;
   background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); color: #0A0A0B;
@@ -1181,6 +1198,9 @@
   }
 
   async function callSirius(systemPrompt, userText, feature) {
+    // userText is either a plain string (single-turn) or an array of
+    // {role, content} messages already built by the caller (multi-turn).
+    const messages = Array.isArray(userText) ? userText : [{ role: 'user', content: userText }];
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -1193,7 +1213,7 @@
         model: 'claude-opus-4-8',
         max_tokens: 1024,
         system: systemPrompt,
-        messages: [{ role: 'user', content: userText }],
+        messages: messages,
       }),
     });
     const json = await res.json();
@@ -1336,50 +1356,112 @@
     return lines.join('\n');
   }
 
-  function runSiriusSolution() {
+  let solutionMessages = [];  // conversation so far, for follow-ups within this modal session
+  let solutionSummary = '';   // parsed out of the FIRST reply only — what the Insert button uses
+  let solutionPlanText = '';
+  let solutionLines = [];
+
+  function openSiriusSolution() {
     openSiriusModal('Get a Solution');
     if (!activeId || activeId === IDEAS_ID) { renderSiriusError('Open a note first.'); return; }
     const text = quill.getText().trim();
     if (!text) { renderSiriusError('This note is empty — write something first.'); return; }
-    if (!siriusKey()) { renderKeyForm(runSiriusSolution); return; }
-    renderSiriusLoading();
+    if (!siriusKey()) { renderKeyForm(openSiriusSolution); return; }
+    solutionMessages = [];
+    solutionSummary = '';
+    solutionPlanText = '';
+    solutionLines = [];
+    runSiriusSolution(text, true);
+  }
 
-    const system = "You are Sirius, the user's personal mentor. The note below describes a situation, problem, or something " +
-      "they're working through. Using the real context about their life below, respond in EXACTLY this format:\n" +
-      "SUMMARY: <one plain sentence capturing what the note is actually about>\n" +
-      "PLAN:\n<a detailed, concrete, actionable plan to address it — specific steps as '- ' bullet points, not generic advice. " +
-      "Reference their actual context (goals, finances, time, etc.) where it genuinely makes the plan more realistic or personal — don't force it if a data point isn't relevant.>\n\n" +
-      "Their current context:\n" + collectUserContext();
+  function renderSolutionModal(loading, errorMsg) {
+    let feedHtml = '';
+    if (solutionSummary || solutionPlanText) {
+      feedHtml +=
+        (solutionSummary ? '<div class="sirius-summary-text" style="margin-bottom:12px"><b>' + siriusEsc(solutionSummary) + '</b></div>' : '') +
+        (solutionLines.length
+          ? '<ul>' + solutionLines.map(l => '<li>' + siriusEsc(l) + '</li>').join('') + '</ul>'
+          : '<div class="sirius-summary-text">' + siriusEsc(solutionPlanText) + '</div>');
+    }
+    // Everything after the first exchange (note text -> initial summary+plan) is a follow-up.
+    const followUps = solutionMessages.slice(2);
+    followUps.forEach((m) => {
+      feedHtml += m.role === 'user'
+        ? '<div class="sirius-followup-q">' + siriusEsc(m.content) + '</div>'
+        : '<div class="sirius-summary-text" style="margin-bottom:12px">' + siriusEsc(m.content) + '</div>';
+    });
+    const loadingHtml = loading ? '<div class="sirius-loading"><span class="sirius-dots"><i></i><i></i><i></i></span> Sirius is thinking…</div>' : '';
+    const errorHtml = errorMsg ? '<div class="sirius-err" style="margin-top:8px">' + siriusEsc(errorMsg) + '</div>' : '';
+    const hasSolution = !!(solutionSummary || solutionPlanText);
 
-    callSirius(system, text, 'notes-solution').then(reply => {
-      const summaryMatch = reply.match(/SUMMARY:\s*(.+)/i);
-      const planMatch = reply.match(/PLAN:\s*([\s\S]*)/i);
-      const summary = summaryMatch ? summaryMatch[1].trim() : '';
-      const planText = (planMatch ? planMatch[1] : reply).trim();
-      const lines = bulletLines(planText);
-      const html =
-        (summary ? '<div class="sirius-summary-text" style="margin-bottom:12px"><b>' + siriusEsc(summary) + '</b></div>' : '') +
-        (lines.length
-          ? '<ul>' + lines.map(l => '<li>' + siriusEsc(l) + '</li>').join('') + '</ul>'
-          : '<div class="sirius-summary-text">' + siriusEsc(planText) + '</div>');
-      $('siriusModalBody').innerHTML =
-        html + '<button class="sirius-insert-btn" id="siriusInsertBtn" type="button">Insert into note</button>';
+    $('siriusModalBody').innerHTML =
+      '<div class="sirius-feed" id="solutionFeed">' + feedHtml + loadingHtml + errorHtml + '</div>' +
+      (hasSolution ? '<button class="sirius-insert-btn" id="siriusInsertBtn" type="button">Insert into note</button>' : '') +
+      '<textarea id="solutionFollowupInput" class="sirius-textarea" style="min-height:56px; margin-top:10px" placeholder="' +
+        (hasSolution ? 'Ask a follow-up…' : '') + '"></textarea>' +
+      '<button class="gm-add" id="solutionFollowupBtn" type="button" style="width:100%; margin-top:8px">' +
+        (hasSolution ? 'Ask follow-up' : 'Ask') + '</button>';
+
+    if (hasSolution) {
       $('siriusInsertBtn').addEventListener('click', () => {
         const Delta = Quill.import('delta');
         const insertDelta = new Delta();
         insertDelta.insert('Solution').insert('\n', { header: 3 });
-        if (summary) insertDelta.insert(summary).insert('\n', { blockquote: true });
-        const planLines = lines.length ? lines : planText.split(/\r?\n+/).map(l => l.trim()).filter(Boolean);
+        if (solutionSummary) insertDelta.insert(solutionSummary).insert('\n', { blockquote: true });
+        const planLines = solutionLines.length ? solutionLines : solutionPlanText.split(/\r?\n+/).map(l => l.trim()).filter(Boolean);
         planLines.forEach(line => { insertDelta.insert(line).insert('\n', { list: 'bullet' }); });
         insertDelta.insert('\n');
         quill.updateContents(insertDelta, Quill.sources.USER);
         const btn = $('siriusInsertBtn');
         btn.textContent = '✓ Inserted'; btn.classList.add('done'); btn.disabled = true;
-        setTimeout(closeSiriusModal, 900);
       });
-    }).catch(e => renderSiriusError(e.message || String(e)));
+    }
+
+    const input = $('solutionFollowupInput');
+    const followupBtn = $('solutionFollowupBtn');
+    followupBtn.addEventListener('click', () => {
+      const q = input.value.trim();
+      if (q) runSiriusSolution(q, false);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); followupBtn.click(); }
+    });
+    input.focus();
+    const feed = $('solutionFeed');
+    feed.scrollTop = feed.scrollHeight;
   }
-  $('solutionBtn').addEventListener('click', runSiriusSolution);
+
+  function runSiriusSolution(userInput, isInitial) {
+    solutionMessages.push({ role: 'user', content: userInput });
+    renderSolutionModal(true);
+
+    const system = isInitial
+      ? "You are Sirius, the user's personal mentor. The note below describes a situation, problem, or something " +
+        "they're working through. Using the real context about their life below, respond in EXACTLY this format:\n" +
+        "SUMMARY: <one plain sentence capturing what the note is actually about>\n" +
+        "PLAN:\n<a detailed, concrete, actionable plan to address it — specific steps as '- ' bullet points, not generic advice. " +
+        "Reference their actual context (goals, finances, time, etc.) where it genuinely makes the plan more realistic or personal — don't force it if a data point isn't relevant.>\n\n" +
+        "Their current context:\n" + collectUserContext()
+      : "You are Sirius, continuing the conversation about the plan you already gave for this note. " +
+        "Answer the follow-up directly and specifically, staying consistent with the plan and context already established — don't restate the whole plan. " +
+        "A few sentences or a short bullet list, plain text, no preamble.";
+
+    callSirius(system, solutionMessages, 'notes-solution').then((reply) => {
+      solutionMessages.push({ role: 'assistant', content: reply });
+      if (isInitial) {
+        const summaryMatch = reply.match(/SUMMARY:\s*(.+)/i);
+        const planMatch = reply.match(/PLAN:\s*([\s\S]*)/i);
+        solutionSummary = summaryMatch ? summaryMatch[1].trim() : '';
+        solutionPlanText = (planMatch ? planMatch[1] : reply).trim();
+        solutionLines = bulletLines(solutionPlanText);
+      }
+      renderSolutionModal(false);
+    }).catch((e) => {
+      solutionMessages.pop();
+      renderSolutionModal(false, e.message || String(e));
+    });
+  }
+  $('solutionBtn').addEventListener('click', openSiriusSolution);
 
   // ---------- Web (graph view) ----------
   let graphSim = null;
