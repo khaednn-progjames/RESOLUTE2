@@ -9,6 +9,20 @@
 // Requires:
 //   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 //   <script src="sync.js" defer></script>
+//
+// Sync model: merge-before-push with tombstones.
+// ------------------------------------------------------------
+// Every push first fetches the current remote state and adopts any key
+// it doesn't have locally yet (e.g. a note created on another device a
+// moment ago), THEN uploads the merged result. A key is only ever
+// deleted locally if it's in the tombstone log — a small per-appKey
+// record of "this key was deliberately removed at time T" that travels
+// inside the synced payload as data.__tombstones__ so every device
+// converges on the same view of what was actually deleted vs. just not
+// synced yet. Without this, two devices writing close together could
+// silently erase each other's most recent data — a full-snapshot
+// overwrite has no way to tell "I don't have this because it's new
+// elsewhere" apart from "I don't have this because it was deleted".
 // =============================================================
 (function () {
   'use strict';
@@ -32,6 +46,8 @@
     let pushTimer = null;
     let suppressSync = false;
     let lastSyncedJson = null;
+    const TOMBSTONE_LS_KEY = 'sync:tombstones:' + appKey;
+    const TOMBSTONE_MAX_AGE_MS = 30 * 86400000; // 30 days
 
     function matches(k) {
       if (!k) return false;
@@ -61,22 +77,60 @@
 
     const origSet = localStorage.setItem.bind(localStorage);
     const origRemove = localStorage.removeItem.bind(localStorage);
+
+    function loadTombstones() {
+      try { return JSON.parse(localStorage.getItem(TOMBSTONE_LS_KEY)) || {}; }
+      catch (e) { return {}; }
+    }
+    function saveTombstonesLocal(t) {
+      try { origSet(TOMBSTONE_LS_KEY, JSON.stringify(t)); } catch (e) {}
+    }
+    function recordTombstone(k) {
+      const t = loadTombstones();
+      t[k] = Date.now();
+      const cutoff = Date.now() - TOMBSTONE_MAX_AGE_MS;
+      Object.keys(t).forEach((kk) => { if (t[kk] < cutoff) delete t[kk]; });
+      saveTombstonesLocal(t);
+    }
+
     localStorage.setItem = function (k, v) {
       origSet(k, v);
       try { if (!suppressSync && matches(k)) schedulePush(); } catch (e) {}
     };
     localStorage.removeItem = function (k) {
       origRemove(k);
-      try { if (!suppressSync && matches(k)) schedulePush(); } catch (e) {}
+      try {
+        if (!suppressSync && matches(k)) {
+          recordTombstone(k);
+          schedulePush();
+        }
+      } catch (e) {}
     };
 
-    function applyRemote(remote) {
+    // Adopts remote keys we don't have locally (unless we deliberately
+    // deleted them — tracked via tombstones), and removes local keys
+    // that a tombstone says were deleted elsewhere. Never deletes a
+    // local key just because it's merely absent from `remote` — that's
+    // the change from the old "delete anything not in remote" behavior,
+    // which could wipe not-yet-synced data from another device.
+    function mergeRemoteIntoLocal(remote) {
       if (!remote || typeof remote !== 'object') return false;
-      suppressSync = true;
+      const remoteTombstones = remote.__tombstones__ || {};
+      const localTombstones = loadTombstones();
+      let tombstonesChanged = false;
+      Object.keys(remoteTombstones).forEach((k) => {
+        if (!localTombstones[k] || remoteTombstones[k] > localTombstones[k]) {
+          localTombstones[k] = remoteTombstones[k];
+          tombstonesChanged = true;
+        }
+      });
+      if (tombstonesChanged) saveTombstonesLocal(localTombstones);
+
       let changed = false;
+      suppressSync = true;
       try {
         for (const k of Object.keys(remote)) {
-          if (!matches(k)) continue;
+          if (k === '__tombstones__' || !matches(k)) continue;
           const incoming = JSON.stringify(remote[k]);
           const local = localStorage.getItem(k);
           if (local !== incoming) {
@@ -84,11 +138,16 @@
           }
         }
         for (const k of listAllKeys()) {
-          if (!(k in remote)) {
+          if (localTombstones[k] && localStorage.getItem(k) != null) {
             try { origRemove(k); changed = true; } catch (e) {}
           }
         }
       } finally { suppressSync = false; }
+      return changed;
+    }
+
+    function applyRemote(remote) {
+      const changed = mergeRemoteIntoLocal(remote);
       if (changed && typeof onApplied === 'function') {
         try { onApplied(); } catch (e) {}
       }
@@ -97,7 +156,18 @@
 
     async function pushNow() {
       if (!supa) return;
+      // Merge in whatever's on the server first, so this push can never
+      // silently erase a key another device already synced.
+      try {
+        const { data } = await supa.from('app_state').select('data').eq('key', appKey).maybeSingle();
+        if (data && data.data) {
+          const changed = mergeRemoteIntoLocal(data.data);
+          if (changed && typeof onApplied === 'function') { try { onApplied(); } catch (e) {} }
+        }
+      } catch (e) { /* offline — push local state as-is */ }
+
       const state = collect();
+      state.__tombstones__ = loadTombstones();
       const json = JSON.stringify(state);
       if (json === lastSyncedJson) return;
       try {
@@ -113,7 +183,11 @@
       pushTimer = setTimeout(pushNow, 250);
     }
     function flushOnUnload() {
+      // Can't reliably await a pre-fetch during unload, so this remains a
+      // best-effort blind push — the next normal pushNow (on any device)
+      // will merge-reconcile if this one raced with something.
       const state = collect();
+      state.__tombstones__ = loadTombstones();
       const json = JSON.stringify(state);
       if (json === lastSyncedJson) return;
       try {
@@ -134,16 +208,7 @@
 
     (async function init() {
       supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      try {
-        const { data, error } = await supa
-          .from('app_state').select('data').eq('key', appKey).maybeSingle();
-        if (!error && data && data.data && Object.keys(data.data).length > 0) {
-          lastSyncedJson = JSON.stringify(data.data);
-          applyRemote(data.data);
-        } else if (Object.keys(collect()).length > 0) {
-          schedulePush();
-        }
-      } catch (e) {}
+      await pushNow(); // fetch + merge remote, then push the merged result back
       supa.channel('app_state_' + appKey)
         .on('postgres_changes', {
           event: '*',
@@ -154,7 +219,6 @@
           if (!payload.new || !payload.new.data) return;
           const incoming = JSON.stringify(payload.new.data);
           if (incoming === lastSyncedJson) return;
-          lastSyncedJson = incoming;
           applyRemote(payload.new.data);
         })
         .subscribe();
