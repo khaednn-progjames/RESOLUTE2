@@ -540,14 +540,16 @@
   <div class="graph-toolbar">
     <span class="graph-title">🕸 Web</span>
     <div style="display:flex; align-items:center; gap:8px">
+      <button class="graph-link-btn" id="graphAutoLinkBtn" type="button">✨ Auto Link</button>
       <button class="graph-link-btn" id="graphLinkBtn" type="button">Link notes</button>
       <button class="graph-close" id="graphCloseBtn" type="button" aria-label="Close">×</button>
     </div>
   </div>
   <div class="graph-hint" id="graphHint" style="display:none">Click a note, then click another to connect them.</div>
+  <div class="graph-hint" id="graphAutoLinkStatus" style="display:none"></div>
   <div class="graph-canvas-wrap">
     <svg id="graphSvg"></svg>
-    <div class="graph-empty" id="graphEmpty" style="display:none">Link notes with <code>[[Note Title]]</code> — or turn on "Link notes" above and click two of them — to see them connected here.</div>
+    <div class="graph-empty" id="graphEmpty" style="display:none">Link notes with <code>[[Note Title]]</code> — or connect them yourself, or let "✨ Auto Link" above find the connections for you.</div>
   </div>
 </div>
 
@@ -1441,6 +1443,84 @@
     graphLinkFirstNode = null;
     $('graphLinkBtn').classList.remove('on');
     $('graphHint').style.display = 'none';
+    $('graphAutoLinkStatus').style.display = 'none';
+  }
+
+  // ---- Auto Link: Sirius reads every note and links the ones that share a central idea ----
+  async function runAutoLink() {
+    if (!siriusKey()) {
+      closeGraphOverlay();
+      openSiriusModal('✨ Auto Link');
+      renderKeyForm(() => { closeSiriusModal(); openGraphOverlay(); runAutoLink(); });
+      return;
+    }
+    const btn = $('graphAutoLinkBtn');
+    const status = $('graphAutoLinkStatus');
+    const candidates = loadIndex()
+      .map((n) => ({ id: n.id, title: n.title || 'Untitled', text: docText(n.id).trim() }))
+      .filter((n) => n.text.length > 0);
+
+    status.style.display = 'block';
+    if (candidates.length < 2) {
+      status.textContent = 'Need at least 2 notes with content to find connections.';
+      return;
+    }
+
+    btn.disabled = true;
+    status.textContent = '✨ Sirius is reading your notes for connections…';
+
+    const { links: existingLinks } = buildGraphData();
+    const idOf = (side) => (typeof side === 'object' ? side.id : side);
+    const pairKey = (a, b) => (a < b ? a + '|' + b : b + '|' + a);
+    const existingPairs = new Set(existingLinks.map((l) => pairKey(idOf(l.source), idOf(l.target))));
+    const titleFor = (id) => { const c = candidates.find((x) => x.id === id); return c ? c.title : null; };
+
+    const notesText = candidates.map((n) => '- "' + n.title + '": ' + n.text.slice(0, 300).replace(/\s+/g, ' ')).join('\n');
+    const existingText = existingLinks.length
+      ? Array.from(existingPairs).map((k) => {
+          const [a, b] = k.split('|');
+          const at = titleFor(a), bt = titleFor(b);
+          return at && bt ? at + ' <-> ' + bt : null;
+        }).filter(Boolean).join('\n') || '(none yet)'
+      : '(none yet)';
+
+    const system = "You are Sirius, analyzing the user's notes to find which ones share a central idea and should be linked together. " +
+      "Given the notes below (title + excerpt) and the connections that already exist, identify NEW pairs that genuinely share a topic, theme, or idea — be selective, only suggest connections that are actually meaningful, not superficial word overlaps. " +
+      "Respond with ONLY one line per new connection, in EXACTLY this format:\n" +
+      "LINK: <exact title A> | <exact title B>\n" +
+      "If there are no meaningful new connections to make, respond with exactly: NONE";
+    const userMsg = "Notes:\n" + notesText + "\n\nAlready linked (do not repeat):\n" + existingText;
+
+    try {
+      const reply = await callSirius(system, userMsg, 'notes-autolink');
+      const pairs = [];
+      const seen = new Set();
+      reply.split(/\r?\n/).forEach((line) => {
+        const m = line.match(/^LINK:\s*(.+?)\s*\|\s*(.+)$/i);
+        if (!m) return;
+        const a = candidates.find((c) => c.title.trim().toLowerCase() === m[1].trim().toLowerCase());
+        const b = candidates.find((c) => c.title.trim().toLowerCase() === m[2].trim().toLowerCase());
+        if (!a || !b || a.id === b.id) return;
+        const key = pairKey(a.id, b.id);
+        if (existingPairs.has(key) || seen.has(key)) return;
+        seen.add(key);
+        pairs.push([a, b]);
+      });
+
+      if (pairs.length === 0) {
+        status.textContent = 'No new connections found — your notes are either already linked or too different.';
+      } else {
+        pairs.forEach(([a, b]) => appendWikilinkToNote(a.id, b.title, b.id));
+        const msg = '✨ Linked ' + pairs.length + ' new connection' + (pairs.length === 1 ? '' : 's') + '.';
+        openGraphOverlay(); // rebuild so the new edges show immediately (status bar survives the rebuild)
+        status.style.display = 'block';
+        status.textContent = msg;
+      }
+    } catch (e) {
+      status.textContent = e.message || String(e);
+    } finally {
+      $('graphAutoLinkBtn').disabled = false;
+    }
   }
 
   function toggleGraphLinkMode() {
@@ -1517,6 +1597,7 @@
   $('graphBtn').addEventListener('click', openGraphOverlay);
   $('graphCloseBtn').addEventListener('click', closeGraphOverlay);
   $('graphLinkBtn').addEventListener('click', toggleGraphLinkMode);
+  $('graphAutoLinkBtn').addEventListener('click', runAutoLink);
 
   // ---------- Dashboard Ideas (merged from the former standalone Ideas tab) ----------
   function loadIdeas() { return loadJSON(IDEAS_KEY, []); }
