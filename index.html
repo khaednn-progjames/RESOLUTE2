@@ -192,47 +192,6 @@ body::after {
 .briefing-body.placeholder { color: var(--text-tertiary); font-style: italic; }
 .briefing-body.err { color: #FF8A8A; }
 
-/* ===== Mood check-in — a 10-second daily pulse, separate from the full Daily Note ===== */
-.mood-card {
-  position: relative; overflow: hidden;
-  border-radius: 16px; padding: 14px 18px;
-  margin-bottom: 14px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.14);
-  backdrop-filter: blur(46px) saturate(2.2);
-  -webkit-backdrop-filter: blur(46px) saturate(2.2);
-}
-.mood-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-.mood-label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
-.mood-streak {
-  font-size: 10.5px; font-weight: 700; color: var(--text-tertiary);
-  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
-}
-.mood-picker { display: flex; gap: 8px; }
-.mood-opt {
-  flex: 1; padding: 9px 0; border-radius: 11px; border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.03); font-size: 21px; cursor: pointer;
-  transition: background 0.15s, transform 0.1s, border-color 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.mood-opt:hover { background: rgba(255,255,255,0.09); transform: translateY(-1px); }
-.mood-opt:active { transform: scale(0.94); }
-.mood-note-input {
-  width: 100%; margin-top: 10px; padding: 9px 12px; border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.10); background: rgba(0,0,0,0.28);
-  color: var(--text-primary); font-family: inherit; font-size: 12.5px; outline: none;
-  transition: border-color 0.2s, background 0.2s;
-}
-.mood-note-input::placeholder { color: var(--text-tertiary); }
-.mood-note-input:focus { border-color: rgba(255,255,255,0.26); background: rgba(0,0,0,0.36); }
-.mood-done { display: flex; align-items: center; gap: 10px; }
-.mood-done-emoji { font-size: 22px; flex-shrink: 0; }
-.mood-done-text { flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mood-edit-btn {
-  border: 0; background: transparent; color: var(--text-tertiary); font-size: 11px; font-weight: 600;
-  cursor: pointer; padding: 4px 6px; flex-shrink: 0; transition: color 0.15s;
-}
-.mood-edit-btn:hover { color: var(--text-primary); }
 .gear-btn {
   width: 42px; height: 42px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
@@ -314,26 +273,6 @@ body::after {
       <button class="briefing-btn" id="briefingBtn" type="button">Generate</button>
     </div>
     <div class="briefing-body placeholder" id="briefingBody">One tap and Sirius reads today's goals, water, notes, planner, and net worth — then tells you where you stand.</div>
-  </div>
-
-  <div class="mood-card" id="moodCard">
-    <div class="mood-head">
-      <span class="mood-label" id="moodLabel">How's today going?</span>
-      <span class="mood-streak" id="moodStreak"></span>
-    </div>
-    <div class="mood-picker" id="moodPicker">
-      <button type="button" class="mood-opt" data-mood="1" aria-label="Rough day">😞</button>
-      <button type="button" class="mood-opt" data-mood="2" aria-label="Not great">😕</button>
-      <button type="button" class="mood-opt" data-mood="3" aria-label="Okay">🙂</button>
-      <button type="button" class="mood-opt" data-mood="4" aria-label="Good">😊</button>
-      <button type="button" class="mood-opt" data-mood="5" aria-label="Great">🤩</button>
-    </div>
-    <input type="text" class="mood-note-input" id="moodNoteInput" placeholder="One thing you're grateful for (optional)…" style="display:none">
-    <div class="mood-done" id="moodDone" style="display:none">
-      <span class="mood-done-emoji" id="moodDoneEmoji"></span>
-      <span class="mood-done-text" id="moodDoneText"></span>
-      <button type="button" class="mood-edit-btn" id="moodEditBtn">Edit</button>
-    </div>
   </div>
 
   <div class="bento">
@@ -941,94 +880,6 @@ body::after {
     }
   }
   $('briefingBtn').addEventListener('click', generateBriefing);
-})();
-</script>
-
-<script>
-// ===== Mood check-in — 10-second daily pulse (mood + optional gratitude line) =====
-(function () {
-  'use strict';
-  const $ = (id) => document.getElementById(id);
-  const KEY_PREFIX = 'mood:';
-  const EMOJI = { 1: '😞', 2: '😕', 3: '🙂', 4: '😊', 5: '🤩' };
-
-  function loadJSON(k, f) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; } catch (e) { return f; } }
-  function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
-  function dayKey(d) {
-    d = d || new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  }
-  function todayEntry() { return loadJSON(KEY_PREFIX + dayKey(), null); }
-  function saveTodayEntry(entry) { saveJSON(KEY_PREFIX + dayKey(), entry); }
-
-  function computeStreak() {
-    let streak = 0;
-    for (let i = 0; ; i++) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      const entry = loadJSON(KEY_PREFIX + dayKey(d), null);
-      if (i === 0 && !entry) continue; // today not logged yet doesn't break a streak already earned
-      if (entry) streak++; else break;
-      if (i > 400) break;
-    }
-    return streak;
-  }
-
-  function renderDoneState(entry) {
-    $('moodPicker').style.display = 'none';
-    $('moodNoteInput').style.display = 'none';
-    $('moodDone').style.display = 'flex';
-    $('moodDoneEmoji').textContent = EMOJI[entry.mood] || '🙂';
-    $('moodDoneText').textContent = entry.note ? entry.note : 'Logged for today';
-  }
-  function renderPickerState() {
-    $('moodPicker').style.display = 'flex';
-    $('moodNoteInput').style.display = 'none';
-    $('moodDone').style.display = 'none';
-  }
-
-  function render() {
-    const streak = computeStreak();
-    $('moodStreak').textContent = streak > 1 ? streak + '-day streak' : '';
-    const entry = todayEntry();
-    if (entry) renderDoneState(entry);
-    else renderPickerState();
-  }
-
-  document.querySelectorAll('.mood-opt').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const mood = parseInt(btn.dataset.mood, 10);
-      saveTodayEntry({ mood: mood, note: '', ts: Date.now() });
-      $('moodPicker').style.display = 'none';
-      const input = $('moodNoteInput');
-      input.style.display = '';
-      input.value = '';
-      input.focus();
-    });
-  });
-
-  function commitNote() {
-    const entry = todayEntry();
-    if (!entry) return;
-    entry.note = $('moodNoteInput').value.trim();
-    saveTodayEntry(entry);
-    render();
-  }
-  $('moodNoteInput').addEventListener('blur', commitNote);
-  $('moodNoteInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitNote(); } });
-
-  $('moodEditBtn').addEventListener('click', () => {
-    const entry = todayEntry();
-    $('moodDone').style.display = 'none';
-    $('moodPicker').style.display = 'flex';
-    if (entry) {
-      const input = $('moodNoteInput');
-      input.style.display = '';
-      input.value = entry.note || '';
-    }
-  });
-
-  render();
-  window.addEventListener('storage', render);
 })();
 </script>
 
