@@ -454,6 +454,25 @@
     reader.readAsText(file);
     e.target.value = '';
   });
+
+  // ---------- cloud sync ----------
+  // "My Data" writes straight to localStorage above, but without this the
+  // hub never pushes po_water_v1 to Supabase — the next sync pull on
+  // po-water.html/health.html (which DO sync it) would then overwrite the
+  // edit right back to the old cloud copy, making it look like it "didn't
+  // save" after any fresh page load (e.g. after a redeploy).
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof initCloudSync !== 'function') return;
+    initCloudSync({
+      appKey: 'health',
+      syncedKeys: ['po_water_v1'],
+      onApplied: function () {
+        // If the settings modal happens to be open when a remote update
+        // lands, refresh the form so it doesn't show stale values.
+        if ($('settingsBg').classList.contains('show')) populate();
+      },
+    });
+  });
 })();
 </script>
 
