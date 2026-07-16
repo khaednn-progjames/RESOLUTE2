@@ -336,6 +336,22 @@ html, body { scrollbar-width: none; -ms-overflow-style: none; }
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .scan-bank-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); border-color: rgba(255,255,255,0.28); }
+.sirius-menu-wrap { position: relative; }
+.sirius-menu-wrap .chev { font-size: 9px; opacity: 0.6; margin-left: 2px; }
+.sirius-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 60; display: none;
+  flex-direction: column; gap: 3px; padding: 6px; min-width: 220px;
+  background: #141416; border: 1px solid rgba(255,255,255,0.14); border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(0,0,0,0.5);
+}
+.sirius-menu.show { display: flex; }
+.sirius-menu button {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 10px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--text-secondary);
+  font-family: inherit; font-size: 12.5px; font-weight: 600; text-align: left; cursor: pointer;
+  transition: background 0.15s, color 0.15s; white-space: nowrap;
+}
+.sirius-menu button:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
 
 .fin-ai-modal-bg {
   position: fixed; inset: 0; z-index: 220; display: none;
@@ -1694,10 +1710,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <div id="netWorthTotal" style="font-size:34px;font-weight:700;color:var(--text-primary);line-height:1.05;margin-top:2px">$0</div>
         <div id="netWorthBreakdown" style="font-size:11px;color:var(--text-tertiary);margin-top:4px"></div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-        <button class="scan-bank-btn" id="bankScanBtn" type="button" style="width:auto;margin-top:0;padding:9px 16px">Scan an account screenshot</button>
-        <button class="scan-bank-btn" id="askSiriusBtn" type="button" style="width:auto;margin-top:0;padding:9px 16px">Ask Sirius about your budget</button>
-        <button class="scan-bank-btn" id="finAiHistoryBtn" type="button" style="width:auto;margin-top:0;padding:9px 16px">Sirius history</button>
+      <div class="sirius-menu-wrap">
+        <button class="scan-bank-btn" id="siriusMenuBtn" type="button" style="width:auto;margin-top:0;padding:9px 16px">🧠 Sirius <span class="chev">▾</span></button>
+        <div class="sirius-menu" id="siriusMenu">
+          <button type="button" id="bankScanBtn">Scan an account screenshot</button>
+          <button type="button" id="askSiriusBtn">Ask Sirius about your budget</button>
+          <button type="button" id="finAiHistoryBtn">Sirius history</button>
+        </div>
       </div>
     </div>
 
@@ -3065,6 +3084,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     document.getElementById('finAiModalBody').innerHTML = hist.map(renderAiHistoryEntry).join('');
   }
   document.getElementById('finAiHistoryBtn').addEventListener('click', openFinAiHistoryModal);
+
+  // ---- Sirius menu (consolidates the 3 buttons above into one dropdown) ----
+  (function () {
+    const btn = document.getElementById('siriusMenuBtn');
+    const menu = document.getElementById('siriusMenu');
+    btn.addEventListener('click', (e) => { e.stopPropagation(); menu.classList.toggle('show'); });
+    menu.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => menu.classList.remove('show')));
+    document.addEventListener('click', (e) => { if (!e.target.closest('.sirius-menu-wrap')) menu.classList.remove('show'); });
+  })();
 
   // ============================================================
   // SUBSCRIPTIONS
