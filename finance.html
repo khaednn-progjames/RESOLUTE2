@@ -12,6 +12,7 @@
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
 <script src="sirius-usage.js" defer></script>
+<link rel="stylesheet" href="design-system.css">
 <style>
 :root {
   --bg: #0A0A0B;
@@ -45,37 +46,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
-  background: var(--bg-deep);
-  color: var(--text-primary);
-  font-family: var(--font);
-  -webkit-font-smoothing: antialiased;
-  min-height: 100%;
-}
-
 /* Backdrop — black with subtle warm + cool washes */
-body::before {
-  content: '';
-  position: fixed;
-  inset: -10%;
-  z-index: -2;
-  background:
-    radial-gradient(60% 45% at 82% 14%, rgba(255, 255, 255, 0.28) 0%, transparent 60%),
-    radial-gradient(55% 45% at 18% 90%, rgba(220, 220, 225, 0.18) 0%, transparent 60%),
-    linear-gradient(180deg, #0A0A0B 0%, #050506 100%);
-  filter: blur(85px) saturate(1.05);
-  pointer-events: none;
-}
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
-  background-size: 3px 3px;
-  opacity: 0.7;
-  pointer-events: none;
-}
 
 .shell {
   max-width: 880px;
@@ -159,7 +130,7 @@ body::after {
 .section[hidden] { display: none !important; }
 
 /* Hide scrollbars everywhere */
-html, body { scrollbar-width: none; -ms-overflow-style: none; }
+
 *::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
 
 /* Section title with reorder controls */

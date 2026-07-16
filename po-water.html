@@ -60,6 +60,7 @@ const CONFIG = {
 };
 </script>
 
+<link rel="stylesheet" href="design-system.css">
 <style>
 :root {
   --bg: #0a0a0b;
@@ -77,23 +78,7 @@ const CONFIG = {
   --font: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, SF Mono, Menlo, Consolas, monospace;
 }
-* { box-sizing: border-box; }
-html, body {
-  margin: 0; padding: 0;
-  background: radial-gradient(ellipse 80% 60% at 50% 0%, #14141a 0%, #0a0a0b 60%);
-  color: var(--text-1);
-  font-family: var(--font);
-  -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
-  position: relative;
-}
-body::before {
-  content: ''; position: fixed; inset: 0;
-  background:
-    radial-gradient(60% 45% at 82% 14%, rgba(255,255,255,0.28) 0%, transparent 60%),
-    radial-gradient(55% 45% at 18% 90%, rgba(220,220,225,0.18) 0%, transparent 60%);
-  filter: blur(85px); pointer-events: none; z-index: -1;
-}
+
 .shell { max-width: 720px; margin: 0 auto; padding: 24px 16px 80px; }
 
 /* ----- Top day pill + header ----- */

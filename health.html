@@ -12,6 +12,7 @@
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
 <script src="sirius-usage.js" defer></script>
+<link rel="stylesheet" href="design-system.css">
 <style>
 :root {
   --bg: #050506;
@@ -40,36 +41,6 @@
   --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
-
-* { box-sizing: border-box; }
-html, body {
-  margin: 0; padding: 0;
-  background: var(--bg);
-  color: var(--text-secondary);
-  font-family: var(--font);
-  font-size: 15px; line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-body { min-height: 100vh; position: relative; overflow-x: hidden; }
-
-body::before {
-  content: ''; position: fixed; inset: 0;
-  background:
-    radial-gradient(60% 50% at 82% 14%, rgba(255, 255, 255, 0.32) 0%, transparent 65%),
-    radial-gradient(50% 40% at 18% 90%, rgba(220, 220, 225, 0.20) 0%, transparent 65%),
-    radial-gradient(55% 45% at 50% 55%, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
-  filter: blur(85px);
-  pointer-events: none; z-index: 0;
-  animation: drift 36s ease-in-out infinite alternate;
-}
-body::after {
-  content: ''; position: fixed; inset: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
-  background-size: 3px 3px;
-  pointer-events: none; z-index: 1;
-}
-@keyframes drift { 0% { transform: translate(0, 0); } 100% { transform: translate(-2%, 2%); } }
 
 main {
   position: relative; z-index: 2;
@@ -641,7 +612,6 @@ main {
 
   <div class="attribution">// editable template · all data stays in your browser</div>
 </main>
-
 
 <script>
 // ===== Meals: photo → Sirius vision → calories/macros, logged per day =====

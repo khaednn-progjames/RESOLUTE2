@@ -12,6 +12,7 @@
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
 
+<link rel="stylesheet" href="design-system.css">
 <style>
 /* ===== Shared design tokens (same as the rest of the dashboard) ===== */
 :root {
@@ -21,104 +22,8 @@
   --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
-* { box-sizing: border-box; }
-html, body {
-  margin: 0; padding: 0;
-  background: #050506;
-  color: var(--text-secondary);
-  font-family: var(--font);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-body {
-  min-height: 100vh; position: relative; overflow-x: hidden;
-  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
-}
-body::before {
-  content: ''; position: fixed; inset: 0;
-  background:
-    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.30), transparent 55%),
-    radial-gradient(circle at 18% 90%, rgba(220,220,225,0.20), transparent 60%),
-    radial-gradient(circle at 50% 55%, rgba(255,255,255,0.08), transparent 65%);
-  filter: blur(85px); pointer-events: none; z-index: -2;
-  animation: drift 36s ease-in-out infinite alternate;
-}
-body::after {
-  content: ''; position: fixed; inset: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
-  background-size: 3px 3px; pointer-events: none; z-index: -1;
-}
-@keyframes drift { 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-22px,14px,0)} }
 
-.page { max-width: 1100px; margin: 0 auto; }
-.dash-title {
-  margin: 0 0 18px; font-size: 28px; font-weight: 700; letter-spacing: -0.025em;
-  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: transparent;
-}
-@media (max-width: 480px) { .dash-title { font-size: 22px; } }
-
-/* ===== BENTO GRID — same system as the main hub, so new tiles drop in easily ===== */
-.bento {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: 168px;
-  grid-auto-flow: dense;
-  gap: 14px;
-}
-.tile {
-  --accent: #FFFFFF;
-  position: relative; overflow: hidden;
-  display: flex; flex-direction: column;
-  padding: 20px;
-  border-radius: 18px;
-  text-decoration: none;
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.18);
-  backdrop-filter: blur(46px) saturate(2.2);
-  -webkit-backdrop-filter: blur(46px) saturate(2.2);
-  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55);
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-}
-.tile::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(circle at 78% 18%,
-              color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%);
-  opacity: 0.7; transition: opacity 0.18s ease;
-}
-.tile:hover {
-  transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.55);
-}
-.tile:hover::before { opacity: 1; }
-.tile.big  { grid-column: span 2; grid-row: span 2; }
-.tile.wide { grid-column: span 2; }
-.tile-spacer { flex: 1; }
-.tile-title {
-  font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
-  color: var(--text-primary); margin: 0 0 4px;
-}
-.tile.big .tile-title { font-size: 28px; }
-.tile-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.tile-sub { font-size: 13px; color: var(--text-tertiary); }
-.tile-arrow {
-  font-size: 18px; color: var(--accent);
-  transition: transform 0.18s ease; flex-shrink: 0;
-}
-.tile:hover .tile-arrow { transform: translateX(4px); }
-@media (max-width: 720px) {
-  .bento { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 150px; }
-  .tile.big { grid-column: span 2; grid-row: span 1; }
-  .tile.big .tile-title { font-size: 22px; }
-}
-@media (max-width: 440px) {
-  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
-  .bento { grid-template-columns: 1fr; grid-auto-rows: 132px; }
-  .tile.big, .tile.wide { grid-column: span 1; }
-}
-
+/* Tile grid now comes from design-system.css (.bento / .tile). */
 .empty-state {
   grid-column: 1 / -1;
   text-align: center; font-size: 13px; font-style: italic; color: var(--text-tertiary);
@@ -135,7 +40,7 @@ body::after {
     <!-- New tiles go here, using the same tile markup as index.html — pick an emoji + href. -->
 
     <!-- Small tile -->
-    <a class="tile" href="gym.html" style="--accent:#FFFFFF">
+    <a class="tile" href="gym.html" style="--accent:#FF8FA3">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Gym</h2>
       <div class="tile-foot">
@@ -145,7 +50,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="caffeine.html" style="--accent:#FFFFFF">
+    <a class="tile" href="caffeine.html" style="--accent:#D9A066">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Caffeine</h2>
       <div class="tile-foot">
@@ -155,7 +60,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="skills.html" style="--accent:#FFFFFF">
+    <a class="tile" href="skills.html" style="--accent:#5FD4D4">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Skills</h2>
       <div class="tile-foot">
@@ -165,7 +70,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="maintenance.html" style="--accent:#FFFFFF">
+    <a class="tile" href="maintenance.html" style="--accent:#FFA76B">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Maintenance</h2>
       <div class="tile-foot">
@@ -175,7 +80,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="money-ideas.html" style="--accent:#FFFFFF">
+    <a class="tile" href="money-ideas.html" style="--accent:#F2C063">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Money Ideas</h2>
       <div class="tile-foot">
@@ -185,7 +90,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="bank-accounts.html" style="--accent:#FFFFFF">
+    <a class="tile" href="bank-accounts.html" style="--accent:#6BE3A4">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Bank Accounts</h2>
       <div class="tile-foot">
@@ -195,7 +100,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="usps-tracking.html" style="--accent:#FFFFFF">
+    <a class="tile" href="usps-tracking.html" style="--accent:#5EC8F2">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">USPS Tracking</h2>
       <div class="tile-foot">
@@ -205,7 +110,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="iron-condor.html" style="--accent:#FFFFFF">
+    <a class="tile" href="iron-condor.html" style="--accent:#B39DDB">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Iron Condor Bot</h2>
       <div class="tile-foot">
@@ -215,7 +120,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="products.html" style="--accent:#FFFFFF">
+    <a class="tile" href="products.html" style="--accent:#A9A6C4">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Products</h2>
       <div class="tile-foot">
