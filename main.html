@@ -580,6 +580,36 @@
 }
 .gm-status.gm-status-error { color: var(--danger); }
 
+/* Suggest Tomorrow's Goals */
+.suggest-goals-row { display: flex; justify-content: flex-end; margin-top: 10px; }
+.suggest-goals-btn {
+  display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 11px;
+  border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.05); color: var(--text-secondary);
+  font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.suggest-goals-btn:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
+.suggest-goals-btn:disabled { opacity: 0.55; cursor: wait; }
+.suggest-goals-panel { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); }
+.suggest-goals-status { font-size: 12px; color: var(--text-tertiary); padding: 4px 0; }
+.suggest-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px;
+  margin-bottom: 6px; background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); border-radius: 11px;
+}
+.suggest-row-text { font-size: 13px; color: var(--text-primary); line-height: 1.4; }
+.suggest-row-text .tag {
+  display: inline-block; margin-right: 7px; font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 1px 6px; border-radius: 999px; vertical-align: 1px;
+}
+.suggest-row-text .tag.carry { background: rgba(242,192,99,0.16); color: var(--warning); }
+.suggest-row-text .tag.new { background: rgba(107,227,164,0.14); color: var(--success); }
+.suggest-row-add {
+  flex-shrink: 0; font-size: 11px; font-weight: 700; padding: 7px 11px; border-radius: 9px;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.09); color: var(--text-secondary);
+  cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.suggest-row-add:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
+.suggest-row-add.done { color: var(--success); border-color: rgba(107,227,164,0.4); }
+
 @media (max-width: 480px) {
   body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
   .gm-card { padding: 16px; }
@@ -741,6 +771,10 @@
         <button type="button" id="tomorrowPolishBtn" class="gm-polish">✨ Polish</button>
         <div class="gm-status" id="tomorrowStatus"></div>
       </div>
+      <div class="suggest-goals-row">
+        <button type="button" id="suggestGoalsBtn" class="suggest-goals-btn">🧠 Suggest tomorrow's goals</button>
+      </div>
+      <div class="suggest-goals-panel" id="suggestGoalsPanel" style="display:none"></div>
     </div>
   </div>
 
@@ -770,8 +804,10 @@
 (function () {
   'use strict';
 
-  // Paste your Anthropic key here to enable ✨ Polish. Empty = falls back to plain add.
-  const ANTHROPIC_API_KEY = '';
+  // Shared BYOK Anthropic key (same one pasted into the Sirius tile) — was
+  // hardcoded empty before, which silently disabled ✨ Polish entirely.
+  const SIRIUS_KEY_LS = 'nova_lite_api_key';
+  function ANTHROPIC_API_KEY() { try { return localStorage.getItem(SIRIUS_KEY_LS) || ''; } catch (e) { return ''; } }
 
   const WAKE_HOUR  = 8;
   const SLEEP_HOUR = 24;
@@ -1291,7 +1327,7 @@
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
+        'x-api-key': ANTHROPIC_API_KEY(),
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
@@ -1333,7 +1369,7 @@
     polishBtn.addEventListener('click', async () => {
       const text = input.value.trim();
       if (!text) return;
-      if (!ANTHROPIC_API_KEY) {
+      if (!ANTHROPIC_API_KEY()) {
         plainAdd(text);
         showStatus(statusEl, 'Polish needs an Anthropic API key — added as-typed.', false);
         return;
@@ -1367,6 +1403,91 @@
     document.getElementById('tomorrowStatus'),
     loadTomorrow
   );
+
+  // ---------- Suggest Tomorrow's Goals (AI) ----------
+  // Looks at how today actually went (done vs. not) plus the 1-year goal,
+  // and asks Sirius for a mix of: today's unfinished goals carried
+  // forward, and a couple of fresh extra goals worth tackling tomorrow.
+  function suggestGoalsContext() {
+    const today = getGoals(todayKey());
+    const done = today.filter((g) => g && g.done).map((g) => g.text);
+    const notDone = today.filter((g) => g && !g.done).map((g) => g.text);
+    let lifeGoal = '';
+    try { lifeGoal = (JSON.parse(localStorage.getItem('lifegoal:v1')) || {}).goal || ''; } catch (e) {}
+    const alreadyPlanned = getGoals(tomorrowKey()).map((g) => g && g.text).filter(Boolean);
+    const lines = [];
+    lines.push(done.length ? 'Finished today: ' + done.join('; ') : 'Nothing finished today.');
+    lines.push(notDone.length ? 'Left unfinished today: ' + notDone.join('; ') : 'No unfinished goals today.');
+    if (lifeGoal) lines.push('1-year goal they are working toward: ' + lifeGoal);
+    if (alreadyPlanned.length) lines.push('Already planned for tomorrow (do not repeat these): ' + alreadyPlanned.join('; '));
+    return lines.join('\n');
+  }
+
+  async function suggestTomorrowGoals() {
+    const btn = document.getElementById('suggestGoalsBtn');
+    const panel = document.getElementById('suggestGoalsPanel');
+    if (!ANTHROPIC_API_KEY()) {
+      panel.style.display = 'block';
+      panel.innerHTML = '<div class="suggest-goals-status">No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.</div>';
+      return;
+    }
+    btn.disabled = true;
+    panel.style.display = 'block';
+    panel.innerHTML = '<div class="suggest-goals-status">Sirius is looking at how today went…</div>';
+
+    const system = "You are Sirius, the user's personal mentor helping them plan tomorrow's goals. " +
+      "Using today's actual results below, suggest goals for tomorrow: carry forward anything left unfinished today (rephrased tighter if it helps), " +
+      "plus 2-3 fresh extra goals worth tackling — small concrete wins, and if a 1-year goal is given, at least one suggestion should genuinely move that forward. " +
+      "Respond with ONLY a JSON array of objects, no preamble, no code fences: [{\"text\": \"<goal, under 60 chars>\", \"carry\": true|false}, ...]. " +
+      "\"carry\": true for a goal continued from today's unfinished list, false for a fresh suggestion. 4-6 items total.";
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY(),
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-8',
+          max_tokens: 700,
+          system: system,
+          messages: [{ role: 'user', content: suggestGoalsContext() }],
+        }),
+      });
+      const data = await res.json();
+      if (typeof logSiriusUsage === 'function') logSiriusUsage('main-suggest-tomorrow', data.usage);
+      if (data.error) throw new Error(data.error.message || 'Something went wrong.');
+      const raw = (data.content && data.content[0] && data.content[0].text) || '';
+      const suggestions = JSON.parse(raw);
+      if (!Array.isArray(suggestions) || suggestions.length === 0) throw new Error('No suggestions came back — try again.');
+
+      panel.innerHTML = suggestions.map((s, i) =>
+        '<div class="suggest-row"><div class="suggest-row-text">' +
+          '<span class="tag ' + (s.carry ? 'carry">Carried over' : 'new">New') + '</span>' +
+          String(s.text || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) +
+        '</div><button type="button" class="suggest-row-add" data-i="' + i + '">+ Add</button></div>'
+      ).join('');
+      panel.querySelectorAll('.suggest-row-add').forEach((addBtn) => {
+        addBtn.addEventListener('click', () => {
+          const s = suggestions[parseInt(addBtn.dataset.i, 10)];
+          const list = getGoals(tomorrowKey());
+          list.push({ text: s.text, done: false });
+          setGoals(tomorrowKey(), list);
+          loadTomorrow();
+          addBtn.textContent = '✓ Added'; addBtn.classList.add('done'); addBtn.disabled = true;
+        });
+      });
+    } catch (e) {
+      panel.innerHTML = '<div class="suggest-goals-status" style="color:var(--danger)">' +
+        (e.message || String(e)).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) + '</div>';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  document.getElementById('suggestGoalsBtn').addEventListener('click', suggestTomorrowGoals);
 
   // ---------- Boot ----------
   rollover();
