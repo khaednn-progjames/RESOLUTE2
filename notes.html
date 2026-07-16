@@ -452,10 +452,10 @@
     <aside class="notes-sidebar" id="notesSidebar">
       <input class="notes-search" id="notesSearch" type="text" placeholder="Search notes…" autocomplete="off">
       <div class="cat-chip-row" id="catChipRow"></div>
-      <button class="pinned-ideas-btn" id="dailyNoteBtn" type="button">📅 Daily Note <span class="cnt" id="dailyNoteStatus"></span></button>
-      <button class="pinned-ideas-btn" id="dashboardIdeasBtn" type="button">💡 Dashboard Ideas <span class="cnt" id="ideasCount"></span></button>
-      <button class="sirius-ideas-btn" id="siriusIdeasBtn" type="button">✍️ Ideas to write about</button>
-      <button class="sirius-ideas-btn" id="graphBtn" type="button">🕸 Web</button>
+      <button class="pinned-ideas-btn" id="dailyNoteBtn" type="button">Daily Note <span class="cnt" id="dailyNoteStatus"></span></button>
+      <button class="pinned-ideas-btn" id="dashboardIdeasBtn" type="button">Dashboard Ideas <span class="cnt" id="ideasCount"></span></button>
+      <button class="sirius-ideas-btn" id="siriusIdeasBtn" type="button">Ideas to write about</button>
+      <button class="sirius-ideas-btn" id="graphBtn" type="button">Web</button>
       <ul class="notes-list" id="notesList"></ul>
     </aside>
 
@@ -474,8 +474,8 @@
                 <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
               </svg>
             </button>
-            <button class="notes-icon-btn" id="siriusSummarizeBtn" type="button" aria-label="Summarize with Sirius" title="Summarize with Sirius">🧠</button>
-            <button class="notes-icon-btn" id="solutionBtn" type="button" aria-label="Get a Solution" title="Get a Solution">🎯</button>
+            <button class="notes-icon-btn" id="siriusSummarizeBtn" type="button" aria-label="Summarize with Sirius" title="Summarize with Sirius" style="font-size:11px; font-weight:800; letter-spacing:0.02em;">AI</button>
+            <button class="notes-icon-btn" id="solutionBtn" type="button" aria-label="Get a Solution" title="Get a Solution" style="font-size:11px; font-weight:800; letter-spacing:0.02em;">Fix</button>
           </div>
         </div>
         <div class="notes-meta-row">
@@ -485,7 +485,7 @@
         <div id="editor"></div>
         <div class="notes-footer" id="notesFooter">0 words</div>
         <div class="backlinks-panel" id="backlinksPanel" style="display:none">
-          <div class="backlinks-title">🔗 Linked mentions</div>
+          <div class="backlinks-title">Linked mentions</div>
           <div class="backlinks-chips" id="backlinksChips"></div>
         </div>
       </div>
@@ -501,7 +501,7 @@
             </div>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap">
-            <button class="sirius-btn" id="siriusBrainstormBtn" type="button">🧠 Brainstorm</button>
+            <button class="sirius-btn" id="siriusBrainstormBtn" type="button">Brainstorm</button>
             <button class="copy-btn" id="copyBtn" type="button">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               <span id="copyBtnText">Copy for Claude</span>
@@ -517,7 +517,7 @@
           <input id="ideaInput" class="gm-input" type="text" placeholder="A feature idea for the dashboard…" autocomplete="off">
           <button type="button" id="ideaAddBtn" class="gm-add">+ Add</button>
         </div>
-        <div class="ideas-hint">Check an idea off once it's built. Hover an idea for a "✨" button to have Sirius flesh it out. "Copy for Claude" puts the whole list on your clipboard — paste it into a Claude Code chat to have it built.</div>
+        <div class="ideas-hint">Check an idea off once it's built. Hover an idea for a "»" button to have Sirius flesh it out. "Copy for Claude" puts the whole list on your clipboard — paste it into a Claude Code chat to have it built.</div>
       </div>
     </section>
   </div>
@@ -538,9 +538,9 @@
 <!-- ===== Web (graph view) ===== -->
 <div class="graph-overlay" id="graphOverlay">
   <div class="graph-toolbar">
-    <span class="graph-title">🕸 Web</span>
+    <span class="graph-title">Web</span>
     <div style="display:flex; align-items:center; gap:8px">
-      <button class="graph-link-btn" id="graphAutoLinkBtn" type="button">✨ Auto Link</button>
+      <button class="graph-link-btn" id="graphAutoLinkBtn" type="button">Auto Link</button>
       <button class="graph-link-btn" id="graphLinkBtn" type="button">Link notes</button>
       <button class="graph-close" id="graphCloseBtn" type="button" aria-label="Close">×</button>
     </div>
@@ -549,7 +549,7 @@
   <div class="graph-hint" id="graphAutoLinkStatus" style="display:none"></div>
   <div class="graph-canvas-wrap">
     <svg id="graphSvg"></svg>
-    <div class="graph-empty" id="graphEmpty" style="display:none">Link notes with <code>[[Note Title]]</code> — or connect them yourself, or let "✨ Auto Link" above find the connections for you.</div>
+    <div class="graph-empty" id="graphEmpty" style="display:none">Link notes with <code>[[Note Title]]</code> — or connect them yourself, or let "Auto Link" above find the connections for you.</div>
   </div>
 </div>
 
@@ -1211,7 +1211,7 @@
 
   // ---- Ideas: what to write about ----
   function runSiriusIdeas() {
-    openSiriusModal('💡 Ideas to write about');
+    openSiriusModal('Ideas to write about');
     if (!siriusKey()) { renderKeyForm(runSiriusIdeas); return; }
     renderSiriusLoading();
 
@@ -1244,7 +1244,7 @@
 
   // ---- Summarize the current note ----
   function runSiriusSummarize() {
-    openSiriusModal('🧠 Summarize this note');
+    openSiriusModal('Summarize this note');
     if (!activeId) { renderSiriusError('Open a note first.'); return; }
     const text = quill.getText().trim();
     if (!text) { renderSiriusError('This note is empty — write something first.'); return; }
@@ -1337,7 +1337,7 @@
   }
 
   function runSiriusSolution() {
-    openSiriusModal('🎯 Get a Solution');
+    openSiriusModal('Get a Solution');
     if (!activeId || activeId === IDEAS_ID) { renderSiriusError('Open a note first.'); return; }
     const text = quill.getText().trim();
     if (!text) { renderSiriusError('This note is empty — write something first.'); return; }
@@ -1450,7 +1450,7 @@
   async function runAutoLink() {
     if (!siriusKey()) {
       closeGraphOverlay();
-      openSiriusModal('✨ Auto Link');
+      openSiriusModal('Auto Link');
       renderKeyForm(() => { closeSiriusModal(); openGraphOverlay(); runAutoLink(); });
       return;
     }
@@ -1467,7 +1467,7 @@
     }
 
     btn.disabled = true;
-    status.textContent = '✨ Sirius is reading your notes for connections…';
+    status.textContent = 'Sirius is reading your notes for connections…';
 
     const { links: existingLinks } = buildGraphData();
     const idOf = (side) => (typeof side === 'object' ? side.id : side);
@@ -1511,7 +1511,7 @@
         status.textContent = 'No new connections found — your notes are either already linked or too different.';
       } else {
         pairs.forEach(([a, b]) => appendWikilinkToNote(a.id, b.title, b.id));
-        const msg = '✨ Linked ' + pairs.length + ' new connection' + (pairs.length === 1 ? '' : 's') + '.';
+        const msg = 'Linked ' + pairs.length + ' new connection' + (pairs.length === 1 ? '' : 's') + '.';
         openGraphOverlay(); // rebuild so the new edges show immediately (status bar survives the rebuild)
         status.style.display = 'block';
         status.textContent = msg;
@@ -1658,7 +1658,7 @@
         expand.type = 'button';
         expand.className = 'idea-expand';
         expand.title = 'Flesh this out with Sirius';
-        expand.textContent = '✨';
+        expand.textContent = '»';
         expand.addEventListener('click', () => runSiriusExpand(it.id, expand));
 
         const del = document.createElement('button');
@@ -1750,7 +1750,7 @@
 
   // ---- Brainstorm new dashboard ideas ----
   async function runSiriusBrainstorm() {
-    openSiriusModal('🧠 Brainstorm new ideas');
+    openSiriusModal('Brainstorm new ideas');
     if (!siriusKey()) { renderKeyForm(runSiriusBrainstorm); return; }
     renderSiriusLoading();
 
@@ -1795,7 +1795,7 @@
     const items = loadIdeas();
     const entry = items.find(x => x.id === id);
     if (!entry) return;
-    if (!siriusKey()) { openSiriusModal('✨ Expand idea'); renderKeyForm(() => runSiriusExpand(id, btnEl)); return; }
+    if (!siriusKey()) { openSiriusModal('Expand idea'); renderKeyForm(() => runSiriusExpand(id, btnEl)); return; }
 
     btnEl.disabled = true;
     const original = btnEl.textContent;
