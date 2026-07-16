@@ -14,193 +14,53 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Dashboard">
 
+<link rel="stylesheet" href="design-system.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
 <script src="sirius-usage.js" defer></script>
 
 <style>
-/* ===== Shared design tokens (same as the rest of the dashboard) ===== */
-:root {
-  --text-primary: #FAFAFA;
-  --text-secondary: #B8B6B0;
-  --text-tertiary: #76746E;
-  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-}
-* { box-sizing: border-box; }
-html, body {
-  margin: 0; padding: 0;
-  background: #050506;
-  color: var(--text-secondary);
-  font-family: var(--font);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-body {
-  min-height: 100vh; position: relative; overflow-x: hidden;
-  padding: max(28px, env(safe-area-inset-top)) 20px 60px;
-}
-/* Soft drifting glow + dot texture (matches the other pages). */
-body::before {
-  content: ''; position: fixed; inset: 0;
-  background:
-    radial-gradient(circle at 82% 14%, rgba(255,255,255,0.30), transparent 55%),
-    radial-gradient(circle at 18% 90%, rgba(220,220,225,0.20), transparent 60%),
-    radial-gradient(circle at 50% 55%, rgba(255,255,255,0.08), transparent 65%);
-  filter: blur(85px); pointer-events: none; z-index: -2;
-  animation: drift 36s ease-in-out infinite alternate;
-}
-body::after {
-  content: ''; position: fixed; inset: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
-  background-size: 3px 3px; pointer-events: none; z-index: -1;
-}
-@keyframes drift { 0%{transform:translate3d(0,0,0)} 100%{transform:translate3d(-22px,14px,0)} }
-
-.page { max-width: 1100px; margin: 0 auto; }
-.dash-title {
-  margin: 0 0 18px; font-size: 28px; font-weight: 700; letter-spacing: -0.025em;
-  background: linear-gradient(180deg, #FFFFFF 0%, #C7C4BC 120%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: transparent;
-}
-@media (max-width: 480px) { .dash-title { font-size: 22px; } }
-
-/* ===== BENTO GRID ===== */
-.bento {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: 168px;
-  grid-auto-flow: dense;
-  gap: 14px;
-}
-.tile {
-  --accent: #FFFFFF;                 /* each tile overrides this */
-  position: relative; overflow: hidden;
-  display: flex; flex-direction: column;
-  padding: 20px;
-  border-radius: 18px;
-  text-decoration: none;
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.18);
-  backdrop-filter: blur(46px) saturate(2.2);
-  -webkit-backdrop-filter: blur(46px) saturate(2.2);
-  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55);
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-}
-/* The "its own style" bit — a faint accent glow per tile. */
-.tile::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(circle at 78% 18%,
-              color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%);
-  opacity: 0.7; transition: opacity 0.18s ease;
-}
-.tile:hover {
-  transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.55);
-}
-.tile:hover::before { opacity: 1; }
-
-/* Tile sizes */
-.tile.big  { grid-column: span 2; grid-row: span 2; }
-.tile.wide { grid-column: span 2; }
-
-/* Tile contents */
-.tile-spacer { flex: 1; }
-.tile-title {
-  font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
-  color: var(--text-primary); margin: 0 0 4px;
-}
-.tile.big .tile-title { font-size: 28px; }
-.tile-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.tile-sub {
-  font-size: 13px; color: var(--text-tertiary);
-}
-.tile-sub.reminder { color: #F2C063; font-weight: 600; }
-.tile-arrow {
-  font-size: 18px; color: var(--accent);
-  transition: transform 0.18s ease; flex-shrink: 0;
-}
-.tile:hover .tile-arrow { transform: translateX(4px); }
-
-/* ===== Responsive: collapse the bento on small screens ===== */
-@media (max-width: 720px) {
-  .bento { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 150px; }
-  .tile.big { grid-column: span 2; grid-row: span 1; }
-  .tile.big .tile-title { font-size: 22px; }
-}
-@media (max-width: 440px) {
-  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
-  .bento { grid-template-columns: 1fr; grid-auto-rows: 132px; }
-  .tile.big, .tile.wide { grid-column: span 1; }
-}
+/* Page-specific chrome only — base tokens, cards, tiles, and buttons
+   now come from design-system.css. */
 
 /* ===== Header row + gear ===== */
-.hub-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
-.hub-head .dash-title { margin: 0; }
+.hub-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: var(--sp-2); }
 .hub-greeting-wrap { min-width: 0; }
 .hub-greeting {
   font-size: 13px; font-weight: 600; color: var(--text-tertiary);
-  letter-spacing: 0.02em; margin-bottom: 3px;
+  letter-spacing: 0.02em; margin-bottom: var(--sp-1);
 }
 .hub-meta-row {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  margin: 10px 0 18px;
+  display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap;
+  margin: var(--sp-3) 0 var(--sp-5);
 }
-.hub-chip {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 7px 12px; border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
-  font-size: 12px; font-weight: 600; color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-.hub-chip .dim { color: var(--text-tertiary); font-weight: 500; }
+.hub-meta-row .pill { font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.hub-meta-row .pill .dim { color: var(--text-tertiary); font-weight: 500; }
 
 /* ===== Daily Briefing card ===== */
-.briefing-card {
-  position: relative; overflow: hidden;
-  border-radius: 18px; padding: 18px 20px;
-  margin-bottom: 14px;
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.18);
-  backdrop-filter: blur(46px) saturate(2.2);
-  -webkit-backdrop-filter: blur(46px) saturate(2.2);
-  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55);
-}
-.briefing-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.briefing-card { margin-bottom: var(--sp-4); }
+.briefing-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
 .briefing-label {
   font-size: 10.5px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
   color: var(--text-tertiary);
 }
-.briefing-btn {
-  padding: 8px 14px; border-radius: 999px; flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.06);
-  color: var(--text-primary); font-family: inherit; font-size: 12px; font-weight: 700;
-  cursor: pointer; transition: background 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.briefing-btn:hover { background: rgba(255,255,255,0.12); }
-.briefing-btn:disabled { opacity: 0.5; cursor: wait; }
 .briefing-body {
   font-size: 13.5px; color: var(--text-primary); line-height: 1.65;
-  margin-top: 10px; white-space: pre-line;
+  margin-top: var(--sp-2); white-space: pre-line;
 }
 .briefing-body.placeholder { color: var(--text-tertiary); font-style: italic; }
-.briefing-body.err { color: #FF8A8A; }
+.briefing-body.err { color: var(--danger); }
 
 .gear-btn {
   width: 42px; height: 42px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 12px; border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.09); color: var(--text-secondary);
+  border-radius: var(--r-md); border: 1px solid var(--surface-border);
+  background: var(--surface); color: var(--text-secondary);
   cursor: pointer; transition: background 0.15s, color 0.15s, transform 0.1s;
   -webkit-tap-highlight-color: transparent;
 }
-.gear-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.gear-btn:hover { background: var(--surface-hover); color: var(--text-primary); }
 .gear-btn:active { transform: scale(0.94) rotate(35deg); }
 .gear-btn svg { width: 22px; height: 22px; }
 
@@ -214,36 +74,21 @@ body::after {
 .modal {
   width: 100%; max-width: 460px; max-height: 88vh; overflow-y: auto;
   background: #0e0e10; border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 18px; padding: 22px; box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+  border-radius: var(--r-lg); padding: var(--sp-5); box-shadow: 0 24px 70px rgba(0,0,0,0.6);
 }
-.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-4); }
 .modal-title { font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
 .modal-close { border: 0; background: transparent; color: var(--text-tertiary); font-size: 26px; line-height: 1; cursor: pointer; padding: 0 4px; }
 .modal-close:hover { color: var(--text-primary); }
-.field { margin-bottom: 14px; }
-.field-label { font-size: 11px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 7px; display: block; }
-.field-row { display: flex; gap: 8px; align-items: center; }
-.set-input {
-  flex: 1; min-width: 0; padding: 11px 13px;
-  border: 1px solid rgba(255,255,255,0.08); border-radius: 11px;
-  background: rgba(0,0,0,0.3); color: var(--text-primary);
-  font-family: inherit; font-size: 14px; outline: none; transition: border-color 0.2s;
-}
-.set-input:focus { border-color: rgba(255,255,255,0.28); }
-.seg { display: inline-flex; border: 1px solid rgba(255,255,255,0.10); border-radius: 11px; overflow: hidden; flex-shrink: 0; }
+.field { margin-bottom: var(--sp-3); }
+.field-label { font-size: 11px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: var(--sp-1); display: block; }
+.field-row { display: flex; gap: var(--sp-2); align-items: center; }
+.field-row .input { flex: 1; min-width: 0; }
+.seg { display: inline-flex; border: 1px solid var(--surface-border); border-radius: var(--r-sm); overflow: hidden; flex-shrink: 0; }
 .seg button { border: 0; background: transparent; color: var(--text-tertiary); font-family: inherit; font-size: 13px; font-weight: 600; padding: 11px 14px; cursor: pointer; transition: background 0.15s, color 0.15s; }
-.seg button.on { background: rgba(255,255,255,0.12); color: var(--text-primary); }
-.set-save {
-  width: 100%; margin-top: 6px; padding: 13px; border: 0; border-radius: 12px;
-  background: linear-gradient(180deg,#FFFFFF,#E8E5DD); color: #0A0A0B;
-  font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 22px rgba(0,0,0,0.25);
-  transition: filter 0.15s, transform 0.1s;
-}
-.set-save:hover { filter: brightness(1.05); }
-.set-save:active { transform: translateY(1px); }
-.set-status { text-align: center; font-size: 12px; color: var(--success); min-height: 16px; margin-top: 8px; }
-.section-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 20px 0 14px; }
+.seg button.on { background: var(--surface-hover); color: var(--text-primary); }
+.set-status { text-align: center; font-size: 12px; color: var(--success); min-height: 16px; margin-top: var(--sp-2); }
+.section-divider { height: 1px; background: rgba(255,255,255,0.07); margin: var(--sp-5) 0 var(--sp-4); }
 </style>
 </head>
 <body>
@@ -263,22 +108,22 @@ body::after {
   </div>
 
   <div class="hub-meta-row">
-    <span class="hub-chip" id="hubDate">—</span>
-    <span class="hub-chip" id="hubWeather" style="display:none"></span>
+    <span class="pill" id="hubDate">—</span>
+    <span class="pill" id="hubWeather" style="display:none"></span>
   </div>
 
-  <div class="briefing-card">
+  <div class="card briefing-card">
     <div class="briefing-head">
       <span class="briefing-label">Daily Briefing</span>
-      <button class="briefing-btn" id="briefingBtn" type="button">Generate</button>
+      <button class="btn btn-secondary" id="briefingBtn" type="button">Generate</button>
     </div>
     <div class="briefing-body placeholder" id="briefingBody">One tap and Sirius reads today's goals, water, notes, planner, and net worth — then tells you where you stand.</div>
   </div>
 
+  <div class="section-eyebrow">Today</div>
   <div class="bento">
-
     <!-- Big tile -->
-    <a class="tile big" href="main.html" style="--accent:#FFFFFF">
+    <a class="tile big" href="main.html" style="--accent:#FAFAFA">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Main</h2>
       <div class="tile-foot">
@@ -288,7 +133,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="po-water.html" style="--accent:#FFFFFF">
+    <a class="tile" href="po-water.html" style="--accent:#5EC8F2">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Water</h2>
       <div class="tile-foot">
@@ -298,7 +143,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="health.html" style="--accent:#FFFFFF">
+    <a class="tile" href="health.html" style="--accent:#6BE3A4">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Health</h2>
       <div class="tile-foot">
@@ -306,9 +151,12 @@ body::after {
         <span class="tile-arrow">→</span>
       </div>
     </a>
+  </div>
 
+  <div class="section-eyebrow">Money</div>
+  <div class="bento">
     <!-- Wide tile -->
-    <a class="tile wide" href="finance.html" style="--accent:#FFFFFF">
+    <a class="tile wide" href="finance.html" style="--accent:#F2C063">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Finance</h2>
       <div class="tile-foot">
@@ -316,9 +164,12 @@ body::after {
         <span class="tile-arrow">→</span>
       </div>
     </a>
+  </div>
 
+  <div class="section-eyebrow">Mentor & Tools</div>
+  <div class="bento">
     <!-- Wide tile -->
-    <a class="tile wide" href="nova-lite.html" style="--accent:#FFFFFF">
+    <a class="tile wide" href="nova-lite.html" style="--accent:#B39DDB">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Sirius</h2>
       <div class="tile-foot">
@@ -328,7 +179,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="planner.html" style="--accent:#FFFFFF">
+    <a class="tile" href="planner.html" style="--accent:#FFA76B">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Planner</h2>
       <div class="tile-foot">
@@ -338,7 +189,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="notes.html" style="--accent:#FFFFFF">
+    <a class="tile" href="notes.html" style="--accent:#FF8FA3">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Notes</h2>
       <div class="tile-foot">
@@ -348,7 +199,7 @@ body::after {
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="links.html" style="--accent:#FFFFFF">
+    <a class="tile" href="links.html" style="--accent:#5FD4D4">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Links</h2>
       <div class="tile-foot">
@@ -357,9 +208,8 @@ body::after {
       </div>
     </a>
 
-
     <!-- Small tile -->
-    <a class="tile" href="misc.html" style="--accent:#FFFFFF">
+    <a class="tile" href="misc.html" style="--accent:#A9A6C4">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Miscellaneous</h2>
       <div class="tile-foot">
@@ -367,7 +217,6 @@ body::after {
         <span class="tile-arrow">→</span>
       </div>
     </a>
-
   </div>
 </div>
 
@@ -382,8 +231,8 @@ body::after {
     <div class="field">
       <label class="field-label">Height</label>
       <div class="field-row">
-        <input class="set-input" id="heightA" type="number" min="0" inputmode="decimal" placeholder="cm">
-        <input class="set-input" id="heightB" type="number" min="0" inputmode="decimal" placeholder="in" style="display:none">
+        <input class="input" id="heightA" type="number" min="0" inputmode="decimal" placeholder="cm">
+        <input class="input" id="heightB" type="number" min="0" inputmode="decimal" placeholder="in" style="display:none">
         <div class="seg" id="heightUnitSeg">
           <button type="button" data-u="cm" class="on">cm</button>
           <button type="button" data-u="ft">ft/in</button>
@@ -394,7 +243,7 @@ body::after {
     <div class="field">
       <label class="field-label">Weight</label>
       <div class="field-row">
-        <input class="set-input" id="weight" type="number" min="0" inputmode="decimal" placeholder="weight">
+        <input class="input" id="weight" type="number" min="0" inputmode="decimal" placeholder="weight">
         <div class="seg" id="weightUnitSeg">
           <button type="button" data-u="kg" class="on">kg</button>
           <button type="button" data-u="lb">lb</button>
@@ -404,7 +253,7 @@ body::after {
 
     <div class="field">
       <label class="field-label">Age</label>
-      <input class="set-input" id="age" type="number" min="0" inputmode="numeric" placeholder="years">
+      <input class="input" id="age" type="number" min="0" inputmode="numeric" placeholder="years">
     </div>
 
     <div class="field">
@@ -417,18 +266,18 @@ body::after {
 
     <div class="field">
       <label class="field-label">Active hours / week</label>
-      <input class="set-input" id="activity" type="number" min="0" inputmode="decimal" placeholder="e.g. 5">
+      <input class="input" id="activity" type="number" min="0" inputmode="decimal" placeholder="e.g. 5">
     </div>
 
-    <button class="set-save" id="settingsSave" type="button">Save</button>
+    <button class="btn btn-primary" id="settingsSave" type="button" style="width:100%">Save</button>
     <div class="set-status" id="settingsStatus"></div>
 
     <div class="section-divider"></div>
     <div class="field">
       <label class="field-label">Backup</label>
       <div class="field-row">
-        <button class="set-save" id="backupExport" type="button" style="margin-top:0">Download backup</button>
-        <button class="set-save" id="backupImport" type="button" style="margin-top:0">Restore…</button>
+        <button class="btn btn-primary" id="backupExport" type="button">Download backup</button>
+        <button class="btn btn-secondary" id="backupImport" type="button">Restore…</button>
         <input type="file" id="backupFile" accept="application/json,.json" style="display:none">
       </div>
       <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;line-height:1.5">Downloads everything on this dashboard (goals, notes, finance, water, all of it) as one JSON file. Restore merges it back in on any device.</div>
