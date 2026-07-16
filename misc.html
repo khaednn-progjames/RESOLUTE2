@@ -60,11 +60,21 @@
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="skills.html" style="--accent:#5FD4D4">
+    <a class="tile" href="skills.html" style="--accent:#9DE8C4">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Skills</h2>
       <div class="tile-foot">
         <span class="tile-sub">Practice streaks</span>
+        <span class="tile-arrow">→</span>
+      </div>
+    </a>
+
+    <!-- Small tile -->
+    <a class="tile" href="links.html" style="--accent:#5FD4D4">
+      <div class="tile-spacer"></div>
+      <h2 class="tile-title">Links</h2>
+      <div class="tile-foot">
+        <span class="tile-sub" id="linksTileSub">Saved & sorted</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -131,5 +141,17 @@
   </div>
 
 </div>
+
+<script>
+(function () {
+  'use strict';
+  try {
+    const items = JSON.parse(localStorage.getItem('links:items')) || [];
+    if (Array.isArray(items) && items.length) {
+      document.getElementById('linksTileSub').textContent = items.length + ' saved link' + (items.length === 1 ? '' : 's');
+    }
+  } catch (e) {}
+})();
+</script>
 </body>
 </html>

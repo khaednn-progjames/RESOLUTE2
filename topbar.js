@@ -656,7 +656,6 @@ body.topbar-modal-open {
     { group: 'Pages', ic: '🎯', label: 'Skills',          sub: 'practice streaks',   href: 'skills.html',       kw: 'skills learning language practice streak instrument' },
     { group: 'Actions', ic: '➕', label: 'Log a drink of water', sub: 'instant', action: 'water',  kw: 'water add drink log +1' },
     { group: 'Actions', ic: '📅', label: "Open today's Daily Note", sub: 'notes', href: 'notes.html#daily', kw: 'daily note today journal write' },
-    { group: 'Actions', ic: '💭', label: 'Capture a Quick Thought', sub: 'notes', href: 'notes.html#quick', kw: 'quick thought capture brain dump' },
     { group: 'Actions', ic: '🕸', label: 'Open the Web of notes', sub: 'graph', href: 'notes.html#web', kw: 'web graph notes connections obsidian' },
   ];
 

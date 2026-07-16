@@ -199,16 +199,6 @@
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="links.html" style="--accent:#5FD4D4">
-      <div class="tile-spacer"></div>
-      <h2 class="tile-title">Links</h2>
-      <div class="tile-foot">
-        <span class="tile-sub" id="linksTileSub">Saved & sorted</span>
-        <span class="tile-arrow">→</span>
-      </div>
-    </a>
-
-    <!-- Small tile -->
     <a class="tile" href="misc.html" style="--accent:#A9A6C4">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Miscellaneous</h2>
@@ -606,7 +596,6 @@
     s.monthDone = monthGoals.filter((g) => g && g.done).length;
     s.monthTitles = monthGoals.map((g) => (g && g.text) + (g && g.done ? ' (done)' : '')).slice(0, 12);
 
-    s.linksCount = (loadJSON('links:items', []) || []).length;
     s.notesCount = (loadJSON('notes:index', []) || []).length;
 
     const events = (loadJSON('events:items', []) || []).slice();
@@ -653,7 +642,6 @@
     } else if (s.monthTotal) {
       $('plannerTileSub').textContent = s.monthDone + '/' + s.monthTotal + ' this month';
     }
-    if (s.linksCount) $('linksTileSub').textContent = s.linksCount + ' saved link' + (s.linksCount === 1 ? '' : 's');
     const notesSub = $('notesTileSub');
     if (!s.dailyNoteWritten) {
       notesSub.textContent = 'Write your daily note';

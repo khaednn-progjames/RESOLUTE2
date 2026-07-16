@@ -222,16 +222,6 @@
 .notes-cat-select:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.22); }
 .notes-footer { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); margin: 8px 2px 0; flex-shrink: 0; }
 
-/* ===== Quick Thought capture ===== */
-.qt-textarea {
-  width: 100%; min-height: 110px; padding: 12px 14px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
-  background: rgba(0,0,0,0.28); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
-  resize: vertical; transition: border-color 0.2s, background 0.2s;
-}
-.qt-textarea::placeholder { color: var(--text-tertiary); }
-.qt-textarea:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
-.qt-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 8px; line-height: 1.5; }
-
 /* ===== Wikilink autocomplete ("[[") ===== */
 .wl-autocomplete {
   position: absolute; display: none; z-index: 50; min-width: 190px; max-width: 260px;
@@ -484,8 +474,7 @@
         <button class="sirius-ideas-btn" id="siriusMenuBtn" type="button">🧠 Ask Sirius <span class="chev">▾</span></button>
         <div class="sirius-menu" id="siriusMenu">
           <button type="button" id="siriusIdeasBtn">✍️ Ideas to write about</button>
-          <button type="button" id="quickThoughtBtn">💭 Quick Thought</button>
-          <button type="button" id="weeklyReviewBtn">📊 Weekly Review</button>
+          <button type="button" id="solutionBtn">🎯 Get a Solution</button>
         </div>
       </div>
       <button class="sirius-ideas-btn" id="graphBtn" type="button">🕸 Web</button>
@@ -1319,69 +1308,10 @@
   }
   $('siriusSummarizeBtn').addEventListener('click', runSiriusSummarize);
 
-  // ---- Quick Thought: compact a rough thought into a clean, auto-categorized note ----
-  function openQuickThoughtModal() {
-    openSiriusModal('💭 Quick Thought');
-    if (!siriusKey()) { renderKeyForm(openQuickThoughtModal); return; }
-    $('siriusModalBody').innerHTML =
-      '<textarea id="qtInput" class="qt-textarea" placeholder="Type whatever\'s on your mind about a situation — Sirius will tidy it up into a note and file it under the right category…"></textarea>' +
-      '<button class="gm-add" id="qtSubmit" type="button" style="width:100%; margin-top:12px">Capture</button>' +
-      '<div class="qt-hint">⌘/Ctrl + Enter to capture. Categorized as: ' + CATEGORIES.join(', ') + '.</div>';
-    $('qtInput').focus();
-    $('qtSubmit').addEventListener('click', submitQuickThought);
-    $('qtInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submitQuickThought(); }
-    });
-  }
-
-  function submitQuickThought() {
-    const raw = ($('qtInput').value || '').trim();
-    if (!raw) return;
-    renderSiriusLoading();
-
-    const system = "You are Sirius, helping the user quickly capture a messy, unstructured thought about a situation into a clean, organized note. " +
-      "Condense their raw input: fix rambling, tighten the language, keep their perspective and the concrete details that matter, using a short paragraph or a few '- ' bullet points, whichever fits the content better. " +
-      "Also classify what they're talking about into exactly one category from this list: " + CATEGORIES.join(', ') + ". " +
-      "Respond in EXACTLY this format and nothing else:\n" +
-      "TITLE: <a short 3-7 word title for the note>\n" +
-      "CATEGORY: <one category from the list above, exact spelling>\n" +
-      "BODY:\n<the compacted note content>";
-
-    callSirius(system, raw, 'notes-quick-thought').then(reply => {
-      const titleMatch = reply.match(/TITLE:\s*(.+)/i);
-      const catMatch = reply.match(/CATEGORY:\s*(.+)/i);
-      const bodyMatch = reply.match(/BODY:\s*([\s\S]*)/i);
-      const title = titleMatch ? titleMatch[1].trim() : 'Quick thought';
-      const catRaw = catMatch ? catMatch[1].trim().toLowerCase() : '';
-      const category = CATEGORIES.find(c => c.toLowerCase() === catRaw) || 'Other';
-      const body = (bodyMatch ? bodyMatch[1] : reply).trim();
-      createNoteFromQuickThought(title, category, body);
-      closeSiriusModal();
-    }).catch(e => renderSiriusError(e.message || String(e)));
-  }
-
-  function createNoteFromQuickThought(title, category, body) {
-    const id = newId();
-    const idx = loadIndex();
-    idx.unshift({ id, title, category, updatedAt: Date.now(), pinned: false });
-    saveIndex(idx);
-
-    const lines = bulletLines(body);
-    const Delta = Quill.import('delta');
-    const insertDelta = new Delta();
-    if (lines.length) {
-      lines.forEach(line => { insertDelta.insert(line).insert('\n', { list: 'bullet' }); });
-    } else {
-      body.split(/\r?\n+/).map(l => l.trim()).filter(Boolean).forEach(line => { insertDelta.insert(line).insert('\n'); });
-    }
-    saveJSON(DOC_PREFIX + id, insertDelta);
-    selectNote(id);
-    closeDrawer();
-  }
-  $('quickThoughtBtn').addEventListener('click', openQuickThoughtModal);
-
-  // ---- Weekly Review: Sirius reads the last 7 days and writes a review note ----
-  function collectWeekContext() {
+  // ---- Get a Solution: summarize the note + a detailed, personalized plan ----
+  // Reuses the same "what's going on in the user's life" context gathering
+  // that used to power Weekly Review, since a good plan needs real context.
+  function collectUserContext() {
     const lines = [];
     let daysWithGoals = 0, goalsDone = 0, goalsTotal = 0;
     const perDay = [];
@@ -1437,39 +1367,50 @@
     return lines.join('\n');
   }
 
-  function runWeeklyReview() {
-    openSiriusModal('📊 Weekly Review');
-    if (!siriusKey()) { renderKeyForm(runWeeklyReview); return; }
+  function runSiriusSolution() {
+    openSiriusModal('🎯 Get a Solution');
+    if (!activeId || activeId === IDEAS_ID) { renderSiriusError('Open a note first.'); return; }
+    const text = quill.getText().trim();
+    if (!text) { renderSiriusError('This note is empty — write something first.'); return; }
+    if (!siriusKey()) { renderKeyForm(runSiriusSolution); return; }
     renderSiriusLoading();
 
-    const system = "You are Sirius, the user's personal mentor, writing their weekly review from real dashboard data. " +
-      "Write it in second person. Structure: one short paragraph on how the week actually went (call out the real numbers), " +
-      "then 3-5 '- ' bullet points: what worked, what slipped, and the single most important focus for next week. " +
-      "Honest but encouraging, no fluff, no headers, no greeting.";
+    const system = "You are Sirius, the user's personal mentor. The note below describes a situation, problem, or something " +
+      "they're working through. Using the real context about their life below, respond in EXACTLY this format:\n" +
+      "SUMMARY: <one plain sentence capturing what the note is actually about>\n" +
+      "PLAN:\n<a detailed, concrete, actionable plan to address it — specific steps as '- ' bullet points, not generic advice. " +
+      "Reference their actual context (goals, finances, time, etc.) where it genuinely makes the plan more realistic or personal — don't force it if a data point isn't relevant.>\n\n" +
+      "Their current context:\n" + collectUserContext();
 
-    callSirius(system, collectWeekContext(), 'notes-weekly-review').then(reply => {
-      const title = 'Weekly Review — ' + new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-      const id = newId();
-      const idx2 = loadIndex();
-      idx2.unshift({ id, title, category: 'Reflection', updatedAt: Date.now(), pinned: false });
-      saveIndex(idx2);
-      // Mixed content: keep paragraphs as plain lines, render "- " lines as bullets.
-      const Delta = Quill.import('delta');
-      const insertDelta = new Delta();
-      reply.trim().split(/\r?\n/).map((l) => l.trim()).filter(Boolean).forEach((line) => {
-        if (/^[-•*]\s+/.test(line)) {
-          insertDelta.insert(line.replace(/^[-•*]\s+/, '').replace(/\*\*/g, '')).insert('\n', { list: 'bullet' });
-        } else {
-          insertDelta.insert(line.replace(/\*\*/g, '')).insert('\n');
-        }
+    callSirius(system, text, 'notes-solution').then(reply => {
+      const summaryMatch = reply.match(/SUMMARY:\s*(.+)/i);
+      const planMatch = reply.match(/PLAN:\s*([\s\S]*)/i);
+      const summary = summaryMatch ? summaryMatch[1].trim() : '';
+      const planText = (planMatch ? planMatch[1] : reply).trim();
+      const lines = bulletLines(planText);
+      const html =
+        (summary ? '<div class="sirius-summary-text" style="margin-bottom:12px"><b>' + siriusEsc(summary) + '</b></div>' : '') +
+        (lines.length
+          ? '<ul>' + lines.map(l => '<li>' + siriusEsc(l) + '</li>').join('') + '</ul>'
+          : '<div class="sirius-summary-text">' + siriusEsc(planText) + '</div>');
+      $('siriusModalBody').innerHTML =
+        html + '<button class="sirius-insert-btn" id="siriusInsertBtn" type="button">Insert into note</button>';
+      $('siriusInsertBtn').addEventListener('click', () => {
+        const Delta = Quill.import('delta');
+        const insertDelta = new Delta();
+        insertDelta.insert('Solution').insert('\n', { header: 3 });
+        if (summary) insertDelta.insert(summary).insert('\n', { blockquote: true });
+        const planLines = lines.length ? lines : planText.split(/\r?\n+/).map(l => l.trim()).filter(Boolean);
+        planLines.forEach(line => { insertDelta.insert(line).insert('\n', { list: 'bullet' }); });
+        insertDelta.insert('\n');
+        quill.updateContents(insertDelta, Quill.sources.USER);
+        const btn = $('siriusInsertBtn');
+        btn.textContent = '✓ Inserted'; btn.classList.add('done'); btn.disabled = true;
+        setTimeout(closeSiriusModal, 900);
       });
-      saveJSON(DOC_PREFIX + id, insertDelta);
-      selectNote(id);
-      closeDrawer();
-      closeSiriusModal();
     }).catch(e => renderSiriusError(e.message || String(e)));
   }
-  $('weeklyReviewBtn').addEventListener('click', runWeeklyReview);
+  $('solutionBtn').addEventListener('click', runSiriusSolution);
 
   // ---------- Web (graph view) ----------
   let graphSim = null;
@@ -1840,8 +1781,7 @@
     const startEntry = (startId && idx.find((n) => n.id === startId)) || sortedIndex()[0];
     selectNote(startEntry.id);
   }
-  if (startHash === '#quick') openQuickThoughtModal();
-  else if (startHash === '#web') openGraphOverlay();
+  if (startHash === '#web') openGraphOverlay();
   if (startHash) history.replaceState(null, '', window.location.pathname);
 
   // ---------- cloud sync ----------
