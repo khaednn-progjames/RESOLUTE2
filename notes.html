@@ -1465,49 +1465,100 @@
   $('solutionBtn').addEventListener('click', openSiriusSolution);
 
   // ---- Article Snapshot: paste an excerpt + what it's for, Sirius titles and files it in ----
+  let snapshotImage = null; // { mediaType, base64 } when a screenshot is chosen instead of/alongside pasted text
+
   function openSnapshotModal() {
     openSiriusModal('Article Snapshot');
     if (!activeId || activeId === IDEAS_ID) { renderSiriusError('Open a note first.'); return; }
     if (!siriusKey()) { renderKeyForm(openSnapshotModal); return; }
+    snapshotImage = null;
     $('siriusModalBody').innerHTML =
-      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px">Paste an excerpt from an article — Sirius titles it and files it into this note, kept word-for-word.</div>' +
-      '<textarea id="snapshotArticleInput" class="sirius-textarea" style="min-height:140px" placeholder="Paste the article or excerpt…"></textarea>' +
+      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px">Paste an excerpt, or upload a screenshot of the article — Sirius reads it and files it into this note.</div>' +
+      '<textarea id="snapshotArticleInput" class="sirius-textarea" style="min-height:110px" placeholder="Paste the article or excerpt…"></textarea>' +
+      '<button class="sirius-btn" id="snapshotImageBtn" type="button" style="width:100%; margin-top:8px; justify-content:center">Upload a screenshot instead</button>' +
+      '<input type="file" id="snapshotImageInput" accept="image/*" style="display:none">' +
+      '<div id="snapshotImageStatus" style="font-size:11px;color:var(--text-tertiary);margin-top:6px"></div>' +
       '<input type="text" id="snapshotPurposeInput" class="gm-input" style="width:100%; margin-top:8px" placeholder="What\'s this for? (optional — e.g. &quot;quote for my essay on X&quot;)">' +
       '<button class="gm-add" id="snapshotSubmitBtn" type="button" style="width:100%; margin-top:12px">Capture</button>';
     $('snapshotArticleInput').focus();
+    $('snapshotImageBtn').addEventListener('click', () => $('snapshotImageInput').click());
+    $('snapshotImageInput').addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
+        if (!match) return;
+        snapshotImage = { mediaType: match[1], base64: match[2] };
+        $('snapshotImageStatus').textContent = 'Attached: ' + file.name;
+        $('snapshotArticleInput').placeholder = 'Optional — add anything the screenshot might miss…';
+      };
+      reader.readAsDataURL(file);
+    });
     $('snapshotSubmitBtn').addEventListener('click', submitSnapshot);
   }
 
   function submitSnapshot() {
     const article = ($('snapshotArticleInput').value || '').trim();
     const purpose = ($('snapshotPurposeInput').value || '').trim();
-    if (!article) return;
+    if (!article && !snapshotImage) return;
     renderSiriusLoading();
+
+    const purposeLine = purpose ? "Intended use: " + purpose : "(No stated purpose — infer one from the content.)";
+
+    if (snapshotImage) {
+      // Vision path: Sirius has to transcribe the text itself (best-effort,
+      // not guaranteed byte-for-byte like the paste path below).
+      const system = "You are Sirius, helping the user file a screenshot of an article into their note. " +
+        "Transcribe the readable article text from the image as accurately as possible — verbatim wording, do not summarize or paraphrase it. " +
+        "If the user also typed extra text, treat it as additional context (not part of the transcription). " +
+        "Respond in EXACTLY this format and nothing else:\n" +
+        "TITLE: <a short 3-7 word title summarizing what this excerpt is about>\n" +
+        "PURPOSE: <one plain sentence on why this is worth keeping or how it should be used — refine their stated intent if given, or infer a sensible one>\n" +
+        "EXCERPT:\n<the transcribed article text>";
+      const userContent = [
+        { type: 'image', source: { type: 'base64', media_type: snapshotImage.mediaType, data: snapshotImage.base64 } },
+        { type: 'text', text: purposeLine + (article ? "\n\nExtra context from the user: " + article : '') },
+      ];
+      callSirius(system, [{ role: 'user', content: userContent }], 'notes-snapshot').then((reply) => {
+        const titleMatch = reply.match(/TITLE:\s*(.+)/i);
+        const purposeMatch = reply.match(/PURPOSE:\s*(.+)/i);
+        const excerptMatch = reply.match(/EXCERPT:\s*([\s\S]*)/i);
+        const title = titleMatch ? titleMatch[1].trim() : 'Article snapshot';
+        const finalPurpose = purposeMatch ? purposeMatch[1].trim() : purpose;
+        const excerpt = excerptMatch ? excerptMatch[1].trim() : reply.trim();
+        insertSnapshotIntoNote(title, finalPurpose, excerpt);
+        closeSiriusModal();
+      }).catch((e) => renderSiriusError(e.message || String(e)));
+      return;
+    }
 
     const system = "You are Sirius, helping the user file a saved article excerpt into their note. " +
       "Given the excerpt below and, if provided, what they intend to use it for, respond in EXACTLY this format and nothing else:\n" +
       "TITLE: <a short 3-7 word title summarizing what this excerpt is about>\n" +
       "PURPOSE: <one plain sentence on why this is worth keeping or how it should be used — refine their stated intent if given, or infer a sensible one from the excerpt if they left it blank>";
-    const userMsg = "Excerpt:\n" + article.slice(0, 4000) +
-      (purpose ? "\n\nIntended use: " + purpose : "\n\n(No stated purpose — infer one from the excerpt.)");
+    const userMsg = "Excerpt:\n" + article.slice(0, 4000) + "\n\n" + purposeLine;
 
     callSirius(system, userMsg, 'notes-snapshot').then((reply) => {
       const titleMatch = reply.match(/TITLE:\s*(.+)/i);
       const purposeMatch = reply.match(/PURPOSE:\s*(.+)/i);
       const title = titleMatch ? titleMatch[1].trim() : 'Article snapshot';
       const finalPurpose = purposeMatch ? purposeMatch[1].trim() : purpose;
-
-      const Delta = Quill.import('delta');
-      const insertDelta = new Delta();
-      insertDelta.insert('Article Snapshot: ' + title).insert('\n', { header: 3 });
-      if (finalPurpose) insertDelta.insert('For: ' + finalPurpose).insert('\n', { italic: true });
-      article.split(/\r?\n+/).map((l) => l.trim()).filter(Boolean).forEach((line) => {
-        insertDelta.insert(line).insert('\n', { blockquote: true });
-      });
-      insertDelta.insert('\n');
-      quill.updateContents(insertDelta, Quill.sources.USER);
+      insertSnapshotIntoNote(title, finalPurpose, article);
       closeSiriusModal();
     }).catch((e) => renderSiriusError(e.message || String(e)));
+  }
+
+  function insertSnapshotIntoNote(title, purpose, excerpt) {
+    const Delta = Quill.import('delta');
+    const insertDelta = new Delta();
+    insertDelta.insert('Article Snapshot: ' + title).insert('\n', { header: 3 });
+    if (purpose) insertDelta.insert('For: ' + purpose).insert('\n', { italic: true });
+    excerpt.split(/\r?\n+/).map((l) => l.trim()).filter(Boolean).forEach((line) => {
+      insertDelta.insert(line).insert('\n', { blockquote: true });
+    });
+    insertDelta.insert('\n');
+    quill.updateContents(insertDelta, Quill.sources.USER);
   }
   $('snapshotBtn').addEventListener('click', openSnapshotModal);
 
