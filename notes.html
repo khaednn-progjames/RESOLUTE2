@@ -1465,35 +1465,55 @@
   $('solutionBtn').addEventListener('click', openSiriusSolution);
 
   // ---- Article Snapshot: paste an excerpt + what it's for, Sirius titles and files it in ----
-  let snapshotImage = null; // { mediaType, base64 } when a screenshot is chosen instead of/alongside pasted text
+  let snapshotImages = []; // [{ mediaType, base64, name }] — one or more screenshots, instead of/alongside pasted text
+
+  function renderSnapshotImageStatus() {
+    const el = $('snapshotImageStatus');
+    if (!el) return;
+    if (snapshotImages.length === 0) { el.innerHTML = ''; return; }
+    el.innerHTML = 'Attached: ' + snapshotImages.length + ' screenshot' + (snapshotImages.length === 1 ? '' : 's') +
+      ' (' + snapshotImages.map((im) => siriusEsc(im.name)).join(', ') + ')' +
+      ' <button type="button" id="snapshotImageClear" style="border:0;background:transparent;color:var(--text-tertiary);text-decoration:underline;cursor:pointer;font-size:11px;padding:0;margin-left:4px">clear</button>';
+    $('snapshotImageClear').addEventListener('click', () => {
+      snapshotImages = [];
+      $('snapshotArticleInput').placeholder = 'Paste the article or excerpt…';
+      renderSnapshotImageStatus();
+    });
+  }
 
   function openSnapshotModal() {
     openSiriusModal('Article Snapshot');
     if (!activeId || activeId === IDEAS_ID) { renderSiriusError('Open a note first.'); return; }
     if (!siriusKey()) { renderKeyForm(openSnapshotModal); return; }
-    snapshotImage = null;
+    snapshotImages = [];
     $('siriusModalBody').innerHTML =
-      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px">Paste an excerpt, or upload a screenshot of the article — Sirius reads it and files it into this note.</div>' +
+      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px">Paste an excerpt, or upload one or more screenshots of the article — Sirius reads them and files it into this note.</div>' +
       '<textarea id="snapshotArticleInput" class="sirius-textarea" style="min-height:110px" placeholder="Paste the article or excerpt…"></textarea>' +
-      '<button class="sirius-btn" id="snapshotImageBtn" type="button" style="width:100%; margin-top:8px; justify-content:center">Upload a screenshot instead</button>' +
-      '<input type="file" id="snapshotImageInput" accept="image/*" style="display:none">' +
+      '<button class="sirius-btn" id="snapshotImageBtn" type="button" style="width:100%; margin-top:8px; justify-content:center">Upload screenshot(s) instead</button>' +
+      '<input type="file" id="snapshotImageInput" accept="image/*" multiple style="display:none">' +
       '<div id="snapshotImageStatus" style="font-size:11px;color:var(--text-tertiary);margin-top:6px"></div>' +
       '<input type="text" id="snapshotPurposeInput" class="gm-input" style="width:100%; margin-top:8px" placeholder="What\'s this for? (optional — e.g. &quot;quote for my essay on X&quot;)">' +
       '<button class="gm-add" id="snapshotSubmitBtn" type="button" style="width:100%; margin-top:12px">Capture</button>';
     $('snapshotArticleInput').focus();
     $('snapshotImageBtn').addEventListener('click', () => $('snapshotImageInput').click());
     $('snapshotImageInput').addEventListener('change', (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
-        if (!match) return;
-        snapshotImage = { mediaType: match[1], base64: match[2] };
-        $('snapshotImageStatus').textContent = 'Attached: ' + file.name;
-        $('snapshotArticleInput').placeholder = 'Optional — add anything the screenshot might miss…';
-      };
-      reader.readAsDataURL(file);
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      let pending = files.length;
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
+          if (match) snapshotImages.push({ mediaType: match[1], base64: match[2], name: file.name });
+          pending--;
+          if (pending === 0) {
+            e.target.value = ''; // allow re-selecting the same file(s) / adding more later
+            $('snapshotArticleInput').placeholder = 'Optional — add anything the screenshots might miss…';
+            renderSnapshotImageStatus();
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     });
     $('snapshotSubmitBtn').addEventListener('click', submitSnapshot);
   }
@@ -1501,25 +1521,27 @@
   function submitSnapshot() {
     const article = ($('snapshotArticleInput').value || '').trim();
     const purpose = ($('snapshotPurposeInput').value || '').trim();
-    if (!article && !snapshotImage) return;
+    if (!article && snapshotImages.length === 0) return;
     renderSiriusLoading();
 
     const purposeLine = purpose ? "Intended use: " + purpose : "(No stated purpose — infer one from the content.)";
 
-    if (snapshotImage) {
+    if (snapshotImages.length > 0) {
       // Vision path: Sirius has to transcribe the text itself (best-effort,
       // not guaranteed byte-for-byte like the paste path below).
-      const system = "You are Sirius, helping the user file a screenshot of an article into their note. " +
-        "Transcribe the readable article text from the image as accurately as possible — verbatim wording, do not summarize or paraphrase it. " +
+      const multi = snapshotImages.length > 1;
+      const system = "You are Sirius, helping the user file " + (multi ? "a multi-screenshot article" : "a screenshot of an article") + " into their note. " +
+        "Transcribe the readable article text from the image" + (multi ? "s, in the order given, into one continuous excerpt" : "") +
+        " as accurately as possible — verbatim wording, do not summarize or paraphrase it. " +
         "If the user also typed extra text, treat it as additional context (not part of the transcription). " +
         "Respond in EXACTLY this format and nothing else:\n" +
         "TITLE: <a short 3-7 word title summarizing what this excerpt is about>\n" +
         "PURPOSE: <one plain sentence on why this is worth keeping or how it should be used — refine their stated intent if given, or infer a sensible one>\n" +
         "EXCERPT:\n<the transcribed article text>";
-      const userContent = [
-        { type: 'image', source: { type: 'base64', media_type: snapshotImage.mediaType, data: snapshotImage.base64 } },
-        { type: 'text', text: purposeLine + (article ? "\n\nExtra context from the user: " + article : '') },
-      ];
+      const userContent = snapshotImages.map((im) => (
+        { type: 'image', source: { type: 'base64', media_type: im.mediaType, data: im.base64 } }
+      ));
+      userContent.push({ type: 'text', text: purposeLine + (article ? "\n\nExtra context from the user: " + article : '') });
       callSirius(system, [{ role: 'user', content: userContent }], 'notes-snapshot').then((reply) => {
         const titleMatch = reply.match(/TITLE:\s*(.+)/i);
         const purposeMatch = reply.match(/PURPOSE:\s*(.+)/i);
