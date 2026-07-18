@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
+<script src="sirius-usage.js" defer></script>
 
 <link rel="stylesheet" href="design-system.css">
 <style>
@@ -191,6 +192,47 @@ input.gm-input[type="date"] { flex: 0 1 175px; color-scheme: dark; }
 .month-chip .n { display: block; font-family: var(--font-mono); font-size: 9.5px; color: var(--text-tertiary); margin-top: 2px; }
 .month-chip.active .n { color: var(--text-secondary); }
 
+/* Day Plan */
+.dayplan-context-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.dayplan-status { font-size: 12px; color: var(--text-tertiary); margin: -6px 0 14px; line-height: 1.5; }
+.dayplan-status.err { color: var(--danger); }
+.dayplan-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 10px; line-height: 1.5; }
+.dayplan-row {
+  display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; margin-bottom: 6px;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); border-radius: 12px;
+  transition: background 0.2s, opacity 0.3s;
+}
+.dayplan-row:hover { background: rgba(255,255,255,0.06); }
+.dayplan-row.gm-row-done { opacity: 0.45; background: rgba(107,227,164,0.04); }
+.dayplan-row.gm-row-done .dayplan-title { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
+.dayplan-check { margin-top: 2px; }
+.dayplan-time {
+  flex-shrink: 0; min-width: 62px; text-align: center; padding: 5px 6px; margin-top: 1px;
+  border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10);
+  font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: var(--text-primary);
+}
+.dayplan-main { flex: 1; min-width: 0; }
+.dayplan-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dayplan-title { font-size: 14px; font-weight: 600; color: var(--text-primary); outline: none; border-radius: 4px; padding: 1px 4px; margin: -1px -4px; }
+.dayplan-title[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); }
+.dayplan-tag {
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-tertiary);
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); border-radius: 999px; padding: 2px 8px; flex-shrink: 0;
+}
+.dayplan-duration { font-size: 10.5px; color: var(--text-tertiary); font-family: var(--font-mono); flex-shrink: 0; }
+.dayplan-meta { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4; }
+.dayplan-meta b { color: var(--text-secondary); font-weight: 600; }
+.dayplan-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.dayplan-goal-btn {
+  border: 0; background: transparent; color: var(--text-tertiary); font-size: 15px; cursor: pointer;
+  padding: 2px 5px; opacity: 0.5; transition: opacity 0.2s, color 0.2s;
+}
+.dayplan-row:hover .dayplan-goal-btn { opacity: 1; }
+.dayplan-goal-btn:hover { color: var(--success); }
+.dayplan-goal-btn.done { color: var(--success); opacity: 1; cursor: default; }
+.dayplan-manual-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: dark; }
+
 @media (max-width: 480px) {
   body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
   .gm-card { padding: 16px; }
@@ -206,6 +248,7 @@ input.gm-input[type="date"] { flex: 0 1 175px; color-scheme: dark; }
 
   <div class="planner-tabs" id="plannerTabs">
     <button type="button" class="planner-tab active" data-view="goals">Goals</button>
+    <button type="button" class="planner-tab" data-view="dayplan">Day Plan</button>
     <button type="button" class="planner-tab" data-view="events">Events</button>
   </div>
 
@@ -247,6 +290,38 @@ input.gm-input[type="date"] { flex: 0 1 175px; color-scheme: dark; }
     </div>
   </div>
 
+  <div id="dayplanView" style="display:none">
+    <div class="gm-card">
+      <div class="gm-header">
+        <div class="gm-header-left">
+          <div class="gm-eyebrow" id="dayplanDateLabel">Today's plan</div>
+          <div class="gm-progress-row">
+            <span class="gm-progress-num" id="dayplanDoneNum">0</span>
+            <span class="gm-progress-total" id="dayplanTotalNum">/ 0</span>
+            <span class="gm-progress-label">done</span>
+          </div>
+        </div>
+      </div>
+      <div class="gm-bar" id="dayplanBar"></div>
+
+      <div class="dayplan-context-row">
+        <input class="gm-input" id="dayplanPreferenceInput" type="text" placeholder="Anything specific? (optional — e.g. outdoors, budget-friendly, with the dog)">
+        <button class="gm-add" id="dayplanGenerateBtn" type="button">Generate ideas</button>
+      </div>
+      <div class="dayplan-status" id="dayplanStatus"></div>
+
+      <ul class="goal-list" id="dayplanList"></ul>
+      <div class="empty-state" id="dayplanEmpty">Nothing planned yet — let Sirius suggest something, or add your own below.</div>
+
+      <div class="dayplan-manual-row">
+        <input class="gm-input" id="dayplanTimeInput" type="time" value="12:00">
+        <input class="gm-input" id="dayplanTitleInput" type="text" placeholder="Add something yourself…" style="flex:2; min-width:140px">
+        <button class="gm-add" id="dayplanAddBtn" type="button">+ Add</button>
+      </div>
+      <div class="dayplan-hint">Parking/hours notes are Sirius's best-guess based on the type of place — worth a quick check before you go.</div>
+    </div>
+  </div>
+
   <div id="eventsView" style="display:none">
     <div class="gm-card">
       <ul class="event-list" id="eventList"></ul>
@@ -279,8 +354,10 @@ input.gm-input[type="date"] { flex: 0 1 175px; color-scheme: dark; }
   // ---------- Tabs: Goals / Events ----------
   function setView(view) {
     $('goalsView').style.display = view === 'goals' ? '' : 'none';
+    $('dayplanView').style.display = view === 'dayplan' ? '' : 'none';
     $('eventsView').style.display = view === 'events' ? '' : 'none';
     document.querySelectorAll('.planner-tab').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+    if (view === 'dayplan') renderDayPlan();
   }
   document.querySelectorAll('.planner-tab').forEach((b) => b.addEventListener('click', () => setView(b.dataset.view)));
   $('nextEventPill').addEventListener('click', () => setView('events'));
@@ -411,6 +488,262 @@ input.gm-input[type="date"] { flex: 0 1 175px; color-scheme: dark; }
   $('eventAddBtn').addEventListener('click', addEvent);
   $('eventName').addEventListener('keydown', (e) => { if (e.key === 'Enter') addEvent(); });
 
+  // ---------- Day Plan: Sirius suggests a real itinerary for today ----------
+  const SIRIUS_KEY_LS = 'nova_lite_api_key'; // shared BYOK key across the dashboard
+  function apiKey() { try { return localStorage.getItem(SIRIUS_KEY_LS) || ''; } catch (e) { return ''; } }
+
+  // Same 6 AM rollover "today" used by Main/topbar, so Day Plan and the
+  // daily goal list agree on what day it currently is.
+  function activeDateKey() {
+    const now = new Date();
+    const d = new Date(now);
+    if (now.getHours() < 6) d.setDate(d.getDate() - 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function calendarDateKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function dayPlanKey() { return STORE_PREFIX + 'dayplan:' + activeDateKey(); }
+  function loadDayPlan() { return loadJSON(dayPlanKey(), []); }
+  function saveDayPlan(items) { saveJSON(dayPlanKey(), items); }
+
+  const WMO_LABELS = [
+    [0, 'clear'], [1, 'mostly clear'], [2, 'partly cloudy'], [3, 'overcast'],
+    [45, 'foggy'], [51, 'drizzly'], [61, 'rainy'], [63, 'rainy'], [65, 'heavy rain'],
+    [71, 'snowy'], [73, 'snowy'], [75, 'heavy snow'], [80, 'showery'], [82, 'heavy showers'],
+    [95, 'thunderstorms'],
+  ];
+  function weatherContext() {
+    const w = loadJSON('hub:weather', null);
+    if (!w || Date.now() - (w.ts || 0) > 6 * 3600 * 1000) return null; // stale beyond ~6h, skip it
+    let label = 'clear';
+    for (const [code, l] of WMO_LABELS) { if (w.code >= code) label = l; }
+    return Math.round(w.temp) + '°F and ' + label;
+  }
+  function todaysGoalTitles() {
+    return (loadJSON('goals:' + activeDateKey(), []) || []).map((g) => g && g.text).filter(Boolean);
+  }
+
+  function timeLabel12h(hhmm) {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm || '');
+    if (!m) return hhmm || '';
+    let h = parseInt(m[1], 10);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if (h === 0) h = 12;
+    return h + ':' + m[2] + ' ' + ampm;
+  }
+
+  function dayPlanStatus(msg, isErr) {
+    const el = $('dayplanStatus');
+    el.textContent = msg || '';
+    el.classList.toggle('err', !!isErr);
+  }
+
+  async function callDayPlanSirius(system, userText) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-8',
+        max_tokens: 1024,
+        system: system,
+        messages: [{ role: 'user', content: userText }],
+      }),
+    });
+    const json = await res.json();
+    if (typeof logSiriusUsage === 'function') logSiriusUsage('planner-dayplan', json.usage);
+    if (json.error) throw new Error(json.error.message || 'Something went wrong.');
+    return (json.content && json.content[0] && json.content[0].text) || '';
+  }
+
+  async function generateDayPlan() {
+    if (!apiKey()) {
+      dayPlanStatus('No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.', true);
+      return;
+    }
+    const btn = $('dayplanGenerateBtn');
+    btn.disabled = true;
+    dayPlanStatus('Sirius is planning your day…');
+
+    const now = new Date();
+    const preference = $('dayplanPreferenceInput').value.trim();
+    const existing = loadDayPlan();
+    const goals = todaysGoalTitles();
+    const weather = weatherContext();
+
+    const system = "You are Sirius, planning the user's day. Suggest a realistic, well-paced itinerary of things to do for the rest of today, using the context below. " +
+      "For EACH suggestion give: a specific time in 24-hour HH:MM format, a short title (3-8 words), a category (one of: Food, Outdoor, Errand, Social, Fitness, Relaxation, Other), an estimated duration (e.g. '45 min', '2 hr'), and a parking note. " +
+      "For the parking note: ONLY if the activity involves going somewhere by car, give brief, general, realistic guidance based on the TYPE of place (e.g. 'usually metered street parking nearby', 'often has a free lot on-site') — never invent a specific named business you can't verify exists; describe the type of venue instead (e.g. 'a nearby coffee shop', 'the local park'). If parking isn't relevant, write exactly n/a. " +
+      "Don't repeat their existing goals or what's already on today's plan. Keep it realistic for the hours actually left in the day and today's weather. " +
+      "Respond with ONLY one line per suggestion, in EXACTLY this format:\n" +
+      "ITEM: <HH:MM> | <title> | <category> | <duration> | <parking note or n/a>\n" +
+      "Give 3-6 suggestions, spread sensibly across the remaining hours in the day.";
+    const userMsg =
+      "Right now: " + now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + ' on ' +
+        now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) + "\n" +
+      (weather ? "Weather: " + weather + "\n" : "") +
+      "Today's goals: " + (goals.length ? goals.join(', ') : 'none set') + "\n" +
+      "Already on today's plan: " + (existing.length ? existing.map((it) => it.title).join(', ') : 'nothing yet') +
+      (preference ? "\nUser's preference for today: " + preference : '');
+
+    try {
+      const reply = await callDayPlanSirius(system, userMsg);
+      const existingTitles = new Set(existing.map((it) => it.title.trim().toLowerCase()));
+      const added = [];
+      reply.split(/\r?\n/).forEach((line) => {
+        const m = line.match(/^ITEM:\s*(\d{1,2}:\d{2})\s*\|\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+)\|\s*(.+)$/i);
+        if (!m) return;
+        const title = m[2].trim();
+        if (existingTitles.has(title.toLowerCase())) return;
+        const parkingRaw = m[5].trim();
+        added.push({
+          id: newId(),
+          time: m[1].trim(),
+          title: title,
+          category: m[3].trim(),
+          duration: m[4].trim(),
+          parking: /^n\/?a$/i.test(parkingRaw) ? '' : parkingRaw,
+          done: false,
+          addedAt: Date.now(),
+        });
+        existingTitles.add(title.toLowerCase());
+      });
+      if (added.length === 0) {
+        dayPlanStatus("Sirius didn't find anything new to add — try a more specific preference.");
+      } else {
+        saveDayPlan(existing.concat(added));
+        dayPlanStatus('Added ' + added.length + ' idea' + (added.length === 1 ? '' : 's') + '.');
+        renderDayPlan();
+      }
+    } catch (e) {
+      dayPlanStatus(e.message || String(e), true);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  $('dayplanGenerateBtn').addEventListener('click', generateDayPlan);
+
+  function addDayPlanItemToGoals(item, btnEl) {
+    const key = 'goals:' + activeDateKey();
+    const goals = loadJSON(key, []);
+    if (goals.some((g) => g && g.text && g.text.trim().toLowerCase() === item.title.trim().toLowerCase())) {
+      btnEl.classList.add('done'); btnEl.textContent = '✓';
+      return;
+    }
+    goals.push({ id: newId(), text: item.title, done: false, addedAt: Date.now() });
+    saveJSON(key, goals);
+    btnEl.classList.add('done'); btnEl.textContent = '✓';
+  }
+
+  function renderDayPlan() {
+    $('dayplanDateLabel').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    const items = loadDayPlan().slice().sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+    const done = items.filter((it) => it.done).length;
+    $('dayplanDoneNum').textContent = done;
+    $('dayplanTotalNum').textContent = '/ ' + items.length;
+
+    const bar = $('dayplanBar');
+    bar.innerHTML = '';
+    items.forEach((it) => {
+      const seg = document.createElement('div');
+      seg.className = 'gm-bar-seg' + (it.done ? ' gm-bar-seg-done' : '');
+      bar.appendChild(seg);
+    });
+
+    const list = $('dayplanList');
+    list.innerHTML = '';
+    $('dayplanEmpty').style.display = items.length ? 'none' : '';
+
+    const todaysGoals = new Set(todaysGoalTitles().map((t) => t.trim().toLowerCase()));
+
+    items.forEach((it) => {
+      const li = document.createElement('li');
+      li.className = 'dayplan-row' + (it.done ? ' gm-row-done' : '');
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'gm-check dayplan-check';
+      cb.checked = !!it.done;
+      cb.addEventListener('change', () => {
+        const arr = loadDayPlan();
+        const entry = arr.find((x) => x.id === it.id);
+        if (entry) { entry.done = cb.checked; saveDayPlan(arr); renderDayPlan(); }
+      });
+
+      const time = document.createElement('div');
+      time.className = 'dayplan-time';
+      time.textContent = timeLabel12h(it.time);
+
+      const main = document.createElement('div');
+      main.className = 'dayplan-main';
+      const titleRow = document.createElement('div');
+      titleRow.className = 'dayplan-title-row';
+      const title = document.createElement('div');
+      title.className = 'dayplan-title';
+      title.textContent = it.title;
+      title.contentEditable = 'true';
+      title.addEventListener('blur', () => {
+        const arr = loadDayPlan();
+        const entry = arr.find((x) => x.id === it.id);
+        if (entry) { entry.title = title.textContent.trim() || entry.title; saveDayPlan(arr); }
+      });
+      title.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); title.blur(); } });
+      titleRow.appendChild(title);
+      if (it.category) { const tag = document.createElement('span'); tag.className = 'dayplan-tag'; tag.textContent = it.category; titleRow.appendChild(tag); }
+      if (it.duration) { const dur = document.createElement('span'); dur.className = 'dayplan-duration'; dur.textContent = it.duration; titleRow.appendChild(dur); }
+      main.appendChild(titleRow);
+      if (it.parking) {
+        const meta = document.createElement('div');
+        meta.className = 'dayplan-meta';
+        meta.innerHTML = '<b>Parking:</b> ' + escHtml(it.parking);
+        main.appendChild(meta);
+      }
+
+      const actions = document.createElement('div');
+      actions.className = 'dayplan-actions';
+      const goalBtn = document.createElement('button');
+      goalBtn.type = 'button';
+      goalBtn.className = 'dayplan-goal-btn';
+      const alreadyInGoals = todaysGoals.has(it.title.trim().toLowerCase());
+      if (alreadyInGoals) { goalBtn.classList.add('done'); goalBtn.textContent = '✓'; }
+      else goalBtn.textContent = '+';
+      goalBtn.title = alreadyInGoals ? 'Already on today\'s goals' : 'Add to today\'s goals';
+      goalBtn.addEventListener('click', () => { if (!alreadyInGoals) addDayPlanItemToGoals(it, goalBtn); });
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'goal-delete';
+      del.textContent = '×';
+      del.addEventListener('click', () => {
+        saveDayPlan(loadDayPlan().filter((x) => x.id !== it.id));
+        renderDayPlan();
+      });
+      actions.append(goalBtn, del);
+
+      li.append(cb, time, main, actions);
+      list.appendChild(li);
+    });
+  }
+
+  function addManualDayPlanItem() {
+    const time = $('dayplanTimeInput').value || '12:00';
+    const title = $('dayplanTitleInput').value.trim();
+    if (!title) return;
+    const items = loadDayPlan();
+    items.push({ id: newId(), time: time, title: title, category: '', duration: '', parking: '', done: false, addedAt: Date.now() });
+    saveDayPlan(items);
+    $('dayplanTitleInput').value = '';
+    renderDayPlan();
+  }
+  $('dayplanAddBtn').addEventListener('click', addManualDayPlanItem);
+  $('dayplanTitleInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addManualDayPlanItem(); });
+
   function render() {
     renderStrip();
     renderNextEventPill();
@@ -511,7 +844,7 @@ input.gm-input[type="date"] { flex: 0 1 175px; color-scheme: dark; }
     initCloudSync({
       appKey: 'planner',
       syncedPrefixes: ['planner:'],
-      onApplied: render,
+      onApplied: function () { render(); renderDayPlan(); },
     });
     // Events kept their own appKey from the former standalone page so
     // existing synced data carries over with no migration needed.
