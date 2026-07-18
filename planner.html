@@ -239,6 +239,13 @@ input.gm-input[type="date"] { flex: 0 1 175px; color-scheme: dark; }
 }
 .dayplan-row:hover .dayplan-goal-btn { opacity: 1; }
 .dayplan-goal-btn:hover { color: var(--success); }
+.dayplan-keep-btn {
+  border: 0; background: transparent; color: var(--text-tertiary); font-size: 15px; cursor: pointer;
+  padding: 2px 5px; opacity: 0.5; transition: opacity 0.2s, color 0.2s;
+}
+.dayplan-row:hover .dayplan-keep-btn { opacity: 1; }
+.dayplan-keep-btn:hover { color: var(--warning); }
+.dayplan-keep-btn.on { color: var(--warning); opacity: 1; }
 .dayplan-goal-btn.done { color: var(--success); opacity: 1; cursor: default; }
 .dayplan-manual-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
 input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: dark; }
@@ -333,7 +340,7 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
         <input class="gm-input" id="dayplanTitleInput" type="text" placeholder="Add something yourself…" style="flex:2; min-width:140px">
         <button class="gm-add" id="dayplanAddBtn" type="button">+ Add</button>
       </div>
-      <div class="dayplan-hint">Parking/hours notes are Sirius's best-guess based on the type of place — worth a quick check before you go.</div>
+      <div class="dayplan-hint">Generating replaces old AI suggestions with new ones based on your preference — tap ☆ on any you want to keep so it survives. Things you add yourself are never cleared. Parking/hours notes are Sirius's best-guess based on the type of place — worth a quick check before you go.</div>
     </div>
   </div>
 
@@ -653,15 +660,22 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
     const now = new Date();
     const preference = $('dayplanPreferenceInput').value.trim();
     const existing = loadDayPlan();
+    // Regenerating replaces old AI suggestions with fresh ones so a new
+    // preference (e.g. "with the car") actually takes effect instead of
+    // just piling more items on top of ones that no longer fit. Anything
+    // you added yourself, or explicitly Kept, survives untouched.
+    const survivors = existing.filter((it) => it.source === 'manual' || it.kept);
+    const clearedCount = existing.length - survivors.length;
     const goals = todaysGoalTitles();
     const weather = weatherContext();
     const location = await ensureLocation();
 
     const system = "You are Sirius, planning the user's day. Suggest a realistic, well-paced itinerary of things to do for the rest of today, using the context below. " +
+      "If the user gave a stated preference for today, treat it as the primary instruction — build the whole itinerary around it, don't just nod to it, replacing any assumption that conflicts with it (e.g. if they say they have a car, suggest things that make sense to drive to, not just walkable/at-home ideas). " +
       "For EACH suggestion give: a specific time in 24-hour HH:MM format, a short title (3-8 words), a category (one of: Food, Outdoor, Errand, Social, Fitness, Relaxation, Other), an estimated duration (e.g. '45 min', '2 hr'), and a parking note. " +
       "For the parking note: ONLY if the activity involves going somewhere by car, give brief, general, realistic guidance based on the TYPE of place (e.g. 'usually metered street parking nearby', 'often has a free lot on-site') — never invent a specific named business you can't verify exists; describe the type of venue instead (e.g. 'a nearby coffee shop', 'the local park'). If parking isn't relevant, write exactly n/a. " +
       "If a location is given, use your general knowledge of that city/area (climate, geography, typical local activity types) to make suggestions feel genuinely local — but still never invent a specific real business name or address you can't verify; describe generic venue types instead (e.g. 'a local taco spot' not a made-up restaurant name). " +
-      "Don't repeat their existing goals or what's already on today's plan. Keep it realistic for the hours actually left in the day and today's weather. " +
+      "Don't repeat their existing goals or what's already kept on today's plan. Keep it realistic for the hours actually left in the day and today's weather. " +
       "Respond with ONLY one line per suggestion, in EXACTLY this format:\n" +
       "ITEM: <HH:MM> | <title> | <category> | <duration> | <parking note or n/a>\n" +
       "Give 3-6 suggestions, spread sensibly across the remaining hours in the day.";
@@ -671,18 +685,18 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
       (location && location.label ? "Location: " + location.label + "\n" : "") +
       (weather ? "Weather: " + weather + "\n" : "") +
       "Today's goals: " + (goals.length ? goals.join(', ') : 'none set') + "\n" +
-      "Already on today's plan: " + (existing.length ? existing.map((it) => it.title).join(', ') : 'nothing yet') +
-      (preference ? "\nUser's preference for today: " + preference : '');
+      "Already kept on today's plan: " + (survivors.length ? survivors.map((it) => it.title).join(', ') : 'nothing yet') +
+      (preference ? "\nUser's stated preference for today (build around this): " + preference : '');
 
     try {
       const reply = await callDayPlanSirius(system, userMsg);
-      const existingTitles = new Set(existing.map((it) => it.title.trim().toLowerCase()));
+      const survivorTitles = new Set(survivors.map((it) => it.title.trim().toLowerCase()));
       const added = [];
       reply.split(/\r?\n/).forEach((line) => {
         const m = line.match(/^ITEM:\s*(\d{1,2}:\d{2})\s*\|\s*([^|]+)\|\s*([^|]+)\|\s*([^|]+)\|\s*(.+)$/i);
         if (!m) return;
         const title = m[2].trim();
-        if (existingTitles.has(title.toLowerCase())) return;
+        if (survivorTitles.has(title.toLowerCase())) return;
         const parkingRaw = m[5].trim();
         added.push({
           id: newId(),
@@ -692,15 +706,20 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
           duration: m[4].trim(),
           parking: /^n\/?a$/i.test(parkingRaw) ? '' : parkingRaw,
           done: false,
+          source: 'ai',
+          kept: false,
           addedAt: Date.now(),
         });
-        existingTitles.add(title.toLowerCase());
+        survivorTitles.add(title.toLowerCase());
       });
       if (added.length === 0) {
         dayPlanStatus("Sirius didn't find anything new to add — try a more specific preference.");
       } else {
-        saveDayPlan(existing.concat(added));
-        dayPlanStatus('Added ' + added.length + ' idea' + (added.length === 1 ? '' : 's') + '.');
+        saveDayPlan(survivors.concat(added));
+        dayPlanStatus(
+          (clearedCount > 0 ? 'Replaced ' + clearedCount + ' idea' + (clearedCount === 1 ? '' : 's') + ' — a' : 'A') +
+          'dded ' + added.length + ' new idea' + (added.length === 1 ? '' : 's') + '.'
+        );
         renderDayPlan();
       }
     } catch (e) {
@@ -790,6 +809,19 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
 
       const actions = document.createElement('div');
       actions.className = 'dayplan-actions';
+      if (it.source === 'ai') {
+        const keepBtn = document.createElement('button');
+        keepBtn.type = 'button';
+        keepBtn.className = 'dayplan-keep-btn' + (it.kept ? ' on' : '');
+        keepBtn.textContent = it.kept ? '★' : '☆';
+        keepBtn.title = it.kept ? 'Kept — survives the next Generate' : 'Keep this — survives the next Generate';
+        keepBtn.addEventListener('click', () => {
+          const arr = loadDayPlan();
+          const entry = arr.find((x) => x.id === it.id);
+          if (entry) { entry.kept = !entry.kept; saveDayPlan(arr); renderDayPlan(); }
+        });
+        actions.appendChild(keepBtn);
+      }
       const goalBtn = document.createElement('button');
       goalBtn.type = 'button';
       goalBtn.className = 'dayplan-goal-btn';
@@ -818,7 +850,7 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
     const title = $('dayplanTitleInput').value.trim();
     if (!title) return;
     const items = loadDayPlan();
-    items.push({ id: newId(), time: time, title: title, category: '', duration: '', parking: '', done: false, addedAt: Date.now() });
+    items.push({ id: newId(), time: time, title: title, category: '', duration: '', parking: '', done: false, source: 'manual', addedAt: Date.now() });
     saveDayPlan(items);
     $('dayplanTitleInput').value = '';
     renderDayPlan();
