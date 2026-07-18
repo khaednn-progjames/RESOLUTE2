@@ -193,6 +193,16 @@ input.gm-input[type="date"] { flex: 0 1 175px; color-scheme: dark; }
 .month-chip.active .n { color: var(--text-secondary); }
 
 /* Day Plan */
+.dayplan-location-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 10px; font-size: 11.5px; color: var(--text-tertiary);
+}
+.dayplan-location-row button {
+  border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.04); color: var(--text-secondary);
+  font-family: inherit; font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 999px;
+  cursor: pointer; transition: background 0.15s, color 0.15s; flex-shrink: 0;
+}
+.dayplan-location-row button:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
 .dayplan-context-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
 .dayplan-status { font-size: 12px; color: var(--text-tertiary); margin: -6px 0 14px; line-height: 1.5; }
 .dayplan-status.err { color: var(--danger); }
@@ -303,6 +313,11 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
         </div>
       </div>
       <div class="gm-bar" id="dayplanBar"></div>
+
+      <div class="dayplan-location-row" id="dayplanLocationRow">
+        <span id="dayplanLocationLabel">Planning without a location — suggestions will be general.</span>
+        <button type="button" id="dayplanLocationBtn">Share my location</button>
+      </div>
 
       <div class="dayplan-context-row">
         <input class="gm-input" id="dayplanPreferenceInput" type="text" placeholder="Anything specific? (optional — e.g. outdoors, budget-friendly, with the dog)">
@@ -562,6 +577,70 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
     return (json.content && json.content[0] && json.content[0].text) || '';
   }
 
+  // ---- Location: reverse-geocoded to a city/region label, never raw
+  // coordinates handed to Sirius — enough grounding for "local-feeling"
+  // suggestions without tempting it to invent specific real business names
+  // it has no way to verify (no maps/places API backs this, by design).
+  const LOCATION_CACHE_KEY = 'planner:location';
+  const LOCATION_MAX_AGE_MS = 24 * 3600 * 1000;
+
+  function renderLocationStatus() {
+    const loc = loadJSON(LOCATION_CACHE_KEY, null);
+    const label = $('dayplanLocationLabel');
+    const btn = $('dayplanLocationBtn');
+    if (loc && loc.label && Date.now() - (loc.ts || 0) < LOCATION_MAX_AGE_MS) {
+      label.textContent = 'Planning for: ' + loc.label;
+      btn.textContent = 'Update';
+    } else if (loc && loc.denied) {
+      label.textContent = 'Location not shared — suggestions will be general.';
+      btn.textContent = 'Try again';
+    } else {
+      label.textContent = 'Planning without a location — suggestions will be general.';
+      btn.textContent = 'Share my location';
+    }
+  }
+
+  function requestLocation() {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) { resolve(null); return; }
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude, lon = pos.coords.longitude;
+          try {
+            const res = await fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lon + '&localityLanguage=en');
+            const json = await res.json();
+            const label = [json.city || json.locality, json.principalSubdivision].filter(Boolean).join(', ') || json.countryName || null;
+            const loc = { label, lat, lon, ts: Date.now() };
+            saveJSON(LOCATION_CACHE_KEY, loc);
+            resolve(loc);
+          } catch (e) {
+            const loc = { label: null, lat, lon, ts: Date.now() };
+            saveJSON(LOCATION_CACHE_KEY, loc);
+            resolve(loc);
+          }
+        },
+        () => { saveJSON(LOCATION_CACHE_KEY, { denied: true, ts: Date.now() }); resolve(null); },
+        { timeout: 8000, maximumAge: 3600000 }
+      );
+    });
+  }
+
+  async function ensureLocation() {
+    const cached = loadJSON(LOCATION_CACHE_KEY, null);
+    if (cached && cached.label && Date.now() - (cached.ts || 0) < LOCATION_MAX_AGE_MS) return cached;
+    if (cached && cached.denied && Date.now() - (cached.ts || 0) < LOCATION_MAX_AGE_MS) return null;
+    const loc = await requestLocation();
+    renderLocationStatus();
+    return loc;
+  }
+  $('dayplanLocationBtn').addEventListener('click', async () => {
+    $('dayplanLocationBtn').disabled = true;
+    await requestLocation();
+    renderLocationStatus();
+    $('dayplanLocationBtn').disabled = false;
+  });
+  renderLocationStatus();
+
   async function generateDayPlan() {
     if (!apiKey()) {
       dayPlanStatus('No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.', true);
@@ -576,10 +655,12 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
     const existing = loadDayPlan();
     const goals = todaysGoalTitles();
     const weather = weatherContext();
+    const location = await ensureLocation();
 
     const system = "You are Sirius, planning the user's day. Suggest a realistic, well-paced itinerary of things to do for the rest of today, using the context below. " +
       "For EACH suggestion give: a specific time in 24-hour HH:MM format, a short title (3-8 words), a category (one of: Food, Outdoor, Errand, Social, Fitness, Relaxation, Other), an estimated duration (e.g. '45 min', '2 hr'), and a parking note. " +
       "For the parking note: ONLY if the activity involves going somewhere by car, give brief, general, realistic guidance based on the TYPE of place (e.g. 'usually metered street parking nearby', 'often has a free lot on-site') — never invent a specific named business you can't verify exists; describe the type of venue instead (e.g. 'a nearby coffee shop', 'the local park'). If parking isn't relevant, write exactly n/a. " +
+      "If a location is given, use your general knowledge of that city/area (climate, geography, typical local activity types) to make suggestions feel genuinely local — but still never invent a specific real business name or address you can't verify; describe generic venue types instead (e.g. 'a local taco spot' not a made-up restaurant name). " +
       "Don't repeat their existing goals or what's already on today's plan. Keep it realistic for the hours actually left in the day and today's weather. " +
       "Respond with ONLY one line per suggestion, in EXACTLY this format:\n" +
       "ITEM: <HH:MM> | <title> | <category> | <duration> | <parking note or n/a>\n" +
@@ -587,6 +668,7 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
     const userMsg =
       "Right now: " + now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + ' on ' +
         now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) + "\n" +
+      (location && location.label ? "Location: " + location.label + "\n" : "") +
       (weather ? "Weather: " + weather + "\n" : "") +
       "Today's goals: " + (goals.length ? goals.join(', ') : 'none set') + "\n" +
       "Already on today's plan: " + (existing.length ? existing.map((it) => it.title).join(', ') : 'nothing yet') +
