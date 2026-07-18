@@ -1465,7 +1465,12 @@
   $('solutionBtn').addEventListener('click', openSiriusSolution);
 
   // ---- Article Snapshot: paste an excerpt + what it's for, Sirius titles and files it in ----
-  let snapshotImages = []; // [{ mediaType, base64, name }] — one or more screenshots, instead of/alongside pasted text
+  let snapshotImages = [];         // [{ mediaType, base64, name }] attached to the INITIAL capture
+  let snapshotFollowupImages = []; // images attached to the follow-up currently being composed
+  let snapshotMessages = [];       // full conversation (incl. the original image/text turn), for follow-ups
+  let snapshotResultTitle = '';
+  let snapshotResultPurpose = '';
+  let snapshotResultExcerpt = '';
 
   function renderSnapshotImageStatus() {
     const el = $('snapshotImageStatus');
@@ -1486,6 +1491,9 @@
     if (!activeId || activeId === IDEAS_ID) { renderSiriusError('Open a note first.'); return; }
     if (!siriusKey()) { renderKeyForm(openSnapshotModal); return; }
     snapshotImages = [];
+    snapshotFollowupImages = [];
+    snapshotMessages = [];
+    snapshotResultTitle = ''; snapshotResultPurpose = ''; snapshotResultExcerpt = '';
     $('siriusModalBody').innerHTML =
       '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px">Paste an excerpt, or upload one or more screenshots of the article — Sirius reads them and files it into this note.</div>' +
       '<textarea id="snapshotArticleInput" class="sirius-textarea" style="min-height:110px" placeholder="Paste the article or excerpt…"></textarea>' +
@@ -1525,12 +1533,16 @@
     renderSiriusLoading();
 
     const purposeLine = purpose ? "Intended use: " + purpose : "(No stated purpose — infer one from the content.)";
+    const usedImages = snapshotImages.length > 0;
 
-    if (snapshotImages.length > 0) {
+    let system, firstUserContent;
+    if (usedImages) {
       // Vision path: Sirius has to transcribe the text itself (best-effort,
-      // not guaranteed byte-for-byte like the paste path below).
+      // not guaranteed byte-for-byte like the paste path below). The image
+      // blocks stay in snapshotMessages so follow-ups can keep referring to
+      // the same screenshots without re-uploading.
       const multi = snapshotImages.length > 1;
-      const system = "You are Sirius, helping the user file " + (multi ? "a multi-screenshot article" : "a screenshot of an article") + " into their note. " +
+      system = "You are Sirius, helping the user file " + (multi ? "a multi-screenshot article" : "a screenshot of an article") + " into their note. " +
         "Transcribe the readable article text from the image" + (multi ? "s, in the order given, into one continuous excerpt" : "") +
         " as accurately as possible — verbatim wording, do not summarize or paraphrase it. " +
         "If the user also typed extra text, treat it as additional context (not part of the transcription). " +
@@ -1538,45 +1550,152 @@
         "TITLE: <a short 3-7 word title summarizing what this excerpt is about>\n" +
         "PURPOSE: <one plain sentence on why this is worth keeping or how it should be used — refine their stated intent if given, or infer a sensible one>\n" +
         "EXCERPT:\n<the transcribed article text>";
-      const userContent = snapshotImages.map((im) => (
+      firstUserContent = snapshotImages.map((im) => (
         { type: 'image', source: { type: 'base64', media_type: im.mediaType, data: im.base64 } }
       ));
-      userContent.push({ type: 'text', text: purposeLine + (article ? "\n\nExtra context from the user: " + article : '') });
-      callSirius(system, [{ role: 'user', content: userContent }], 'notes-snapshot').then((reply) => {
-        const titleMatch = reply.match(/TITLE:\s*(.+)/i);
-        const purposeMatch = reply.match(/PURPOSE:\s*(.+)/i);
-        const excerptMatch = reply.match(/EXCERPT:\s*([\s\S]*)/i);
-        const title = titleMatch ? titleMatch[1].trim() : 'Article snapshot';
-        const finalPurpose = purposeMatch ? purposeMatch[1].trim() : purpose;
-        const excerpt = excerptMatch ? excerptMatch[1].trim() : reply.trim();
-        insertSnapshotIntoNote(title, finalPurpose, excerpt);
-        closeSiriusModal();
-      }).catch((e) => renderSiriusError(e.message || String(e)));
-      return;
+      firstUserContent.push({ type: 'text', text: purposeLine + (article ? "\n\nExtra context from the user: " + article : '') });
+    } else {
+      system = "You are Sirius, helping the user file a saved article excerpt into their note. " +
+        "Given the excerpt below and, if provided, what they intend to use it for, respond in EXACTLY this format and nothing else:\n" +
+        "TITLE: <a short 3-7 word title summarizing what this excerpt is about>\n" +
+        "PURPOSE: <one plain sentence on why this is worth keeping or how it should be used — refine their stated intent if given, or infer a sensible one from the excerpt if they left it blank>";
+      firstUserContent = "Excerpt:\n" + article.slice(0, 4000) + "\n\n" + purposeLine;
     }
 
-    const system = "You are Sirius, helping the user file a saved article excerpt into their note. " +
-      "Given the excerpt below and, if provided, what they intend to use it for, respond in EXACTLY this format and nothing else:\n" +
-      "TITLE: <a short 3-7 word title summarizing what this excerpt is about>\n" +
-      "PURPOSE: <one plain sentence on why this is worth keeping or how it should be used — refine their stated intent if given, or infer a sensible one from the excerpt if they left it blank>";
-    const userMsg = "Excerpt:\n" + article.slice(0, 4000) + "\n\n" + purposeLine;
-
-    callSirius(system, userMsg, 'notes-snapshot').then((reply) => {
+    snapshotMessages = [{ role: 'user', content: firstUserContent }];
+    callSirius(system, snapshotMessages, 'notes-snapshot').then((reply) => {
+      snapshotMessages.push({ role: 'assistant', content: reply });
       const titleMatch = reply.match(/TITLE:\s*(.+)/i);
       const purposeMatch = reply.match(/PURPOSE:\s*(.+)/i);
-      const title = titleMatch ? titleMatch[1].trim() : 'Article snapshot';
-      const finalPurpose = purposeMatch ? purposeMatch[1].trim() : purpose;
-      insertSnapshotIntoNote(title, finalPurpose, article);
-      closeSiriusModal();
-    }).catch((e) => renderSiriusError(e.message || String(e)));
+      const excerptMatch = reply.match(/EXCERPT:\s*([\s\S]*)/i);
+      snapshotResultTitle = titleMatch ? titleMatch[1].trim() : 'Article snapshot';
+      snapshotResultPurpose = purposeMatch ? purposeMatch[1].trim() : purpose;
+      // Paste path already has the exact original text locally — prefer
+      // that over the model's echo so a formatting slip can't alter it.
+      snapshotResultExcerpt = usedImages ? (excerptMatch ? excerptMatch[1].trim() : reply.trim()) : article;
+      renderSnapshotResult(false);
+    }).catch((e) => {
+      snapshotMessages = [];
+      renderSiriusError(e.message || String(e));
+    });
   }
 
-  function insertSnapshotIntoNote(title, purpose, excerpt) {
+  function renderSnapshotFollowupImageStatus() {
+    const el = $('snapshotFollowupImageStatus');
+    if (!el) return;
+    if (snapshotFollowupImages.length === 0) { el.innerHTML = ''; return; }
+    el.innerHTML = 'Attaching: ' + snapshotFollowupImages.length + ' screenshot' + (snapshotFollowupImages.length === 1 ? '' : 's') +
+      ' (' + snapshotFollowupImages.map((im) => siriusEsc(im.name)).join(', ') + ')' +
+      ' <button type="button" id="snapshotFollowupImageClear" style="border:0;background:transparent;color:var(--text-tertiary);text-decoration:underline;cursor:pointer;font-size:11px;padding:0;margin-left:4px">clear</button>';
+    $('snapshotFollowupImageClear').addEventListener('click', () => {
+      snapshotFollowupImages = [];
+      renderSnapshotFollowupImageStatus();
+    });
+  }
+
+  function renderSnapshotResult(loading, errorMsg) {
+    const preview = snapshotResultExcerpt.length > 600 ? snapshotResultExcerpt.slice(0, 600) + '…' : snapshotResultExcerpt;
+    let feedHtml =
+      '<div class="sirius-summary-text" style="margin-bottom:8px"><b>' + siriusEsc(snapshotResultTitle) + '</b></div>' +
+      (snapshotResultPurpose ? '<div class="sirius-summary-text" style="margin-bottom:10px; font-style:italic">For: ' + siriusEsc(snapshotResultPurpose) + '</div>' : '') +
+      '<div class="sirius-summary-text" style="white-space:pre-line">' + siriusEsc(preview) + '</div>';
+
+    // Everything after the first exchange is a follow-up.
+    snapshotMessages.slice(2).forEach((m) => {
+      if (m.role === 'user') {
+        const text = typeof m.content === 'string' ? m.content : ((m.content.find((c) => c.type === 'text') || {}).text || '');
+        const imgCount = Array.isArray(m.content) ? m.content.filter((c) => c.type === 'image').length : 0;
+        feedHtml += '<div class="sirius-followup-q">' + siriusEsc(text || '(screenshots only)') +
+          (imgCount ? ' <span style="opacity:.6">[+' + imgCount + ' screenshot' + (imgCount === 1 ? '' : 's') + ']</span>' : '') + '</div>';
+      } else {
+        feedHtml += '<div class="sirius-summary-text" style="margin-bottom:12px">' + siriusEsc(m.content) + '</div>';
+      }
+    });
+    const loadingHtml = loading ? '<div class="sirius-loading"><span class="sirius-dots"><i></i><i></i><i></i></span> Sirius is thinking…</div>' : '';
+    const errorHtml = errorMsg ? '<div class="sirius-err" style="margin-top:8px">' + siriusEsc(errorMsg) + '</div>' : '';
+
+    $('siriusModalBody').innerHTML =
+      '<div class="sirius-feed" id="snapshotFeed">' + feedHtml + loadingHtml + errorHtml + '</div>' +
+      '<button class="sirius-insert-btn" id="snapshotInsertBtn" type="button">Insert into note</button>' +
+      '<div style="margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08)">' +
+        '<textarea id="snapshotFollowupInput" class="sirius-textarea" style="min-height:56px" placeholder="Ask a follow-up about ' +
+          (snapshotImages.length ? 'the screenshot' + (snapshotImages.length === 1 ? '' : 's') + ' you uploaded' : 'this excerpt') + '…"></textarea>' +
+        '<button class="sirius-btn" id="snapshotFollowupImageBtn" type="button" style="width:100%; margin-top:8px; justify-content:center">Attach more screenshots</button>' +
+        '<input type="file" id="snapshotFollowupImageInput" accept="image/*" multiple style="display:none">' +
+        '<div id="snapshotFollowupImageStatus" style="font-size:11px;color:var(--text-tertiary);margin-top:6px"></div>' +
+        '<button class="gm-add" id="snapshotFollowupBtn" type="button" style="width:100%; margin-top:8px">Ask follow-up</button>' +
+      '</div>';
+
+    $('snapshotInsertBtn').addEventListener('click', () => {
+      insertSnapshotIntoNote();
+      const btn = $('snapshotInsertBtn');
+      btn.textContent = '✓ Inserted'; btn.classList.add('done'); btn.disabled = true;
+    });
+
+    $('snapshotFollowupImageBtn').addEventListener('click', () => $('snapshotFollowupImageInput').click());
+    $('snapshotFollowupImageInput').addEventListener('change', (e) => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      let pending = files.length;
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
+          if (match) snapshotFollowupImages.push({ mediaType: match[1], base64: match[2], name: file.name });
+          pending--;
+          if (pending === 0) { e.target.value = ''; renderSnapshotFollowupImageStatus(); }
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+    renderSnapshotFollowupImageStatus();
+
+    const input = $('snapshotFollowupInput');
+    const followupBtn = $('snapshotFollowupBtn');
+    followupBtn.addEventListener('click', submitSnapshotFollowup);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); followupBtn.click(); }
+    });
+    input.focus();
+    const feed = $('snapshotFeed');
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  function submitSnapshotFollowup() {
+    const text = ($('snapshotFollowupInput').value || '').trim();
+    if (!text && snapshotFollowupImages.length === 0) return;
+
+    let content;
+    if (snapshotFollowupImages.length > 0) {
+      content = snapshotFollowupImages.map((im) => (
+        { type: 'image', source: { type: 'base64', media_type: im.mediaType, data: im.base64 } }
+      ));
+      content.push({ type: 'text', text: text || '(see attached screenshot(s))' });
+    } else {
+      content = text;
+    }
+    snapshotMessages.push({ role: 'user', content: content });
+    snapshotFollowupImages = [];
+    renderSnapshotResult(true);
+
+    const system = "You are Sirius, continuing to help the user with the article excerpt/screenshot(s) they shared earlier in this conversation. " +
+      "Answer the follow-up directly using what's already in the conversation (and any newly attached screenshots) — don't re-transcribe or restate the whole thing unless asked. " +
+      "A few sentences or a short list, plain text, no preamble.";
+    callSirius(system, snapshotMessages, 'notes-snapshot').then((reply) => {
+      snapshotMessages.push({ role: 'assistant', content: reply });
+      renderSnapshotResult(false);
+    }).catch((e) => {
+      snapshotMessages.pop();
+      renderSnapshotResult(false, e.message || String(e));
+    });
+  }
+
+  function insertSnapshotIntoNote() {
     const Delta = Quill.import('delta');
     const insertDelta = new Delta();
-    insertDelta.insert('Article Snapshot: ' + title).insert('\n', { header: 3 });
-    if (purpose) insertDelta.insert('For: ' + purpose).insert('\n', { italic: true });
-    excerpt.split(/\r?\n+/).map((l) => l.trim()).filter(Boolean).forEach((line) => {
+    insertDelta.insert('Article Snapshot: ' + snapshotResultTitle).insert('\n', { header: 3 });
+    if (snapshotResultPurpose) insertDelta.insert('For: ' + snapshotResultPurpose).insert('\n', { italic: true });
+    snapshotResultExcerpt.split(/\r?\n+/).map((l) => l.trim()).filter(Boolean).forEach((line) => {
       insertDelta.insert(line).insert('\n', { blockquote: true });
     });
     insertDelta.insert('\n');
