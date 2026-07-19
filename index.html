@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="lock.js"></script>
 <script src="/api/config"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -741,7 +740,7 @@
 
 <script>
 // Register the service worker so the dashboard is installable (Add to Home
-// Screen / desktop install). No-ops silently if unsupported or if lock.js
+// Screen / desktop install). No-ops silently if unsupported or if this
 // is running from a non-secure context where SW registration is blocked.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
