@@ -75,6 +75,13 @@
 .pinned-ideas-btn.active { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.28); }
 .pinned-ideas-btn .cnt { margin-left: auto; font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
 
+.notes-section-label {
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-tertiary); padding: 6px 4px 0; flex-shrink: 0;
+}
+.meeting-btn-main { display: flex; flex-direction: column; gap: 2px; }
+.meeting-btn-time { font-size: 10.5px; font-weight: 500; color: var(--text-tertiary); }
+
 /* ===== Ideas view (merged from the former standalone Ideas tab) ===== */
 .gm-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .gm-eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
@@ -484,6 +491,15 @@
       <div class="cat-chip-row" id="catChipRow"></div>
       <button class="pinned-ideas-btn" id="dailyNoteBtn" type="button">Daily Note <span class="cnt" id="dailyNoteStatus"></span></button>
       <button class="pinned-ideas-btn" id="dashboardIdeasBtn" type="button">Dashboard Ideas <span class="cnt" id="ideasCount"></span></button>
+      <div class="notes-section-label">Meeting Notes</div>
+      <button class="pinned-ideas-btn meeting-btn" id="meeting_mon_Btn" type="button">
+        <span class="meeting-btn-main">Monday Meeting<span class="meeting-btn-time">7:00 – 8:45 PM</span></span>
+        <span class="cnt" id="meeting_mon_Status"></span>
+      </button>
+      <button class="pinned-ideas-btn meeting-btn" id="meeting_sat_Btn" type="button">
+        <span class="meeting-btn-main">Saturday Meeting<span class="meeting-btn-time">1:00 – 2:45 PM</span></span>
+        <span class="cnt" id="meeting_sat_Status"></span>
+      </button>
       <button class="sirius-ideas-btn" id="siriusIdeasBtn" type="button">Ideas to write about</button>
       <button class="sirius-ideas-btn" id="graphBtn" type="button">Web</button>
       <ul class="notes-list" id="notesList"></ul>
@@ -594,7 +610,12 @@
   const IDEAS_ID = '__IDEAS__'; // sentinel activeId for the pinned Dashboard Ideas view
   const IDEAS_KEY = 'ideas:items';
   const DAILY_MAP_KEY = 'notes:dailyMap'; // maps 'YYYY-MM-DD' -> note id
-  const CATEGORIES = ['Work', 'Personal', 'Health', 'Relationships', 'Finance', 'Ideas', 'Reflection', 'Other'];
+  const MEETING_MAP_KEY = 'notes:meetingMap'; // maps 'meetingId:YYYY-MM-DD' -> note id
+  const MEETINGS = [
+    { id: 'mon', label: 'Monday Meeting', weekday: 1, time: '7:00 – 8:45 PM' },
+    { id: 'sat', label: 'Saturday Meeting', weekday: 6, time: '1:00 – 2:45 PM' },
+  ];
+  const CATEGORIES = ['Work', 'Personal', 'Health', 'Relationships', 'Finance', 'Ideas', 'Reflection', 'Meeting Notes', 'Other'];
   let categoryFilter = null; // null = "All"
 
   function loadJSON(k, f) {
@@ -962,6 +983,7 @@
     ideasBtn.classList.toggle('active', activeId === IDEAS_ID);
     $('ideasCount').textContent = ideasItems.length ? ideasItems.filter(i => i.done).length + '/' + ideasItems.length : '';
     renderDailyNoteButton();
+    renderMeetingButtons();
 
     const allItems = sortedIndex();
     renderCatChips(allItems);
@@ -1142,6 +1164,67 @@
   }
   $('dailyNoteBtn').addEventListener('click', openDailyNote);
 
+  // ---------- Meeting Notes: one note per weekly occurrence per recurring meeting ----------
+  function loadMeetingMap() { return loadJSON(MEETING_MAP_KEY, {}); }
+  function saveMeetingMap(map) { saveJSON(MEETING_MAP_KEY, map); }
+
+  // Date of `weekday` (0=Sun..6=Sat) within the current Monday-start week.
+  function weekOccurrenceDate(weekday) {
+    const d = new Date();
+    const dow = d.getDay();
+    const mondayOffset = (dow === 0) ? -6 : 1 - dow;
+    const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + mondayOffset);
+    const offsetFromMonday = (weekday === 0) ? 6 : weekday - 1;
+    return new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + offsetFromMonday);
+  }
+  function weekOccurrenceKey(weekday) {
+    const d = weekOccurrenceDate(weekday);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function meetingNoteIdFor(meeting) {
+    const key = meeting.id + ':' + weekOccurrenceKey(meeting.weekday);
+    const id = loadMeetingMap()[key];
+    return id && loadIndex().find((n) => n.id === id) ? id : null;
+  }
+  function meetingNoteDone(meeting) {
+    const id = meetingNoteIdFor(meeting);
+    return !!(id && docText(id).trim().length > 0);
+  }
+
+  function openMeetingNote(meeting) {
+    const key = meeting.id + ':' + weekOccurrenceKey(meeting.weekday);
+    const map = loadMeetingMap();
+    const idx = loadIndex();
+    let id = map[key];
+    if (!id || !idx.find((n) => n.id === id)) {
+      id = newId();
+      const dateLabel = weekOccurrenceDate(meeting.weekday).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+      const title = meeting.label + ' — ' + dateLabel;
+      idx.unshift({ id, title, category: 'Meeting Notes', updatedAt: Date.now(), pinned: false });
+      saveIndex(idx);
+      saveJSON(DOC_PREFIX + id, { ops: [{ insert: '\n' }] });
+      map[key] = id;
+      saveMeetingMap(map);
+    }
+    selectNote(id);
+    closeDrawer();
+  }
+
+  function renderMeetingButtons() {
+    MEETINGS.forEach((meeting) => {
+      const id = meetingNoteIdFor(meeting);
+      const btn = document.getElementById('meeting_' + meeting.id + '_Btn');
+      const statusEl = document.getElementById('meeting_' + meeting.id + '_Status');
+      if (btn) btn.classList.toggle('active', !!(id && activeId === id));
+      if (statusEl) statusEl.textContent = meetingNoteDone(meeting) ? '✓' : '';
+    });
+  }
+  MEETINGS.forEach((meeting) => {
+    const btn = document.getElementById('meeting_' + meeting.id + '_Btn');
+    if (btn) btn.addEventListener('click', () => openMeetingNote(meeting));
+  });
+
   function deleteNote(id) {
     if (!confirm('Delete this note? This can\'t be undone.')) return;
     let idx = loadIndex();
@@ -1202,6 +1285,7 @@
         $('notesMeta').textContent = 'Edited ' + relTime(entry.updatedAt);
       }
       renderDailyNoteButton();
+      renderMeetingButtons();
     }, 400);
   });
 
