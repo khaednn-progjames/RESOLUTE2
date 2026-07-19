@@ -232,6 +232,20 @@
 .wl-item.sel, .wl-item:hover { background: rgba(255,255,255,0.10); color: var(--text-primary); }
 .wl-empty { padding: 7px 10px; font-size: 12px; color: var(--text-tertiary); }
 
+/* ===== Scripture suggest ("John 3:16" -> NWT lookup) ===== */
+.scripture-suggest {
+  position: absolute; display: none; z-index: 50; max-width: 280px;
+  background: #141416; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px;
+  padding: 8px 11px; box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+  font-size: 12px; color: var(--text-secondary); line-height: 1.4;
+}
+.scripture-suggest b { color: var(--text-primary); }
+.scripture-suggest .kbd {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05); color: var(--text-tertiary); margin-right: 4px;
+}
+
 /* ===== Backlinks panel ===== */
 .backlinks-panel { flex-shrink: 0; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); }
 .backlinks-title { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
@@ -804,6 +818,78 @@
     quill.focus();
   }
 
+  // ---------- scripture lookup ("John 3:16" -> New World Translation text) ----------
+  // Detects a Bible reference as it's typed and offers to expand it inline.
+  // The verse text comes from Sirius (no free public API serves NWT text
+  // specifically), so it's AI-recalled, not fetched from an authoritative
+  // source — the suggestion says so up front, and each insert is tagged
+  // "(NWT)" only, matching how a normal citation would look, but anything
+  // where exact wording matters is worth checking against an official copy.
+  const SCRIPTURE_RE = /\b((?:[1-3]\s)?[A-Z][a-zA-Z]+(?:\s[a-zA-Z]+){0,2})\s+(\d{1,3}):(\d{1,3})(?:-(\d{1,3}))?$/;
+  const scriptureBox = document.createElement('div');
+  scriptureBox.className = 'scripture-suggest';
+  quill.container.appendChild(scriptureBox);
+  let scriptureActive = false, scriptureStart = null, scriptureEnd = null, scriptureRef = '', scriptureDismissedAt = null;
+
+  function hideScriptureSuggest() {
+    scriptureActive = false; scriptureStart = null; scriptureEnd = null; scriptureRef = '';
+    scriptureBox.style.display = 'none';
+  }
+
+  function showScriptureSuggest(start, end, refText) {
+    scriptureStart = start; scriptureEnd = end; scriptureRef = refText;
+    scriptureBox.innerHTML = '<span class="kbd">Tab</span>Insert <b>' + siriusEsc(refText) + '</b> (New World Translation, AI-recalled)';
+    const bounds = quill.getBounds(end);
+    scriptureBox.style.left = bounds.left + 'px';
+    scriptureBox.style.top = (bounds.bottom + 6) + 'px';
+    scriptureBox.style.display = 'block';
+    scriptureActive = true;
+  }
+
+  function checkScriptureTrigger() {
+    const sel = quill.getSelection();
+    if (!sel || sel.length !== 0) { hideScriptureSuggest(); return; }
+    const cursor = sel.index;
+    const [line, offset] = quill.getLine(cursor);
+    if (!line) { hideScriptureSuggest(); return; }
+    const lineStartIndex = cursor - offset;
+    const textBefore = quill.getText(lineStartIndex, offset);
+    const m = SCRIPTURE_RE.exec(textBefore);
+    if (!m) { hideScriptureSuggest(); return; }
+    const start = lineStartIndex + m.index;
+    if (start === scriptureDismissedAt) return; // user explicitly closed this one — don't reopen until they type more
+    showScriptureSuggest(start, lineStartIndex + m.index + m[0].length, m[0]);
+  }
+
+  async function confirmScripture() {
+    const start = scriptureStart, end = scriptureEnd, ref = scriptureRef;
+    hideScriptureSuggest();
+    if (!ref || !siriusKey()) return; // quiet background convenience — no key configured means no-op, not an error popup
+    const system = "You are a Bible reference lookup embedded in a note-taking app. The user typed the reference below. " +
+      "Respond with ONLY the exact verse text from the New World Translation of the Holy Scriptures (NWT) for that reference — nothing else: no preamble, no repeated reference, no surrounding quotation marks. " +
+      "For a verse range, include every verse, each preceded by its verse number in square brackets, like [16] verse text [17] next verse text. " +
+      "If you are not confident of the precise NWT wording for this exact reference, respond with exactly: UNSURE";
+    try {
+      const reply = await callSirius(system, ref, 'notes-scripture');
+      const text = (reply || '').trim();
+      if (!text || /^unsure$/i.test(text)) return; // fail silently — this is a passive convenience, not a user-initiated action worth an error dialog
+      const Delta = Quill.import('delta');
+      const delta = new Delta().retain(start).delete(end - start)
+        .insert(ref, { bold: true })
+        .insert(' “' + text + '” ')
+        .insert('(NWT)', { italic: true })
+        .insert(' ');
+      quill.updateContents(delta, Quill.sources.USER);
+      quill.setSelection(start + ref.length + text.length + 12, Quill.sources.SILENT);
+    } catch (e) { /* silent, same reasoning as above */ }
+  }
+
+  quill.root.addEventListener('keydown', function (e) {
+    if (wlActive || !scriptureActive) return;
+    if (e.key === 'Tab' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); confirmScripture(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); scriptureDismissedAt = scriptureStart; hideScriptureSuggest(); }
+  }, true);
+
   quill.root.addEventListener('keydown', function (e) {
     if (!wlActive) return;
     if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); wlSelectedIdx = Math.min(wlSelectedIdx + 1, wlMatches.length - 1); updateWlSelection(); }
@@ -812,7 +898,7 @@
     else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); hideWikilinkAutocomplete(); }
   }, true);
 
-  quill.on('selection-change', function (range) { if (!range) hideWikilinkAutocomplete(); });
+  quill.on('selection-change', function (range) { if (!range) { hideWikilinkAutocomplete(); hideScriptureSuggest(); } });
 
   // clicking a "[[Note Title]]" link jumps straight to that note.
   // Intercepted on mousedown (capture phase): the browser places the caret inside the
@@ -987,6 +1073,7 @@
     const entry = idx.find((n) => n.id === id);
     if (!entry) return;
     hideWikilinkAutocomplete();
+    hideScriptureSuggest();
     $('ideasView').style.display = 'none';
     $('noteView').style.display = 'flex';
     activeId = id;
@@ -1103,7 +1190,7 @@
   let saveTimer = null;
   quill.on('text-change', function (delta, oldDelta, source) {
     updateWordCount();
-    if (source === 'user') checkWikilinkTrigger();
+    if (source === 'user') { checkWikilinkTrigger(); checkScriptureTrigger(); }
     if (source !== 'user' || suppressAutosave || !activeId) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
