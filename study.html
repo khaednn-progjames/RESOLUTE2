@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Personal Study · Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
+<script src="sirius-usage.js" defer></script>
+
+<link rel="stylesheet" href="design-system.css">
+<style>
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger:  #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+.gm-card {
+  position: relative; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10); border-radius: 16px; padding: 20px;
+  margin-bottom: 14px; backdrop-filter: blur(46px) saturate(2.2);
+  -webkit-backdrop-filter: blur(46px) saturate(2.2);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55);
+  overflow: hidden;
+}
+
+/* ---------- stats ---------- */
+.study-stat-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px;
+}
+.study-stat {
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 12px; padding: 14px;
+}
+.study-stat-num {
+  font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em; color: var(--text-primary); line-height: 1;
+}
+.study-stat-label {
+  margin-top: 6px; font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary);
+}
+
+/* ---------- meetings tie-in ---------- */
+.study-meeting-next { font-size: 13.5px; color: var(--text-secondary); margin-bottom: 14px; }
+.study-meeting-next b { color: var(--text-primary); }
+.study-meeting-links { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- ask sirius ---------- */
+.study-source-note {
+  font-size: 11.5px; color: var(--text-tertiary); line-height: 1.5; margin-bottom: 16px;
+}
+.study-daily-row { margin-bottom: 14px; }
+.study-quick-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.study-chip {
+  padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.035); color: var(--text-secondary);
+  font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.study-chip:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); border-color: rgba(255,255,255,0.24); }
+.study-input-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+.study-input-row textarea.input {
+  flex: 1; min-width: 220px; min-height: 46px; max-height: 160px; resize: vertical;
+  font-family: inherit; line-height: 1.4;
+}
+.study-status { font-size: 12px; color: var(--text-tertiary); margin-top: 10px; min-height: 16px; }
+.study-status.err { color: var(--danger); }
+
+.study-caveat {
+  font-size: 12px; color: var(--warning); background: rgba(242,192,99,0.08);
+  border: 1px solid rgba(242,192,99,0.28); border-radius: 10px; padding: 9px 12px;
+  margin-bottom: 14px; line-height: 1.5;
+}
+.study-result-topic { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; }
+.study-block { margin-bottom: 14px; }
+.study-block:last-child { margin-bottom: 0; }
+.study-block-label {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 6px;
+}
+.study-block-body { font-size: 13.5px; color: var(--text-secondary); line-height: 1.6; }
+.study-block-body div { margin-bottom: 4px; }
+.study-block-body div:last-child { margin-bottom: 0; }
+.study-sources { display: flex; flex-direction: column; gap: 6px; }
+.study-sources a {
+  font-size: 12px; color: #8FB9FF; text-decoration: none; word-break: break-word;
+}
+.study-sources a:hover { text-decoration: underline; }
+
+/* ---------- journal ---------- */
+.cat-chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+.cat-chip {
+  padding: 5px 9px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.03);
+  color: var(--text-tertiary); font-size: 10.5px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.cat-chip:hover { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
+.cat-chip.on { background: rgba(255,255,255,0.14); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
+
+.journal-entry {
+  border: 1px solid rgba(255,255,255,0.10); border-radius: 12px; margin-bottom: 8px;
+  background: rgba(255,255,255,0.02); overflow: hidden;
+}
+.journal-entry-head {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px; cursor: pointer;
+}
+.journal-entry-cat {
+  font-size: 8.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-tertiary);
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); border-radius: 999px; padding: 2px 7px;
+  flex-shrink: 0;
+}
+.journal-entry-topic {
+  flex: 1; min-width: 0; font-size: 13px; color: var(--text-primary); font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.journal-entry-time { font-size: 10.5px; color: var(--text-tertiary); font-family: var(--font-mono); flex-shrink: 0; }
+.journal-entry-del {
+  border: 0; background: transparent; color: var(--text-tertiary); font-size: 17px; cursor: pointer;
+  padding: 0 2px; flex-shrink: 0; transition: color 0.15s;
+}
+.journal-entry-del:hover { color: var(--danger); }
+.journal-entry-body { display: none; padding: 0 14px 14px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; }
+.journal-entry.open .journal-entry-body { display: block; }
+.empty-state { text-align: center; font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 14px 0; }
+
+@media (max-width: 480px) {
+  body { padding: max(20px, env(safe-area-inset-top)) 14px 50px; }
+  .gm-card { padding: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1 class="dash-title">Personal Study</h1>
+
+  <div class="section-eyebrow">This Week</div>
+  <div class="gm-card">
+    <div class="study-stat-grid">
+      <div class="study-stat"><div class="study-stat-num" id="studyStreakNum">0</div><div class="study-stat-label">Day Streak</div></div>
+      <div class="study-stat"><div class="study-stat-num" id="studyWeekNum">0</div><div class="study-stat-label">This Week</div></div>
+      <div class="study-stat"><div class="study-stat-num" id="studyTotalNum">0</div><div class="study-stat-label">All Time</div></div>
+      <div class="study-stat"><div class="study-stat-num" id="studyLastLabel" style="font-size:15px">—</div><div class="study-stat-label">Last Studied</div></div>
+    </div>
+  </div>
+
+  <div class="section-eyebrow">Meetings</div>
+  <div class="gm-card">
+    <div class="study-meeting-next" id="studyNextMeeting">—</div>
+    <div class="study-meeting-links">
+      <a class="btn btn-secondary" href="notes.html">Monday Meeting notes →</a>
+      <a class="btn btn-secondary" href="notes.html">Saturday Meeting notes →</a>
+    </div>
+  </div>
+
+  <div class="section-eyebrow">Ask Sirius</div>
+  <div class="gm-card">
+    <div class="study-source-note">
+      Every answer here is grounded in a live search of <b style="color:var(--text-secondary)">jw.org</b> and
+      <b style="color:var(--text-secondary)">wol.jw.org</b> only — Sirius is instructed to search those sites first
+      and answer from what it actually finds, never from its own memory alone. Sources are only ever links the
+      search itself returned, filtered again here to just those two sites before anything is shown to you.
+    </div>
+
+    <div class="study-daily-row">
+      <button class="btn btn-secondary" id="studyDailyTextBtn" type="button">Get Today's Daily Text</button>
+    </div>
+
+    <div class="study-quick-row" id="studyQuickRow"></div>
+
+    <div class="study-input-row">
+      <textarea class="input" id="studyInput" placeholder="Type anything — a topic, a struggle, a question, a scripture you want explained…"></textarea>
+      <button class="btn btn-primary" id="studySearchBtn" type="button">Search</button>
+    </div>
+    <div class="study-status" id="studyStatus"></div>
+
+    <div id="studyResult" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08)"></div>
+  </div>
+
+  <div class="section-eyebrow">My Study Journal</div>
+  <div class="gm-card">
+    <div class="cat-chip-row" id="journalChipRow"></div>
+    <div id="journalList"></div>
+  </div>
+
+</div><!-- /.page -->
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+
+  function loadJSON(k, f) { try { return JSON.parse(localStorage.getItem(k)) || f; } catch (e) { return f; } }
+  function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+  function escHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function relTime(ts) {
+    if (!ts) return '—';
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    if (s < 604800) return Math.floor(s / 86400) + 'd ago';
+    return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  }
+
+  const SIRIUS_KEY_LS = 'nova_lite_api_key'; // shared BYOK key across the dashboard
+  function apiKey() { try { return localStorage.getItem(SIRIUS_KEY_LS) || ''; } catch (e) { return ''; } }
+
+  const JOURNAL_KEY = 'study:journal';
+  const STUDY_CATEGORIES = ['Prayer', 'Trials', 'Ministry', 'Family', 'Doctrine', 'Faith', 'Comfort', 'Meetings', 'Other'];
+  const QUICK_TOPICS = [
+    'Building a stronger prayer life',
+    'Staying strong through a trial',
+    'Preparing for the ministry this week',
+    'Improving family worship',
+    'Overcoming discouragement',
+    'Studying the Bible more effectively',
+    'Dealing with doubts or hard questions',
+    'Comfort after a loss',
+  ];
+
+  // ---------- Meetings tie-in (matches the recurring meetings set up in Notes) ----------
+  const MEETINGS_SCHEDULE = [
+    { label: 'Monday Meeting', weekday: 1, hour: 19, minute: 0 },
+    { label: 'Saturday Meeting', weekday: 6, hour: 13, minute: 0 },
+  ];
+  function nextMeetingInfo() {
+    const now = new Date();
+    let best = null;
+    MEETINGS_SCHEDULE.forEach((m) => {
+      for (let add = 0; add <= 7; add++) {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + add, m.hour, m.minute, 0, 0);
+        if (d.getDay() !== m.weekday || d < now) continue;
+        if (!best || d < best.date) best = { date: d, label: m.label };
+        break;
+      }
+    });
+    return best;
+  }
+  function renderNextMeeting() {
+    const info = nextMeetingInfo();
+    if (!info) { $('studyNextMeeting').textContent = ''; return; }
+    const diffH = (info.date - new Date()) / 3600000;
+    const timeStr = info.date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    let when;
+    if (diffH < 24) when = 'today at ' + timeStr;
+    else if (diffH < 48) when = 'tomorrow at ' + timeStr;
+    else when = info.date.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' }) + ' at ' + timeStr;
+    $('studyNextMeeting').innerHTML = 'Next: <b>' + escHtml(info.label) + '</b> ' + escHtml(when);
+  }
+
+  // ---------- stats ----------
+  function computeStreak(all) {
+    const keyFor = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const daysSet = new Set(all.map((e) => keyFor(new Date(e.ts))));
+    let cursor = new Date();
+    if (!daysSet.has(keyFor(cursor))) {
+      cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() - 1);
+      if (!daysSet.has(keyFor(cursor))) return 0;
+    }
+    let streak = 0;
+    while (daysSet.has(keyFor(cursor))) {
+      streak++;
+      cursor = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate() - 1);
+    }
+    return streak;
+  }
+  function renderStudyStats() {
+    const all = loadJSON(JOURNAL_KEY, []);
+    const now = new Date();
+    const dow = now.getDay();
+    const mondayOffset = (dow === 0) ? -6 : 1 - dow;
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset).getTime();
+    $('studyStreakNum').textContent = computeStreak(all);
+    $('studyWeekNum').textContent = all.filter((e) => e.ts >= startOfWeek).length;
+    $('studyTotalNum').textContent = all.length;
+    $('studyLastLabel').textContent = all.length ? relTime(all[0].ts) : '—';
+  }
+
+  // ---------- Sirius call, grounded to jw.org / wol.jw.org only ----------
+  const STUDY_SYSTEM =
+    "You are Sirius, helping a Jehovah's Witness with personal Bible study to deepen their relationship with Jehovah. " +
+    "You have a web_search tool restricted to jw.org and wol.jw.org — use it for every question, even ones you think you already know, because the user wants an answer grounded in official material, not your own recollection. Search first, then write your answer using what you actually found; run more than one search if the first doesn't turn up enough. " +
+    "Never mention, cite, or draw from any source outside jw.org or wol.jw.org. If your searches genuinely don't turn up anything solid after a couple of tries, say so honestly in the ANSWER section instead of answering from memory. " +
+    "Respond in EXACTLY this structure, with these exact plain-text labels each on their own line and nothing before ANSWER or after CATEGORY:\n" +
+    "ANSWER:\n<a warm, direct, pastoral answer to what they asked, grounded in what you found, 3-6 sentences>\n\n" +
+    "SCRIPTURES:\n<one or more relevant scriptures, each on its own line as '<Reference> — <short line of context or the point it makes>'; if genuinely none fit, write 'None found.'>\n\n" +
+    "APPLY:\n<2-4 short, concrete, practical steps for actually working through or acting on this in daily life, each on its own line starting with '- '>\n\n" +
+    "CATEGORY: <single word from this list that best fits, nothing else on the line: " + STUDY_CATEGORIES.join(', ') + ">";
+
+  function isAllowedSource(url) {
+    try {
+      const h = new URL(url).hostname.toLowerCase();
+      return h === 'jw.org' || h.endsWith('.jw.org');
+    } catch (e) { return false; }
+  }
+
+  async function callStudySirius(userText) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-8',
+        max_tokens: 1536,
+        system: STUDY_SYSTEM,
+        messages: [{ role: 'user', content: userText }],
+        tools: [{
+          type: 'web_search_20250305',
+          name: 'web_search',
+          max_uses: 5,
+          allowed_domains: ['jw.org', 'wol.jw.org'],
+        }],
+      }),
+    });
+    const json = await res.json();
+    if (typeof logSiriusUsage === 'function') logSiriusUsage('personal-study', json.usage);
+    if (json.error) throw new Error(json.error.message || 'Something went wrong.');
+    let text = '';
+    const sources = [];
+    (json.content || []).forEach((block) => {
+      if (block.type === 'text') {
+        text += block.text;
+        (block.citations || []).forEach((c) => {
+          if (c && c.url && isAllowedSource(c.url) && !sources.find((s) => s.url === c.url)) {
+            sources.push({ url: c.url, title: c.title || c.url });
+          }
+        });
+      }
+    });
+    return { text: text.trim(), sources };
+  }
+
+  function parseStudyReply(raw) {
+    const text = raw || '';
+    function grab(label, stopLabels) {
+      const re = new RegExp(label + ':\\s*([\\s\\S]*?)(?=\\n(?:' + stopLabels.join('|') + '):|$)', 'i');
+      const m = text.match(re);
+      return m ? m[1].trim() : '';
+    }
+    const answer = grab('ANSWER', ['SCRIPTURES', 'APPLY', 'CATEGORY']);
+    const scriptures = grab('SCRIPTURES', ['APPLY', 'CATEGORY']);
+    const apply = grab('APPLY', ['CATEGORY']);
+    const catMatch = text.match(/CATEGORY:\s*([A-Za-z]+)/i);
+    const found = catMatch && STUDY_CATEGORIES.find((c) => c.toLowerCase() === catMatch[1].trim().toLowerCase());
+    return { answer: answer || text, scriptures, apply, category: found || 'Other' };
+  }
+
+  function linesToHtml(s) {
+    return escHtml(s).split(/\n+/).map((l) => l.trim()).filter(Boolean)
+      .map((l) => '<div>' + l.replace(/^-\s*/, '') + '</div>').join('');
+  }
+
+  function studyStatus(msg, isErr) {
+    const el = $('studyStatus');
+    el.textContent = msg || '';
+    el.classList.toggle('err', !!isErr);
+  }
+
+  function renderStudyResult(parsed, sources, label) {
+    const box = $('studyResult');
+    let html = '<div class="study-result-topic">' + escHtml(label) + '</div>';
+    if (sources.length === 0) {
+      html += '<div class="study-caveat">No jw.org or wol.jw.org sources came back for this search — treat this answer with extra caution, or try rephrasing.</div>';
+    }
+    html += '<div class="study-block"><div class="study-block-label">Answer</div><div class="study-block-body">' + linesToHtml(parsed.answer) + '</div></div>';
+    if (parsed.scriptures) html += '<div class="study-block"><div class="study-block-label">Scriptures</div><div class="study-block-body">' + linesToHtml(parsed.scriptures) + '</div></div>';
+    if (parsed.apply) html += '<div class="study-block"><div class="study-block-label">Ways to apply this</div><div class="study-block-body">' + linesToHtml(parsed.apply) + '</div></div>';
+    if (sources.length) {
+      html += '<div class="study-block"><div class="study-block-label">Sources</div><div class="study-sources">' +
+        sources.map((s) => '<a href="' + escHtml(s.url) + '" target="_blank" rel="noopener noreferrer">' + escHtml(s.title) + '</a>').join('') +
+        '</div></div>';
+    }
+    box.innerHTML = html;
+    box.style.display = 'block';
+  }
+
+  function saveJournalEntry(query, parsed, sources) {
+    const list = loadJSON(JOURNAL_KEY, []);
+    list.unshift({
+      id: 'j' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      query, answer: parsed.answer, scriptures: parsed.scriptures, apply: parsed.apply,
+      sources, category: parsed.category, ts: Date.now(),
+    });
+    if (list.length > 300) list.length = 300;
+    saveJSON(JOURNAL_KEY, list);
+  }
+
+  let studyBusy = false;
+  async function runStudySearch(query, displayLabel) {
+    query = (query || '').trim();
+    if (!query || studyBusy) return;
+    if (!apiKey()) { studyStatus('No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
+    studyBusy = true;
+    $('studySearchBtn').disabled = true;
+    $('studyDailyTextBtn').disabled = true;
+    studyStatus('Searching jw.org and wol.jw.org…');
+    $('studyResult').style.display = 'none';
+    try {
+      const { text, sources } = await callStudySirius(query);
+      const parsed = parseStudyReply(text);
+      const label = displayLabel || query;
+      renderStudyResult(parsed, sources, label);
+      saveJournalEntry(label, parsed, sources);
+      studyStatus('');
+      $('studyInput').value = '';
+      renderJournal();
+      renderStudyStats();
+    } catch (e) {
+      studyStatus(e.message || String(e), true);
+    }
+    studyBusy = false;
+    $('studySearchBtn').disabled = false;
+    $('studyDailyTextBtn').disabled = false;
+  }
+
+  $('studySearchBtn').addEventListener('click', () => runStudySearch($('studyInput').value));
+  $('studyInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runStudySearch($('studyInput').value); }
+  });
+
+  $('studyDailyTextBtn').addEventListener('click', () => {
+    const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const query = "Find today's Watchtower \"Examining the Scriptures Daily\" daily text for " + today + " on wol.jw.org, including the scripture and the comments beneath it.";
+    runStudySearch(query, 'Daily Text — ' + new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+  });
+
+  (function renderQuickTopics() {
+    const row = $('studyQuickRow');
+    QUICK_TOPICS.forEach((topic) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'study-chip';
+      chip.textContent = topic;
+      chip.addEventListener('click', () => runStudySearch(topic));
+      row.appendChild(chip);
+    });
+  })();
+
+  // ---------- journal ----------
+  let journalCategoryFilter = null;
+  function renderJournalChips(all) {
+    const row = $('journalChipRow');
+    const counts = {};
+    all.forEach((e) => { counts[e.category] = (counts[e.category] || 0) + 1; });
+    const present = STUDY_CATEGORIES.filter((c) => counts[c]);
+    if (present.length === 0) { row.innerHTML = ''; return; }
+    row.innerHTML = '';
+    const allChip = document.createElement('button');
+    allChip.type = 'button';
+    allChip.className = 'cat-chip' + (journalCategoryFilter === null ? ' on' : '');
+    allChip.textContent = 'All';
+    allChip.addEventListener('click', () => { journalCategoryFilter = null; renderJournal(); });
+    row.appendChild(allChip);
+    present.forEach((c) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'cat-chip' + (journalCategoryFilter === c ? ' on' : '');
+      chip.textContent = c + ' ' + counts[c];
+      chip.addEventListener('click', () => { journalCategoryFilter = (journalCategoryFilter === c ? null : c); renderJournal(); });
+      row.appendChild(chip);
+    });
+  }
+
+  function journalEntryHtml(e) {
+    let body = '';
+    if (e.answer) body += '<div class="study-block-label">Answer</div><div class="study-block-body">' + linesToHtml(e.answer) + '</div>';
+    if (e.scriptures) body += '<div class="study-block-label" style="margin-top:10px">Scriptures</div><div class="study-block-body">' + linesToHtml(e.scriptures) + '</div>';
+    if (e.apply) body += '<div class="study-block-label" style="margin-top:10px">Ways to apply this</div><div class="study-block-body">' + linesToHtml(e.apply) + '</div>';
+    if (e.sources && e.sources.length) {
+      body += '<div class="study-block-label" style="margin-top:10px">Sources</div><div class="study-sources">' +
+        e.sources.map((s) => '<a href="' + escHtml(s.url) + '" target="_blank" rel="noopener noreferrer">' + escHtml(s.title) + '</a>').join('') + '</div>';
+    }
+    return '<div class="journal-entry" data-id="' + e.id + '">' +
+      '<div class="journal-entry-head">' +
+        '<span class="journal-entry-cat">' + escHtml(e.category) + '</span>' +
+        '<span class="journal-entry-topic">' + escHtml(e.query) + '</span>' +
+        '<span class="journal-entry-time">' + relTime(e.ts) + '</span>' +
+        '<button type="button" class="journal-entry-del" data-id="' + e.id + '" aria-label="Delete">×</button>' +
+      '</div>' +
+      '<div class="journal-entry-body">' + body + '</div>' +
+    '</div>';
+  }
+
+  function renderJournal() {
+    const all = loadJSON(JOURNAL_KEY, []);
+    renderJournalChips(all);
+    const list = journalCategoryFilter ? all.filter((e) => e.category === journalCategoryFilter) : all;
+    const wrap = $('journalList');
+    if (list.length === 0) {
+      wrap.innerHTML = '<div class="empty-state">Nothing studied yet — ask something above and it\'ll show up here.</div>';
+      return;
+    }
+    wrap.innerHTML = list.map(journalEntryHtml).join('');
+    wrap.querySelectorAll('.journal-entry-head').forEach((h) => {
+      h.addEventListener('click', () => h.closest('.journal-entry').classList.toggle('open'));
+    });
+    wrap.querySelectorAll('.journal-entry-del').forEach((b) => {
+      b.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (!confirm('Delete this study entry?')) return;
+        saveJSON(JOURNAL_KEY, loadJSON(JOURNAL_KEY, []).filter((e) => e.id !== b.dataset.id));
+        renderJournal();
+        renderStudyStats();
+      });
+    });
+  }
+
+  renderNextMeeting();
+  renderStudyStats();
+  renderJournal();
+
+  if (window.initCloudSync) {
+    window.initCloudSync({
+      appKey: 'study',
+      syncedPrefixes: ['study:'],
+      onApplied: function () { renderJournal(); renderStudyStats(); },
+    });
+  }
+})();
+</script>
+</body>
+</html>

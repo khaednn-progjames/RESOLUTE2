@@ -642,6 +642,7 @@ body.topbar-modal-open {
     { group: 'Pages', ic: '📊', label: 'Finance',         sub: 'net worth & budget', href: 'finance.html',      kw: 'money net worth budget subs subscriptions wishlist orders' },
     { group: 'Pages', ic: '🧠', label: 'Sirius',          sub: 'AI mentor',          href: 'nova-lite.html',    kw: 'ai chat mentor sirius ask' },
     { group: 'Pages', ic: '📝', label: 'Notes',           sub: 'ideas & docs',       href: 'notes.html',        kw: 'notes docs writing ideas quick thought web' },
+    { group: 'Pages', ic: '📖', label: 'Personal Study',  sub: 'grow with Jehovah',  href: 'study.html',        kw: 'personal study bible jw jehovah witness scripture prayer ministry meeting daily text' },
     { group: 'Pages', ic: '🔗', label: 'Links',           sub: 'saved & sorted',     href: 'links.html',        kw: 'links bookmarks saved urls' },
     { group: 'Pages', ic: '🗂', label: 'Miscellaneous',   sub: 'everything else',    href: 'misc.html',         kw: 'misc other tools' },
     { group: 'Pages', ic: '❤️', label: 'Health',          sub: 'meals & water',      href: 'health.html',       kw: 'health meals food calories water supplements stack vitamins' },
