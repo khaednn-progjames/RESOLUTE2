@@ -480,6 +480,7 @@
       renderStudyConversation();
       studyStatus('');
       $('studyInput').value = '';
+      journalCategoryFilter = null; // always show a freshly saved entry, even if a different category chip was active
       renderJournal();
       renderStudyStats();
     } catch (e) {
