@@ -98,6 +98,20 @@
 }
 .study-sources a:hover { text-decoration: underline; }
 
+.study-turn { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.study-turn:last-of-type { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
+.study-followup-q {
+  font-size: 13px; color: var(--text-secondary); background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 9px 12px 10px;
+  margin: 4px 0 14px; line-height: 1.5;
+}
+.study-followup-q::before {
+  content: 'You'; display: block; font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 4px;
+}
+.study-followup-row { display: flex; gap: 8px; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); flex-wrap: wrap; }
+.study-followup-row .input { flex: 1; min-width: 180px; }
+
 /* ---------- journal ---------- */
 .cat-chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
 .cat-chip {
@@ -306,7 +320,7 @@
     } catch (e) { return false; }
   }
 
-  async function callStudySirius(userText) {
+  async function callStudySirius(messages) {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -319,7 +333,7 @@
         model: 'claude-opus-4-8',
         max_tokens: 1536,
         system: STUDY_SYSTEM,
-        messages: [{ role: 'user', content: userText }],
+        messages: messages,
         tools: [{
           type: 'web_search_20250305',
           name: 'web_search',
@@ -372,33 +386,76 @@
     el.classList.toggle('err', !!isErr);
   }
 
-  function renderStudyResult(parsed, sources, label) {
-    const box = $('studyResult');
-    let html = '<div class="study-result-topic">' + escHtml(label) + '</div>';
-    if (sources.length === 0) {
-      html += '<div class="study-caveat">No jw.org or wol.jw.org sources came back for this search — treat this answer with extra caution, or try rephrasing.</div>';
+  // Renders one turn's Answer / Scriptures / Apply / Sources — shared between
+  // the live conversation box and the saved journal entries below it.
+  function turnBodyHtml(parsed, sources) {
+    let html = '';
+    if (sources && sources.length === 0) {
+      html += '<div class="study-caveat">No jw.org or wol.jw.org sources came back for this — treat this answer with extra caution, or try rephrasing.</div>';
     }
-    html += '<div class="study-block"><div class="study-block-label">Answer</div><div class="study-block-body">' + linesToHtml(parsed.answer) + '</div></div>';
+    if (parsed.answer) html += '<div class="study-block"><div class="study-block-label">Answer</div><div class="study-block-body">' + linesToHtml(parsed.answer) + '</div></div>';
     if (parsed.scriptures) html += '<div class="study-block"><div class="study-block-label">Scriptures</div><div class="study-block-body">' + linesToHtml(parsed.scriptures) + '</div></div>';
     if (parsed.apply) html += '<div class="study-block"><div class="study-block-label">Ways to apply this</div><div class="study-block-body">' + linesToHtml(parsed.apply) + '</div></div>';
-    if (sources.length) {
+    if (sources && sources.length) {
       html += '<div class="study-block"><div class="study-block-label">Sources</div><div class="study-sources">' +
         sources.map((s) => '<a href="' + escHtml(s.url) + '" target="_blank" rel="noopener noreferrer">' + escHtml(s.title) + '</a>').join('') +
         '</div></div>';
     }
+    return html;
+  }
+
+  // ---------- live conversation state (reset each time a new top-level search starts) ----------
+  let studyMessages = [];       // API context: [{role, content}]
+  let studyTurns = [];          // rendered turns: [{query, parsed, sources}]
+  let studyTopicLabel = '';
+  let currentJournalEntryId = null;
+
+  function renderStudyConversation() {
+    const box = $('studyResult');
+    let html = '<div class="study-result-topic">' + escHtml(studyTopicLabel) + '</div>';
+    studyTurns.forEach((turn, i) => {
+      if (i > 0) html += '<div class="study-followup-q">' + escHtml(turn.query) + '</div>';
+      html += '<div class="study-turn">' + turnBodyHtml(turn.parsed, turn.sources) + '</div>';
+    });
+    html += '<div class="study-followup-row">' +
+      '<input class="input" id="studyFollowupInput" type="text" placeholder="Ask a follow-up about this…" autocomplete="off">' +
+      '<button class="btn btn-secondary" id="studyFollowupBtn" type="button">Ask</button>' +
+    '</div>';
     box.innerHTML = html;
     box.style.display = 'block';
+    $('studyFollowupBtn').addEventListener('click', submitStudyFollowup);
+    $('studyFollowupInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); submitStudyFollowup(); }
+    });
   }
 
   function saveJournalEntry(query, parsed, sources) {
     const list = loadJSON(JOURNAL_KEY, []);
+    const id = 'j' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     list.unshift({
-      id: 'j' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-      query, answer: parsed.answer, scriptures: parsed.scriptures, apply: parsed.apply,
-      sources, category: parsed.category, ts: Date.now(),
+      id, query, answer: parsed.answer, scriptures: parsed.scriptures, apply: parsed.apply,
+      sources, category: parsed.category, ts: Date.now(), followups: [],
     });
     if (list.length > 300) list.length = 300;
     saveJSON(JOURNAL_KEY, list);
+    return id;
+  }
+
+  function appendJournalFollowup(entryId, query, parsed, sources) {
+    if (!entryId) return;
+    const list = loadJSON(JOURNAL_KEY, []);
+    const entry = list.find((e) => e.id === entryId);
+    if (!entry) return;
+    if (!entry.followups) entry.followups = [];
+    entry.followups.push({ query, answer: parsed.answer, scriptures: parsed.scriptures, apply: parsed.apply, sources, ts: Date.now() });
+    saveJSON(JOURNAL_KEY, list);
+  }
+
+  function setStudyBusyUI(busy) {
+    $('studySearchBtn').disabled = busy;
+    $('studyDailyTextBtn').disabled = busy;
+    const fBtn = document.getElementById('studyFollowupBtn');
+    if (fBtn) fBtn.disabled = busy;
   }
 
   let studyBusy = false;
@@ -407,16 +464,20 @@
     if (!query || studyBusy) return;
     if (!apiKey()) { studyStatus('No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
     studyBusy = true;
-    $('studySearchBtn').disabled = true;
-    $('studyDailyTextBtn').disabled = true;
+    setStudyBusyUI(true);
     studyStatus('Searching jw.org and wol.jw.org…');
     $('studyResult').style.display = 'none';
+    studyTurns = [];
+    studyMessages = [{ role: 'user', content: query }];
+    studyTopicLabel = displayLabel || query;
+    currentJournalEntryId = null;
     try {
-      const { text, sources } = await callStudySirius(query);
+      const { text, sources } = await callStudySirius(studyMessages);
       const parsed = parseStudyReply(text);
-      const label = displayLabel || query;
-      renderStudyResult(parsed, sources, label);
-      saveJournalEntry(label, parsed, sources);
+      studyMessages.push({ role: 'assistant', content: text });
+      studyTurns.push({ query, parsed, sources });
+      currentJournalEntryId = saveJournalEntry(studyTopicLabel, parsed, sources);
+      renderStudyConversation();
       studyStatus('');
       $('studyInput').value = '';
       renderJournal();
@@ -425,8 +486,33 @@
       studyStatus(e.message || String(e), true);
     }
     studyBusy = false;
-    $('studySearchBtn').disabled = false;
-    $('studyDailyTextBtn').disabled = false;
+    setStudyBusyUI(false);
+  }
+
+  async function submitStudyFollowup() {
+    const input = $('studyFollowupInput');
+    const q = (input.value || '').trim();
+    if (!q || studyBusy || studyTurns.length === 0) return;
+    if (!apiKey()) { studyStatus('No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
+    studyBusy = true;
+    setStudyBusyUI(true);
+    studyStatus('Searching jw.org and wol.jw.org…');
+    studyMessages.push({ role: 'user', content: q });
+    try {
+      const { text, sources } = await callStudySirius(studyMessages);
+      const parsed = parseStudyReply(text);
+      studyMessages.push({ role: 'assistant', content: text });
+      studyTurns.push({ query: q, parsed, sources });
+      appendJournalFollowup(currentJournalEntryId, q, parsed, sources);
+      renderStudyConversation();
+      studyStatus('');
+      renderJournal();
+    } catch (e) {
+      studyMessages.pop(); // don't leave a dangling unanswered turn in the context
+      studyStatus(e.message || String(e), true);
+    }
+    studyBusy = false;
+    setStudyBusyUI(false);
   }
 
   $('studySearchBtn').addEventListener('click', () => runStudySearch($('studyInput').value));
@@ -478,14 +564,11 @@
   }
 
   function journalEntryHtml(e) {
-    let body = '';
-    if (e.answer) body += '<div class="study-block-label">Answer</div><div class="study-block-body">' + linesToHtml(e.answer) + '</div>';
-    if (e.scriptures) body += '<div class="study-block-label" style="margin-top:10px">Scriptures</div><div class="study-block-body">' + linesToHtml(e.scriptures) + '</div>';
-    if (e.apply) body += '<div class="study-block-label" style="margin-top:10px">Ways to apply this</div><div class="study-block-body">' + linesToHtml(e.apply) + '</div>';
-    if (e.sources && e.sources.length) {
-      body += '<div class="study-block-label" style="margin-top:10px">Sources</div><div class="study-sources">' +
-        e.sources.map((s) => '<a href="' + escHtml(s.url) + '" target="_blank" rel="noopener noreferrer">' + escHtml(s.title) + '</a>').join('') + '</div>';
-    }
+    let body = turnBodyHtml({ answer: e.answer, scriptures: e.scriptures, apply: e.apply }, e.sources);
+    (e.followups || []).forEach((f) => {
+      body += '<div class="study-followup-q" style="margin-top:14px">' + escHtml(f.query) + '</div>';
+      body += turnBodyHtml({ answer: f.answer, scriptures: f.scriptures, apply: f.apply }, f.sources);
+    });
     return '<div class="journal-entry" data-id="' + e.id + '">' +
       '<div class="journal-entry-head">' +
         '<span class="journal-entry-cat">' + escHtml(e.category) + '</span>' +
