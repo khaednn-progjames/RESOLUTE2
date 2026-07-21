@@ -451,6 +451,67 @@
     saveJSON(JOURNAL_KEY, list);
   }
 
+  // Turns a saved (parsed) turn back into the tagged text format Sirius
+  // itself produces, so a past journal entry can be replayed as real
+  // conversation history — journal entries only persist the parsed
+  // fields, not the original raw reply text.
+  function reconstructAssistantText(turn) {
+    return 'ANSWER:\n' + (turn.answer || '') + '\n\n' +
+      'SCRIPTURES:\n' + (turn.scriptures || 'None found.') + '\n\n' +
+      'APPLY:\n' + (turn.apply || '') + '\n\n' +
+      'CATEGORY: ' + (turn.category || 'Other');
+  }
+
+  function buildHistoryMessagesFromEntry(entry) {
+    const messages = [
+      { role: 'user', content: entry.query },
+      { role: 'assistant', content: reconstructAssistantText(entry) },
+    ];
+    (entry.followups || []).forEach((f) => {
+      messages.push({ role: 'user', content: f.query });
+      messages.push({ role: 'assistant', content: reconstructAssistantText(f) });
+    });
+    return messages;
+  }
+
+  const journalFollowupBusy = {};
+  async function submitJournalFollowup(entryId) {
+    if (journalFollowupBusy[entryId]) return;
+    const input = document.querySelector('.journal-followup-input[data-id="' + entryId + '"]');
+    const btn = document.querySelector('.journal-followup-btn[data-id="' + entryId + '"]');
+    const statusEl = document.querySelector('.journal-followup-status[data-id="' + entryId + '"]');
+    if (!input) return;
+    const q = (input.value || '').trim();
+    if (!q) return;
+    if (!apiKey()) {
+      if (statusEl) { statusEl.textContent = 'No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.'; statusEl.classList.add('err'); }
+      return;
+    }
+    const list = loadJSON(JOURNAL_KEY, []);
+    const entry = list.find((e) => e.id === entryId);
+    if (!entry) return;
+    journalFollowupBusy[entryId] = true;
+    if (btn) btn.disabled = true;
+    if (statusEl) { statusEl.classList.remove('err'); statusEl.textContent = 'Searching jw.org and wol.jw.org…'; }
+    const messages = buildHistoryMessagesFromEntry(entry).concat([{ role: 'user', content: q }]);
+    try {
+      const { text, sources } = await callStudySirius(messages);
+      const parsed = parseStudyReply(text);
+      appendJournalFollowup(entryId, q, parsed, sources);
+      if (currentJournalEntryId === entryId) {
+        studyMessages.push({ role: 'user', content: q });
+        studyMessages.push({ role: 'assistant', content: text });
+        studyTurns.push({ query: q, parsed, sources });
+        renderStudyConversation();
+      }
+      renderJournal(entryId);
+    } catch (e) {
+      if (statusEl) { statusEl.classList.add('err'); statusEl.textContent = e.message || String(e); }
+    }
+    journalFollowupBusy[entryId] = false;
+    if (btn) btn.disabled = false;
+  }
+
   function setStudyBusyUI(busy) {
     $('studySearchBtn').disabled = busy;
     $('studyDailyTextBtn').disabled = busy;
@@ -564,13 +625,18 @@
     });
   }
 
-  function journalEntryHtml(e) {
+  function journalEntryHtml(e, isOpen) {
     let body = turnBodyHtml({ answer: e.answer, scriptures: e.scriptures, apply: e.apply }, e.sources);
     (e.followups || []).forEach((f) => {
       body += '<div class="study-followup-q" style="margin-top:14px">' + escHtml(f.query) + '</div>';
       body += turnBodyHtml({ answer: f.answer, scriptures: f.scriptures, apply: f.apply }, f.sources);
     });
-    return '<div class="journal-entry" data-id="' + e.id + '">' +
+    body += '<div class="study-followup-row">' +
+      '<input class="input journal-followup-input" data-id="' + e.id + '" type="text" placeholder="Ask a follow-up about this…" autocomplete="off">' +
+      '<button type="button" class="btn btn-secondary journal-followup-btn" data-id="' + e.id + '">Ask</button>' +
+    '</div>' +
+    '<div class="study-status journal-followup-status" data-id="' + e.id + '"></div>';
+    return '<div class="journal-entry' + (isOpen ? ' open' : '') + '" data-id="' + e.id + '">' +
       '<div class="journal-entry-head">' +
         '<span class="journal-entry-cat">' + escHtml(e.category) + '</span>' +
         '<span class="journal-entry-topic">' + escHtml(e.query) + '</span>' +
@@ -581,16 +647,19 @@
     '</div>';
   }
 
-  function renderJournal() {
+  function renderJournal(keepOpenId) {
     const all = loadJSON(JOURNAL_KEY, []);
     renderJournalChips(all);
     const list = journalCategoryFilter ? all.filter((e) => e.category === journalCategoryFilter) : all;
     const wrap = $('journalList');
+    const openIds = new Set(keepOpenId
+      ? [keepOpenId]
+      : Array.from(wrap.querySelectorAll('.journal-entry.open')).map((el) => el.dataset.id));
     if (list.length === 0) {
       wrap.innerHTML = '<div class="empty-state">Nothing studied yet — ask something above and it\'ll show up here.</div>';
       return;
     }
-    wrap.innerHTML = list.map(journalEntryHtml).join('');
+    wrap.innerHTML = list.map((e) => journalEntryHtml(e, openIds.has(e.id))).join('');
     wrap.querySelectorAll('.journal-entry-head').forEach((h) => {
       h.addEventListener('click', () => h.closest('.journal-entry').classList.toggle('open'));
     });
@@ -601,6 +670,15 @@
         saveJSON(JOURNAL_KEY, loadJSON(JOURNAL_KEY, []).filter((e) => e.id !== b.dataset.id));
         renderJournal();
         renderStudyStats();
+      });
+    });
+    wrap.querySelectorAll('.journal-followup-btn').forEach((b) => {
+      b.addEventListener('click', (ev) => { ev.stopPropagation(); submitJournalFollowup(b.dataset.id); });
+    });
+    wrap.querySelectorAll('.journal-followup-input').forEach((inp) => {
+      inp.addEventListener('click', (ev) => ev.stopPropagation());
+      inp.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); submitJournalFollowup(inp.dataset.id); }
       });
     });
   }
