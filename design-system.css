@@ -9,10 +9,13 @@
      <link rel="stylesheet" href="design-system.css">
      <style> ...page-specific overrides only... </style>
 
-   This is a refinement pass on the existing look (dark glass,
-   gradient title, tile grid) — same DNA, tighter spacing scale,
-   fewer one-off component variants, calmer motion/glow. It is NOT
-   a visual overhaul; every page should still feel like the same app.
+   Liquid Glass pass: layered "floating at depth" shadows, heavier
+   frosted blur, and spring-based motion (see --ease-spring* /
+   --dur-* tokens below) on every shared component — cards, tiles,
+   buttons, pills, inputs. Pair with liquid-glass.js for the auto
+   stagger-in entrance, number count-up, and sheet-expansion helpers.
+   Pages still add their own <style> block after this for anything
+   page-specific, same cascade order as before.
    ================================================================== */
 
 :root {
@@ -50,6 +53,68 @@
   --r-md: 12px;
   --r-lg: 16px;
   --r-pill: 999px;
+
+  /* ---- Liquid Glass: motion tokens ----
+     Two spring curves: a bouncy one (visible overshoot, for small/light
+     things like buttons and tiles) and a soft one (settles without
+     overshoot, for bigger/heavier things like sheets and modals — a
+     modal-sized element overshooting reads as janky, not springy). */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 0.22s;
+  --dur-base: 0.42s;
+  --dur-slow: 0.6s;
+
+  /* ---- Liquid Glass: material tokens ---- */
+  --glass-blur: 24px;
+  --glass-sat: 180%;
+  --glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.20),
+    0 10px 24px rgba(0, 0, 0, 0.35),
+    0 28px 64px rgba(0, 0, 0, 0.35);
+  --glass-shadow-lifted:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 2px 4px rgba(0, 0, 0, 0.22),
+    0 16px 32px rgba(0, 0, 0, 0.40),
+    0 40px 80px rgba(0, 0, 0, 0.40);
+}
+
+/* Users who've asked for less motion get it — same end states, none of
+   the springing, staggering, or sliding to get there. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Backdrop-filter fallback — glass panels get a solid-enough background
+   to stay readable on browsers that can't blur what's behind them. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .card, .tile { background: #16161a; }
+}
+
+@keyframes lg-enter {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+/* Auto-staggered entrance — liquid-glass.js assigns --lg-i (child index)
+   to direct children of any .lg-stagger container it finds, so new
+   containers get this for free with no per-page JS. */
+.lg-stagger > * {
+  animation: lg-enter var(--dur-slow) var(--ease-spring-soft) both;
+  animation-delay: calc(var(--lg-i, 0) * 45ms);
+}
+
+/* Shared-element sheet expansion — liquid-glass.js toggles this class
+   for the duration of a modal's open/close FLIP animation. */
+.lg-sheet-animating {
+  transition: transform var(--dur-slow) var(--ease-spring-soft), opacity var(--dur-base) ease;
 }
 
 * { box-sizing: border-box; }
@@ -100,9 +165,11 @@ body::before {
 .card {
   position: relative;
   background: var(--surface); border: 1px solid var(--surface-border);
-  border-radius: var(--r-lg); padding: var(--sp-5);
-  backdrop-filter: blur(38px) saturate(1.8); -webkit-backdrop-filter: blur(38px) saturate(1.8);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), 0 16px 40px rgba(0, 0, 0, 0.5);
+  border-radius: 22px; padding: var(--sp-5);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-shadow);
+  transition: transform var(--dur-base) var(--ease-spring-soft), box-shadow var(--dur-base) var(--ease-spring-soft);
 }
 
 /* ---- Buttons (3 variants replace the many one-off button classes) ---- */
@@ -110,19 +177,21 @@ body::before {
   display: inline-flex; align-items: center; justify-content: center; gap: 7px;
   padding: 10px 16px; border-radius: var(--r-sm); border: 1px solid transparent;
   font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
-  transition: transform 0.1s, filter 0.15s, background 0.15s, border-color 0.15s, color 0.15s;
+  transition: transform var(--dur-fast) var(--ease-spring), filter 0.15s, background 0.15s, border-color 0.15s, color 0.15s, box-shadow var(--dur-fast) var(--ease-spring);
   -webkit-tap-highlight-color: transparent;
 }
 .btn-primary {
   background: linear-gradient(180deg, #FFFFFF, #E8E5DD); color: #0A0A0B;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 6px 18px rgba(0, 0, 0, 0.25);
 }
-.btn-primary:hover { filter: brightness(1.05); transform: translateY(-1px); }
-.btn-primary:active { transform: translateY(0); }
+.btn-primary:hover { filter: brightness(1.05); transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 10px 26px rgba(0,0,0,0.32); }
+.btn-primary:active { transform: scale(0.96) translateY(0); transition-duration: 0.1s; }
 .btn-secondary { background: var(--surface); border-color: var(--surface-border); color: var(--text-primary); }
-.btn-secondary:hover { background: var(--surface-hover); }
+.btn-secondary:hover { background: var(--surface-hover); transform: translateY(-1px); }
+.btn-secondary:active { transform: scale(0.96); transition-duration: 0.1s; }
 .btn-ghost { background: transparent; border-color: var(--surface-border); color: var(--text-tertiary); font-weight: 600; }
 .btn-ghost:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+.btn-ghost:active { transform: scale(0.96); transition-duration: 0.1s; }
 .btn:disabled { opacity: 0.5; cursor: wait; transform: none; }
 
 /* ---- Pills / badges ---- */
@@ -130,42 +199,53 @@ body::before {
   display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--r-pill);
   background: var(--surface); border: 1px solid var(--surface-border); color: var(--text-tertiary);
   font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  transition: transform var(--dur-fast) var(--ease-spring), background 0.15s;
 }
 
 /* ---- Inputs ---- */
 .input {
   width: 100%; padding: 11px 14px; border-radius: var(--r-sm); border: 1px solid rgba(255, 255, 255, 0.10);
   background: var(--surface-inset); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
-  transition: border-color 0.2s, background 0.2s;
+  transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease, box-shadow var(--dur-fast) var(--ease-spring-soft);
 }
 .input::placeholder { color: var(--text-tertiary); }
-.input:focus { border-color: rgba(255, 255, 255, 0.28); background: rgba(0, 0, 0, 0.36); }
+.input:focus { border-color: rgba(255, 255, 255, 0.28); background: rgba(0, 0, 0, 0.36); box-shadow: 0 0 0 4px rgba(255,255,255,0.06); }
 
 /* ---- Tile grid (hub-style bento) ---- */
 .bento { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 160px; grid-auto-flow: dense; gap: var(--sp-3); }
 .tile {
   --accent: #FFFFFF;
   position: relative; overflow: hidden; display: flex; flex-direction: column;
-  padding: var(--sp-5); border-radius: var(--r-lg); text-decoration: none;
+  padding: var(--sp-5); border-radius: 22px; text-decoration: none;
   background: var(--surface); border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--surface-border));
-  backdrop-filter: blur(38px) saturate(1.8); -webkit-backdrop-filter: blur(38px) saturate(1.8);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), 0 16px 40px rgba(0, 0, 0, 0.5);
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-shadow);
+  transition: transform var(--dur-base) var(--ease-spring-soft), border-color var(--dur-fast) ease,
+    box-shadow var(--dur-base) var(--ease-spring-soft), backdrop-filter var(--dur-base) var(--ease-spring-soft);
 }
 /* Always-on color identity per tile — a soft glow anchored top-right,
    not just a hover effect, so each tile reads distinctly at rest. */
 .tile::before {
   content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
   background: radial-gradient(circle at 88% -10%, color-mix(in srgb, var(--accent) 38%, transparent), transparent 62%);
-  opacity: 0.9; transition: opacity 0.15s ease;
+  opacity: 0.9; transition: opacity var(--dur-base) ease;
 }
 .tile > * { position: relative; z-index: 1; }
 .tile:hover {
-  transform: translateY(-2px);
+  transform: translateY(-6px) scale(1.015);
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.30), 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: var(--glass-shadow-lifted), 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+  backdrop-filter: blur(calc(var(--glass-blur) + 6px)) saturate(calc(var(--glass-sat) + 20%));
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur) + 6px)) saturate(calc(var(--glass-sat) + 20%));
 }
 .tile:hover::before { opacity: 1; }
+.tile:active {
+  transform: scale(0.97) translateY(-2px);
+  transition-duration: 0.1s;
+}
 .tile.big { grid-column: span 2; grid-row: span 2; }
 .tile.wide { grid-column: span 2; }
 .tile-spacer { flex: 1; }
@@ -174,8 +254,8 @@ body::before {
 .tile-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .tile-sub { font-size: 12.5px; color: var(--text-tertiary); }
 .tile-sub.reminder { color: var(--warning); font-weight: 600; }
-.tile-arrow { font-size: 17px; color: var(--accent); transition: transform 0.15s ease; flex-shrink: 0; }
-.tile:hover .tile-arrow { transform: translateX(3px); }
+.tile-arrow { font-size: 17px; color: var(--accent); transition: transform var(--dur-base) var(--ease-spring); flex-shrink: 0; }
+.tile:hover .tile-arrow { transform: translateX(5px); }
 
 @media (max-width: 720px) {
   .bento { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 145px; }

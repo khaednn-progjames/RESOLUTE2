@@ -18,6 +18,7 @@
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
 <script src="sirius-usage.js" defer></script>
+<script src="liquid-glass.js" defer></script>
 
 <style>
 /* Page-specific chrome only — base tokens, cards, tiles, and buttons
@@ -56,36 +57,59 @@
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: var(--r-md); border: 1px solid var(--surface-border);
   background: var(--surface); color: var(--text-secondary);
-  cursor: pointer; transition: background 0.15s, color 0.15s, transform 0.1s;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  cursor: pointer; transition: background var(--dur-fast) ease, color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-spring);
   -webkit-tap-highlight-color: transparent;
 }
-.gear-btn:hover { background: var(--surface-hover); color: var(--text-primary); }
-.gear-btn:active { transform: scale(0.94) rotate(35deg); }
+.gear-btn:hover { background: var(--surface-hover); color: var(--text-primary); transform: rotate(35deg); }
+.gear-btn:active { transform: scale(0.90) rotate(70deg); transition-duration: 0.1s; }
 .gear-btn svg { width: 22px; height: 22px; }
 
 /* ===== Settings modal ===== */
 .modal-bg {
   position: fixed; inset: 0; z-index: 120; display: none;
   align-items: center; justify-content: center; padding: 20px;
-  background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);
+  opacity: 0; transition: opacity var(--dur-base) ease;
 }
-.modal-bg.show { display: flex; }
+.modal-bg.show { display: flex; opacity: 1; }
 .modal {
   width: 100%; max-width: 460px; max-height: 88vh; overflow-y: auto;
-  background: #0e0e10; border: 1px solid rgba(255,255,255,0.08);
-  border-radius: var(--r-lg); padding: var(--sp-5); box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+  background: rgba(20,20,24,0.68); border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border-radius: 26px; padding: var(--sp-5); box-shadow: var(--glass-shadow-lifted);
 }
 .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-4); }
 .modal-title { font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
-.modal-close { border: 0; background: transparent; color: var(--text-tertiary); font-size: 26px; line-height: 1; cursor: pointer; padding: 0 4px; }
-.modal-close:hover { color: var(--text-primary); }
+.modal-close {
+  border: 0; background: transparent; color: var(--text-tertiary); font-size: 26px; line-height: 1;
+  cursor: pointer; padding: 0 4px; border-radius: var(--r-sm);
+  transition: color var(--dur-fast) ease, transform var(--dur-fast) var(--ease-spring);
+}
+.modal-close:hover { color: var(--text-primary); transform: rotate(90deg); }
+.modal-close:active { transform: rotate(90deg) scale(0.85); transition-duration: 0.1s; }
 .field { margin-bottom: var(--sp-3); }
 .field-label { font-size: 11px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: var(--sp-1); display: block; }
 .field-row { display: flex; gap: var(--sp-2); align-items: center; }
 .field-row .input { flex: 1; min-width: 0; }
-.seg { display: inline-flex; border: 1px solid var(--surface-border); border-radius: var(--r-sm); overflow: hidden; flex-shrink: 0; }
-.seg button { border: 0; background: transparent; color: var(--text-tertiary); font-family: inherit; font-size: 13px; font-weight: 600; padding: 11px 14px; cursor: pointer; transition: background 0.15s, color 0.15s; }
-.seg button.on { background: var(--surface-hover); color: var(--text-primary); }
+.seg { display: inline-flex; position: relative; border: 1px solid var(--surface-border); border-radius: var(--r-sm); overflow: hidden; flex-shrink: 0; }
+.seg button {
+  position: relative; z-index: 1; border: 0; background: transparent; color: var(--text-tertiary);
+  font-family: inherit; font-size: 13px; font-weight: 600; padding: 11px 14px; cursor: pointer;
+  transition: color var(--dur-fast) ease;
+}
+.seg button.on { color: var(--text-primary); }
+/* A single sliding pill behind the active segment, instead of each
+   button re-painting its own background — this is what makes the
+   selection feel like it glides between options rather than jumping. */
+.seg { isolation: isolate; }
+.seg-indicator {
+  position: absolute; top: 3px; bottom: 3px; left: 3px; z-index: 0;
+  background: var(--surface-hover); border-radius: calc(var(--r-sm) - 3px);
+  transition: transform var(--dur-base) var(--ease-spring), width var(--dur-base) var(--ease-spring);
+}
 .set-status { text-align: center; font-size: 12px; color: var(--success); min-height: 16px; margin-top: var(--sp-2); }
 .section-divider { height: 1px; background: rgba(255,255,255,0.07); margin: var(--sp-5) 0 var(--sp-4); }
 </style>
@@ -127,7 +151,7 @@
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Main</h2>
       <div class="tile-foot">
-        <span class="tile-sub" id="mainTileSub">Goals & daily plan</span>
+        <span class="tile-sub lg-number" id="mainTileSub">Goals & daily plan</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -137,7 +161,7 @@
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Water</h2>
       <div class="tile-foot">
-        <span class="tile-sub" id="waterTileSub">Hydration</span>
+        <span class="tile-sub lg-number" id="waterTileSub">Hydration</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -147,7 +171,7 @@
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Health</h2>
       <div class="tile-foot">
-        <span class="tile-sub" id="healthTileSub">Meals & water</span>
+        <span class="tile-sub lg-number" id="healthTileSub">Meals & water</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -160,7 +184,7 @@
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Finance</h2>
       <div class="tile-foot">
-        <span class="tile-sub" id="financeTileSub">Net worth & spending</span>
+        <span class="tile-sub lg-number" id="financeTileSub">Net worth & spending</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -183,7 +207,7 @@
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Planner</h2>
       <div class="tile-foot">
-        <span class="tile-sub" id="plannerTileSub">Goals & events</span>
+        <span class="tile-sub lg-number" id="plannerTileSub">Goals & events</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -193,7 +217,7 @@
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Notes</h2>
       <div class="tile-foot">
-        <span class="tile-sub" id="notesTileSub">Ideas & docs</span>
+        <span class="tile-sub lg-number" id="notesTileSub">Ideas & docs</span>
         <span class="tile-arrow">→</span>
       </div>
     </a>
@@ -289,11 +313,11 @@
       <label class="field-label">Sirius usage</label>
       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px">
         <div style="flex:1; min-width:110px; padding:12px 14px; border-radius:11px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.18)">
-          <div style="font-size:20px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums" id="siriusUsageTotal">$0.00</div>
+          <div class="lg-number" style="font-size:20px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums" id="siriusUsageTotal">$0.00</div>
           <div style="font-size:9.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); margin-top:4px">All time est.</div>
         </div>
         <div style="flex:1; min-width:110px; padding:12px 14px; border-radius:11px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.18)">
-          <div style="font-size:20px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums" id="siriusUsage30">$0.00</div>
+          <div class="lg-number" style="font-size:20px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums" id="siriusUsage30">$0.00</div>
           <div style="font-size:9.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-tertiary); margin-top:4px">Last 30 days</div>
         </div>
       </div>
@@ -324,9 +348,27 @@
   let weightUnit = 'kg';   // 'kg' | 'lb'
   let sex = 'm';
 
+  // Slides a single pill behind whichever segment button is active,
+  // instead of each button toggling its own background — that's what
+  // makes switching segments feel like the selection glides over,
+  // rather than the old option turning off and the new one on.
+  function updateSegIndicator(seg) {
+    let ind = seg.querySelector('.seg-indicator');
+    if (!ind) {
+      ind = document.createElement('div');
+      ind.className = 'seg-indicator';
+      seg.insertBefore(ind, seg.firstChild);
+    }
+    const activeBtn = seg.querySelector('button.on');
+    if (!activeBtn || !activeBtn.offsetWidth) return; // seg not laid out yet (e.g. modal still hidden)
+    ind.style.width = activeBtn.offsetWidth + 'px';
+    ind.style.transform = 'translateX(' + activeBtn.offsetLeft + 'px)';
+  }
+
   function setHeightUnit(u) {
     heightUnit = u;
     $('heightUnitSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.u === u));
+    updateSegIndicator($('heightUnitSeg'));
     const a = $('heightA'), b = $('heightB');
     if (u === 'cm') { a.placeholder = 'cm'; b.style.display = 'none'; }
     else { a.placeholder = 'ft'; b.placeholder = 'in'; b.style.display = ''; }
@@ -334,10 +376,12 @@
   function setWeightUnit(u) {
     weightUnit = u;
     $('weightUnitSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.u === u));
+    updateSegIndicator($('weightUnitSeg'));
   }
   function setSex(s) {
     sex = s;
     $('sexSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.s === s));
+    updateSegIndicator($('sexSeg'));
   }
 
   function getHeightCm() {
@@ -394,8 +438,25 @@
       ? rows.map((f) => '<div style="display:flex; justify-content:space-between"><span>' + f + '</span><span>$' + s.byFeature[f].toFixed(2) + '</span></div>').join('')
       : 'No Sirius calls logged yet.';
   }
-  function open() { populate(); renderSiriusUsage(); $('settingsBg').classList.add('show'); }
-  function close() { $('settingsBg').classList.remove('show'); }
+  function open() {
+    populate();
+    renderSiriusUsage();
+    const bg = $('settingsBg'), panel = bg.querySelector('.modal');
+    if (window.LiquidGlass) LiquidGlass.presentSheet(bg, panel, $('settingsOpen'));
+    else bg.classList.add('show');
+    // Segment indicators can't measure their width until the modal is
+    // actually laid out, so re-sync them on the next frame post-show.
+    requestAnimationFrame(() => {
+      updateSegIndicator($('heightUnitSeg'));
+      updateSegIndicator($('weightUnitSeg'));
+      updateSegIndicator($('sexSeg'));
+    });
+  }
+  function close() {
+    const bg = $('settingsBg'), panel = bg.querySelector('.modal');
+    if (window.LiquidGlass) LiquidGlass.dismissSheet(bg, panel, $('settingsOpen'));
+    else bg.classList.remove('show');
+  }
   $('settingsOpen').addEventListener('click', open);
   $('settingsClose').addEventListener('click', close);
   $('settingsBg').addEventListener('click', (e) => { if (e.target === $('settingsBg')) close(); });
