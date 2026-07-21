@@ -108,6 +108,7 @@
 
   <div class="hub-meta-row">
     <span class="pill" id="hubDate">—</span>
+    <span class="pill" id="hubBaptism" style="display:none"></span>
     <span class="pill" id="hubWeather" style="display:none"></span>
   </div>
 
@@ -508,6 +509,34 @@
   else greet = 'Winding down';
   $('hubGreeting').textContent = greet + ' — let’s make it count.';
   $('hubDate').textContent = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+
+  /* ---------- baptism countdown / anniversary ---------- */
+  (function renderBaptismPill() {
+    const BAPTISM_YEAR = 2026, BAPTISM_MONTH = 10, BAPTISM_DAY = 7; // November 7, 2026
+    const el = $('hubBaptism');
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const baptismDate = new Date(BAPTISM_YEAR, BAPTISM_MONTH, BAPTISM_DAY);
+    const MS_PER_DAY = 86400000;
+    if (today.getTime() === baptismDate.getTime()) {
+      el.textContent = '🕊 Baptized today!';
+    } else if (today < baptismDate) {
+      const days = Math.round((baptismDate - today) / MS_PER_DAY);
+      el.textContent = '🕊 Baptism in ' + days + ' day' + (days === 1 ? '' : 's');
+    } else {
+      const thisYearAnniv = new Date(now.getFullYear(), BAPTISM_MONTH, BAPTISM_DAY);
+      const passedThisYear = today > thisYearAnniv;
+      const years = now.getFullYear() - BAPTISM_YEAR - (passedThisYear ? 0 : 1);
+      if (today.getTime() === thisYearAnniv.getTime()) {
+        el.textContent = '🕊 ' + (years + 1) + '-year baptism anniversary today!';
+      } else {
+        const nextAnniv = passedThisYear ? new Date(now.getFullYear() + 1, BAPTISM_MONTH, BAPTISM_DAY) : thisYearAnniv;
+        const days = Math.round((nextAnniv - today) / MS_PER_DAY);
+        el.textContent = '🕊 ' + years + ' yr' + (years === 1 ? '' : 's') + ' since baptism · anniversary in ' + days + ' day' + (days === 1 ? '' : 's');
+      }
+    }
+    el.style.display = '';
+  })();
 
   /* ---------- weather (Open-Meteo, free, no key) ---------- */
   const WEATHER_CACHE_KEY = 'hub:weather';
