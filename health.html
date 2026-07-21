@@ -24,7 +24,7 @@
 
   --border: rgba(255, 255, 255, 0.06);
   --border-soft: rgba(255, 255, 255, 0.04);
-  --border-strong: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255,255,255,0.10);
 
   --text-primary: #FAFAFA;
   --text-secondary: #B8B6B0;
@@ -64,7 +64,7 @@ main {
   margin: 0 0 24px;
   padding: 16px 18px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.06));
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255,255,255,0.13);
   border-radius: 16px;
   text-decoration: none; color: var(--text-primary);
   -webkit-tap-highlight-color: transparent;
@@ -141,7 +141,7 @@ main {
 }
 .stack-progress-track {
   height: 5px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255,255,255,0.032);
   border-radius: 999px; overflow: hidden;
   margin: 14px 0 18px;
 }
@@ -174,7 +174,7 @@ main {
   border: 1px solid transparent;
   transition: background 0.2s, border-color 0.2s;
 }
-.stack-item:hover { background: rgba(255,255,255,0.05); }
+.stack-item:hover { background: rgba(255,255,255,0.032); }
 .stack-item.taken { background: rgba(29,158,117,0.08); }
 .stack-item.taken .stack-item-name { text-decoration: line-through; color: var(--text-tertiary); }
 
@@ -438,7 +438,7 @@ main {
   color: var(--text-secondary);
   transition: background 0.12s;
 }
-.stack-result:hover, .stack-result.is-focused { background: rgba(255, 255, 255, 0.06); }
+.stack-result:hover, .stack-result.is-focused { background: rgba(255,255,255,0.04); }
 
 .stack-result-icon { font-size: 17px; flex-shrink: 0; width: 24px; text-align: center; }
 .stack-result-body { min-width: 0; flex: 1; }
@@ -474,14 +474,14 @@ main {
 ::selection { background: rgba(255, 255, 255, 0.25); color: var(--text-primary); }
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 999px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
 
 /* ===== Meals (photo → calories) ===== */
 .meal-totals { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0 4px; }
 .meal-total {
   flex: 1; min-width: 100px; padding: 12px 14px; border-radius: 12px;
-  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.022); border: 1px solid rgba(255,255,255,0.14);
 }
 .meal-total .n { font-size: 22px; font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; line-height: 1; }
 .meal-total .l { font-size: 9.5px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 5px; }
@@ -500,7 +500,7 @@ main {
 .meal-list { list-style: none; margin: 14px 0 0; padding: 0; }
 .meal-row {
   display: flex; align-items: center; gap: 12px; padding: 11px 14px; margin-bottom: 6px;
-  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); border-radius: 12px;
+  background: rgba(255,255,255,0.022); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px;
 }
 .meal-name { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
 .meal-macros { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
@@ -531,7 +531,7 @@ main {
   transition: border-color 0.2s, background 0.2s;
 }
 .grocery-add-input::placeholder { color: var(--text-tertiary); }
-.grocery-add-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.grocery-add-input:focus { border-color: rgba(255,255,255,0.22); background: rgba(0,0,0,0.36); }
 .grocery-add-btn {
   padding: 10px 16px; border: 0; border-radius: 11px; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
   color: #0A0A0B; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap;
@@ -539,15 +539,15 @@ main {
 .grocery-list { list-style: none; margin: 0; padding: 0; }
 .grocery-row {
   display: flex; align-items: center; gap: 12px; padding: 10px 14px; margin-bottom: 6px;
-  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); border-radius: 12px;
+  background: rgba(255,255,255,0.022); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px;
   transition: background 0.2s, opacity 0.3s;
 }
-.grocery-row:hover { background: rgba(255,255,255,0.06); }
+.grocery-row:hover { background: rgba(255,255,255,0.04); }
 .grocery-row.bought { opacity: 0.45; }
 .grocery-row.bought .grocery-name { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
 .grocery-check {
   appearance: none; -webkit-appearance: none; width: 20px; height: 20px; flex-shrink: 0; margin: 0;
-  border: 1.5px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); border-radius: 6px;
+  border: 1.5px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.28); border-radius: 6px;
   position: relative; cursor: pointer; transition: background 0.2s, border-color 0.2s;
 }
 .grocery-check:checked { background: var(--success, #6BE3A4); border-color: var(--success, #6BE3A4); }
@@ -560,11 +560,11 @@ main {
 .grocery-row:hover .grocery-del { opacity: 1; }
 .grocery-del:hover { color: #FF6B6B; }
 .grocery-clear-btn {
-  margin-top: 10px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.04);
+  margin-top: 10px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.025);
   color: var(--text-tertiary); font-family: inherit; font-size: 11.5px; font-weight: 600;
   padding: 7px 12px; border-radius: 9px; cursor: pointer; transition: background 0.15s, color 0.15s;
 }
-.grocery-clear-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.grocery-clear-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
 </style>
 </head>
 <body>

@@ -37,12 +37,12 @@
 .notes-icon-btn {
   width: 40px; height: 40px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 12px; border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.09); color: var(--text-secondary);
+  border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.055); color: var(--text-secondary);
   cursor: pointer; transition: background 0.15s, color 0.15s, transform 0.1s;
   -webkit-tap-highlight-color: transparent;
 }
-.notes-icon-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.notes-icon-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
 .notes-icon-btn:active { transform: scale(0.94); }
 .notes-icon-btn svg { width: 20px; height: 20px; }
 .notes-hamburger { display: none; }
@@ -53,7 +53,7 @@
 
 .notes-sidebar {
   width: 270px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px;
-  background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.055); border: 1px solid rgba(255,255,255,0.14);
   border-radius: 16px; padding: 14px;
   backdrop-filter: blur(46px) saturate(2.2); -webkit-backdrop-filter: blur(46px) saturate(2.2);
   box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55); overflow: hidden;
@@ -64,16 +64,16 @@
   font-family: inherit; font-size: 13px; outline: none; transition: border-color 0.2s, background 0.2s;
 }
 .notes-search::placeholder { color: var(--text-tertiary); }
-.notes-search:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.notes-search:focus { border-color: rgba(255,255,255,0.22); background: rgba(0,0,0,0.36); }
 
 .pinned-ideas-btn {
   display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px;
-  border-radius: 11px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.04);
+  border-radius: 11px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.025);
   color: var(--text-primary); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
   transition: background 0.15s, border-color 0.15s; text-align: left; flex-shrink: 0;
 }
-.pinned-ideas-btn:hover { background: rgba(255,255,255,0.08); }
-.pinned-ideas-btn.active { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.28); }
+.pinned-ideas-btn:hover { background: rgba(255,255,255,0.05); }
+.pinned-ideas-btn.active { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.22); }
 .pinned-ideas-btn .cnt { margin-left: auto; font-family: var(--font-mono); font-size: 10.5px; color: var(--text-tertiary); }
 
 .notes-section-label {
@@ -92,30 +92,30 @@
 .gm-progress-label { font-size: 11px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-left: 4px; }
 .copy-btn {
   display: inline-flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: 11px;
-  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: var(--text-primary);
+  border: 1px solid rgba(255,255,255,0.11); background: rgba(255,255,255,0.032); color: var(--text-primary);
   font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
   transition: background 0.15s, transform 0.1s; white-space: nowrap;
 }
-.copy-btn:hover { background: rgba(255,255,255,0.10); }
+.copy-btn:hover { background: rgba(255,255,255,0.065); }
 .copy-btn:active { transform: translateY(1px); }
 .copy-btn.copied { background: rgba(107,227,164,0.14); border-color: rgba(107,227,164,0.4); color: #FFFFFF; }
 .gm-bar { display: flex; gap: 4px; height: 6px; margin-bottom: 4px; }
 .gm-bar:empty { display: none; }
-.gm-bar-seg { flex: 1; background: rgba(255,255,255,0.06); border-radius: 3px; transition: background 0.3s; }
+.gm-bar-seg { flex: 1; background: rgba(255,255,255,0.04); border-radius: 3px; transition: background 0.3s; }
 .gm-bar-seg-done { background: #FFFFFF; }
 
 .idea-list { list-style: none; margin: 16px 0 0; padding: 0; overflow-y: auto; flex: 1; }
 .idea-row {
   display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 6px;
-  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); border-radius: 12px;
+  background: rgba(255,255,255,0.022); border: 1px solid rgba(255,255,255,0.14); border-radius: 12px;
   transition: background 0.2s, opacity 0.3s;
 }
-.idea-row:hover { background: rgba(255,255,255,0.06); }
+.idea-row:hover { background: rgba(255,255,255,0.04); }
 .idea-row.is-done { opacity: 0.45; }
 .idea-row.is-done .idea-text { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
 .idea-check {
   appearance: none; -webkit-appearance: none; width: 22px; height: 22px; flex-shrink: 0; margin: 0;
-  border: 1.5px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.28); border-radius: 7px;
+  border: 1.5px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.28); border-radius: 7px;
   position: relative; cursor: pointer; transition: background 0.2s, border-color 0.2s, box-shadow 0.25s;
 }
 .idea-check:checked { background: #FFFFFF; border-color: #FFFFFF; box-shadow: 0 0 12px rgba(255,255,255,0.30); }
@@ -144,7 +144,7 @@
   transition: border-color 0.2s, background 0.2s;
 }
 .gm-input::placeholder { color: var(--text-tertiary); }
-.gm-input:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.gm-input:focus { border-color: rgba(255,255,255,0.22); background: rgba(0,0,0,0.36); }
 .gm-add {
   padding: 11px 20px; border: 0; border-radius: 12px; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
   color: #0A0A0B; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
@@ -161,8 +161,8 @@
   border-radius: 11px; cursor: pointer; background: rgba(255,255,255,0.02);
   border: 1px solid transparent; transition: background 0.15s, border-color 0.15s;
 }
-.notes-item:hover { background: rgba(255,255,255,0.06); }
-.notes-item.active { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.14); }
+.notes-item:hover { background: rgba(255,255,255,0.04); }
+.notes-item.active { background: rgba(255,255,255,0.065); border-color: rgba(255,255,255,0.11); }
 .notes-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .notes-item-title { font-size: 13.5px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .notes-item.active .notes-item-title { color: #FFFFFF; }
@@ -170,18 +170,18 @@
 .notes-item-time { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); }
 .notes-item-cat {
   font-size: 8.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-tertiary);
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); border-radius: 999px; padding: 1px 6px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 1px 6px;
 }
 
 /* ===== Category filter chips ===== */
 .cat-chip-row { display: flex; flex-wrap: wrap; gap: 5px; flex-shrink: 0; }
 .cat-chip {
-  padding: 5px 9px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.03);
+  padding: 5px 9px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);
   color: var(--text-tertiary); font-size: 10.5px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.cat-chip:hover { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
-.cat-chip.on { background: rgba(255,255,255,0.14); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
+.cat-chip:hover { background: rgba(255,255,255,0.045); color: var(--text-secondary); }
+.cat-chip.on { background: rgba(255,255,255,0.09); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
 .notes-pin, .notes-item-del {
   border: 0; background: transparent; cursor: pointer; flex-shrink: 0;
   padding: 3px; opacity: 0; transition: opacity 0.15s, color 0.15s;
@@ -203,7 +203,7 @@
 /* ===== Editor pane ===== */
 .notes-editor {
   flex: 1; min-width: 0; display: flex; flex-direction: column;
-  background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.055); border: 1px solid rgba(255,255,255,0.14);
   border-radius: 16px; padding: 16px 16px 12px;
   backdrop-filter: blur(46px) saturate(2.2); -webkit-backdrop-filter: blur(46px) saturate(2.2);
   box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55); overflow: hidden;
@@ -220,7 +220,7 @@
 .notes-meta { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
 .notes-cat-select {
   font-family: inherit; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
-  color: var(--text-secondary); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text-secondary); background: rgba(255,255,255,0.032); border: 1px solid rgba(255,255,255,0.10);
   border-radius: 999px; padding: 4px 22px 4px 10px; cursor: pointer; outline: none;
   -webkit-appearance: none; appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2376746E' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
@@ -232,25 +232,25 @@
 /* ===== Wikilink autocomplete ("[[") ===== */
 .wl-autocomplete {
   position: absolute; display: none; z-index: 50; min-width: 190px; max-width: 260px;
-  background: #141416; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px;
+  background: #141416; border: 1px solid rgba(255,255,255,0.11); border-radius: 10px;
   padding: 6px; box-shadow: 0 12px 30px rgba(0,0,0,0.5);
 }
 .wl-item { padding: 7px 10px; border-radius: 7px; font-size: 13px; color: var(--text-secondary); cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wl-item.sel, .wl-item:hover { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+.wl-item.sel, .wl-item:hover { background: rgba(255,255,255,0.065); color: var(--text-primary); }
 .wl-empty { padding: 7px 10px; font-size: 12px; color: var(--text-tertiary); }
 
 /* ===== Scripture suggest ("John 3:16" -> NWT lookup) ===== */
 .scripture-suggest {
   position: absolute; display: none; z-index: 50; max-width: 280px;
-  background: #141416; border: 1px solid rgba(255,255,255,0.14); border-radius: 10px;
+  background: #141416; border: 1px solid rgba(255,255,255,0.11); border-radius: 10px;
   padding: 8px 11px; box-shadow: 0 12px 30px rgba(0,0,0,0.5);
   font-size: 12px; color: var(--text-secondary); line-height: 1.4;
 }
 .scripture-suggest b { color: var(--text-primary); }
 .scripture-suggest .kbd {
   font-family: var(--font-mono); font-size: 10px; font-weight: 700;
-  padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.05); color: var(--text-tertiary); margin-right: 4px;
+  padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.11);
+  background: rgba(255,255,255,0.032); color: var(--text-tertiary); margin-right: 4px;
 }
 
 /* ===== Backlinks panel ===== */
@@ -259,10 +259,10 @@
 .backlinks-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .backlink-chip {
   display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); color: var(--text-secondary);
+  border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.025); color: var(--text-secondary);
   font-family: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s;
 }
-.backlink-chip:hover { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+.backlink-chip:hover { background: rgba(255,255,255,0.065); color: var(--text-primary); }
 
 /* ===== Graph view ("Web") ===== */
 .graph-overlay {
@@ -275,11 +275,11 @@
 .graph-close { border: 0; background: transparent; color: var(--text-tertiary); font-size: 26px; line-height: 1; cursor: pointer; padding: 0 6px; }
 .graph-close:hover { color: var(--text-primary); }
 .graph-link-btn {
-  padding: 7px 13px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.05); color: var(--text-secondary); font-family: inherit;
+  padding: 7px 13px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.11);
+  background: rgba(255,255,255,0.032); color: var(--text-secondary); font-family: inherit;
   font-size: 12px; font-weight: 700; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.graph-link-btn:hover { background: rgba(255,255,255,0.10); color: var(--text-primary); }
+.graph-link-btn:hover { background: rgba(255,255,255,0.065); color: var(--text-primary); }
 .graph-link-btn.on { background: #FFFFFF; color: #0A0A0B; border-color: #FFFFFF; }
 .graph-hint {
   text-align: center; font-size: 12px; color: var(--text-secondary); padding: 0 20px 10px; flex-shrink: 0;
@@ -291,7 +291,7 @@
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   color: var(--text-tertiary); font-size: 13.5px; text-align: center; padding: 20px;
 }
-.graph-empty code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 5px; color: var(--text-secondary); }
+.graph-empty code { background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 5px; color: var(--text-secondary); }
 .gnode-label { fill: var(--text-secondary); font-family: var(--font); font-size: 11px; pointer-events: none; }
 .gnode-circle { fill: rgba(255,255,255,0.85); cursor: pointer; transition: fill 0.15s; }
 .gnode-circle:hover { fill: #FFFFFF; }
@@ -318,10 +318,10 @@
 .ql-editor h1, .ql-editor h2, .ql-editor h3 { color: var(--text-primary); letter-spacing: -0.02em; }
 .ql-editor a { color: #FAFAFA !important; text-decoration: underline; }
 .ql-editor a[href^="#note:"] {
-  text-decoration: none !important; background: rgba(255,255,255,0.09); border-radius: 5px;
+  text-decoration: none !important; background: rgba(255,255,255,0.055); border-radius: 5px;
   padding: 1px 5px; cursor: pointer; transition: background 0.15s;
 }
-.ql-editor a[href^="#note:"]:hover { background: rgba(255,255,255,0.18); }
+.ql-editor a[href^="#note:"]:hover { background: rgba(255,255,255,0.12); }
 .ql-editor blockquote {
   border-left: 3px solid var(--accent) !important; color: var(--text-secondary) !important;
   padding-left: 14px !important; margin: 10px 0 !important;
@@ -337,7 +337,7 @@
 .ql-snow .ql-fill, .ql-snow .ql-stroke.ql-fill { fill: var(--text-secondary) !important; }
 .ql-snow .ql-picker { color: var(--text-secondary) !important; }
 .ql-snow .ql-picker-options {
-  background: #141416 !important; border: 1px solid rgba(255,255,255,0.10) !important;
+  background: #141416 !important; border: 1px solid rgba(255,255,255,0.08) !important;
   border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,0.5);
 }
 .ql-snow .ql-picker-item, .ql-snow .ql-picker-label { color: var(--text-secondary) !important; }
@@ -351,11 +351,11 @@
 .ql-snow.ql-toolbar button:hover .ql-fill, .ql-snow .ql-toolbar button:hover .ql-fill,
 .ql-snow.ql-toolbar button.ql-active .ql-fill, .ql-snow .ql-toolbar button.ql-active .ql-fill { fill: var(--text-primary) !important; }
 .ql-snow .ql-tooltip {
-  background: #14141a !important; border: 1px solid rgba(255,255,255,0.10) !important; color: var(--text-primary) !important;
+  background: #14141a !important; border: 1px solid rgba(255,255,255,0.08) !important; color: var(--text-primary) !important;
   box-shadow: 0 12px 30px rgba(0,0,0,0.5); border-radius: 10px;
 }
 .ql-snow .ql-tooltip input[type=text] {
-  background: rgba(0,0,0,0.3) !important; border: 1px solid rgba(255,255,255,0.12) !important;
+  background: rgba(0,0,0,0.3) !important; border: 1px solid rgba(255,255,255,0.10) !important;
   color: var(--text-primary) !important; border-radius: 6px;
 }
 .ql-snow .ql-tooltip a.ql-action, .ql-snow .ql-tooltip a.ql-remove { color: #FAFAFA !important; text-decoration: underline; }
@@ -375,12 +375,12 @@
 /* ===== Sirius (AI mentor) integration ===== */
 .sirius-ideas-btn {
   display: flex; align-items: center; justify-content: center; gap: 7px;
-  width: 100%; padding: 10px 12px; border-radius: 11px; border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.03); color: var(--text-secondary); font-family: inherit;
+  width: 100%; padding: 10px 12px; border-radius: 11px; border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02); color: var(--text-secondary); font-family: inherit;
   font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.sirius-ideas-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+.sirius-ideas-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
 
 .sirius-modal-bg {
   position: fixed; inset: 0; z-index: 220; display: none;
@@ -391,7 +391,7 @@
 .sirius-modal-bg.show { display: flex; opacity: 1; }
 .sirius-modal {
   width: 100%; max-width: 480px; max-height: 82vh; overflow-y: auto;
-  background: rgba(20,20,24,0.68); border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(20,20,24,0.48); border: 1px solid rgba(255,255,255,0.10);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   border-radius: 26px; padding: 22px; box-shadow: var(--glass-shadow-lifted);
 }
@@ -421,23 +421,23 @@
 
 .sirius-idea-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 13px;
-  margin-bottom: 6px; background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18); border-radius: 11px;
+  margin-bottom: 6px; background: rgba(255,255,255,0.022); border: 1px solid rgba(255,255,255,0.14); border-radius: 11px;
 }
 .sirius-idea-text { font-size: 13.5px; color: var(--text-primary); line-height: 1.4; }
 .sirius-idea-add {
   flex-shrink: 0; font-size: 11px; font-weight: 700; padding: 7px 11px; border-radius: 9px;
-  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.09); color: var(--text-secondary);
+  border: 1px solid rgba(255,255,255,0.11); background: rgba(255,255,255,0.055); color: var(--text-secondary);
   cursor: pointer; transition: background 0.15s, color 0.15s;
 }
-.sirius-idea-add:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
+.sirius-idea-add:hover { background: rgba(255,255,255,0.055); color: var(--text-primary); }
 .sirius-idea-add.done { color: var(--success); border-color: rgba(107,227,164,0.4); }
 .sirius-btn {
   display: inline-flex; align-items: center; gap: 7px; padding: 10px 14px; border-radius: 11px;
-  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: var(--text-primary);
+  border: 1px solid rgba(255,255,255,0.11); background: rgba(255,255,255,0.032); color: var(--text-primary);
   font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer;
   transition: background 0.15s; white-space: nowrap;
 }
-.sirius-btn:hover { background: rgba(255,255,255,0.10); }
+.sirius-btn:hover { background: rgba(255,255,255,0.065); }
 
 .sirius-summary-text { font-size: 13.5px; color: var(--text-primary); line-height: 1.65; }
 .sirius-summary-text ul { margin: 6px 0 0; padding-left: 18px; }
@@ -448,9 +448,9 @@
   resize: vertical; transition: border-color 0.2s, background 0.2s;
 }
 .sirius-textarea::placeholder { color: var(--text-tertiary); }
-.sirius-textarea:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.sirius-textarea:focus { border-color: rgba(255,255,255,0.22); background: rgba(0,0,0,0.36); }
 .sirius-followup-q {
-  font-size: 13px; color: var(--text-secondary); background: rgba(255,255,255,0.05);
+  font-size: 13px; color: var(--text-secondary); background: rgba(255,255,255,0.032);
   border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 9px 12px 10px;
   margin: 12px 0 10px; line-height: 1.5;
 }

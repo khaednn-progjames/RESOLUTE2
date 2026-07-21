@@ -27,8 +27,8 @@
 }
 
 .gm-card {
-  position: relative; background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.10); border-radius: 22px; padding: 20px;
+  position: relative; background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 22px; padding: 20px;
   margin-bottom: 14px; backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   box-shadow: var(--glass-shadow);
@@ -41,7 +41,7 @@
   display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px;
 }
 .study-stat {
-  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.022); border: 1px solid rgba(255,255,255,0.14);
   border-radius: 12px; padding: 14px;
 }
 .study-stat-num {
@@ -65,12 +65,12 @@
 .study-daily-row { margin-bottom: 14px; }
 .study-quick-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
 .study-chip {
-  padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.035); color: var(--text-secondary);
+  padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.022); color: var(--text-secondary);
   font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.study-chip:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); border-color: rgba(255,255,255,0.24); }
+.study-chip:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); border-color: rgba(255,255,255,0.19); }
 .study-input-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
 .study-input-row textarea.input {
   flex: 1; min-width: 220px; min-height: 86px; max-height: 160px; resize: vertical;
@@ -103,7 +103,7 @@
 .study-turn { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.06); }
 .study-turn:last-of-type { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
 .study-followup-q {
-  font-size: 13px; color: var(--text-secondary); background: rgba(255,255,255,0.05);
+  font-size: 13px; color: var(--text-secondary); background: rgba(255,255,255,0.032);
   border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 9px 12px 10px;
   margin: 4px 0 14px; line-height: 1.5;
 }
@@ -117,15 +117,15 @@
 /* ---------- journal ---------- */
 .cat-chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
 .cat-chip {
-  padding: 5px 9px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.10); background: rgba(255,255,255,0.03);
+  padding: 5px 9px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);
   color: var(--text-tertiary); font-size: 10.5px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.cat-chip:hover { background: rgba(255,255,255,0.07); color: var(--text-secondary); }
-.cat-chip.on { background: rgba(255,255,255,0.14); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
+.cat-chip:hover { background: rgba(255,255,255,0.045); color: var(--text-secondary); }
+.cat-chip.on { background: rgba(255,255,255,0.09); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
 
 .journal-entry {
-  border: 1px solid rgba(255,255,255,0.10); border-radius: 12px; margin-bottom: 8px;
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; margin-bottom: 8px;
   background: rgba(255,255,255,0.02); overflow: hidden;
 }
 .journal-entry-head {
@@ -133,7 +133,7 @@
 }
 .journal-entry-cat {
   font-size: 8.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-tertiary);
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); border-radius: 999px; padding: 2px 7px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 999px; padding: 2px 7px;
   flex-shrink: 0;
 }
 .journal-entry-topic {

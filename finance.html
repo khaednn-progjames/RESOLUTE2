@@ -61,7 +61,7 @@
   gap: 6px;
   padding: 8px 14px 8px 10px;
   margin: 0 0 14px;
-  background: rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.055);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 999px;
   color: var(--text-secondary);
@@ -74,7 +74,7 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 .fin-back-btn:hover, .fin-back-btn:active {
-  background: rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.045);
   color: var(--text-primary);
 }
 .fin-back-btn svg { display: block; }
@@ -116,8 +116,8 @@
 .bot-tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.025); }
 .bot-tab.active {
   color: var(--text-primary);
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.08);
 }
 .bot-tab-icon { font-size: 18px; line-height: 1; }
 .bot-tab-label {
@@ -219,7 +219,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   border: none;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255,255,255,0.032);
   color: var(--text-secondary);
   font-family: var(--font-mono);
   text-transform: uppercase;
@@ -287,7 +287,7 @@
 .quick-add input::placeholder { color: var(--text-tertiary); }
 .quick-add-btn {
   padding: 0 14px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.04);
   border: none;
   color: var(--text-secondary);
   border-radius: 9px;
@@ -303,17 +303,17 @@
 /* ===== Scan a bank screenshot (AI balance read + wealth plan) ===== */
 .scan-bank-btn {
   width: 100%; margin-top: 8px; padding: 9px 12px; border-radius: 9px;
-  border: 1px dashed rgba(255,255,255,0.16); background: transparent; color: var(--text-tertiary);
+  border: 1px dashed rgba(255,255,255,0.13); background: transparent; color: var(--text-tertiary);
   font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.scan-bank-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); border-color: rgba(255,255,255,0.28); }
+.scan-bank-btn:hover { background: rgba(255,255,255,0.032); color: var(--text-primary); border-color: rgba(255,255,255,0.22); }
 .sirius-menu-wrap { position: relative; }
 .sirius-menu-wrap .chev { font-size: 9px; opacity: 0.6; margin-left: 2px; }
 .sirius-menu {
   position: absolute; top: calc(100% + 6px); right: 0; z-index: 60; display: none;
   flex-direction: column; gap: 3px; padding: 6px; min-width: 220px;
-  background: #141416; border: 1px solid rgba(255,255,255,0.14); border-radius: 12px;
+  background: #141416; border: 1px solid rgba(255,255,255,0.11); border-radius: 12px;
   box-shadow: 0 14px 34px rgba(0,0,0,0.5);
 }
 .sirius-menu.show { display: flex; }
@@ -323,7 +323,7 @@
   font-family: inherit; font-size: 12.5px; font-weight: 600; text-align: left; cursor: pointer;
   transition: background 0.15s, color 0.15s; white-space: nowrap;
 }
-.sirius-menu button:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
+.sirius-menu button:hover { background: rgba(255,255,255,0.055); color: var(--text-primary); }
 
 .fin-ai-modal-bg {
   position: fixed; inset: 0; z-index: 220; display: none;
@@ -334,7 +334,7 @@
 .fin-ai-modal-bg.show { display: flex; opacity: 1; }
 .fin-ai-modal {
   width: 100%; max-width: 440px; max-height: 82vh; overflow-y: auto;
-  background: rgba(20,20,24,0.68); border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(20,20,24,0.48); border: 1px solid rgba(255,255,255,0.10);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   border-radius: 26px; padding: 22px; box-shadow: var(--glass-shadow-lifted);
 }
@@ -366,7 +366,7 @@
   resize: vertical; transition: border-color 0.2s, background 0.2s;
 }
 .fin-ai-textarea::placeholder { color: var(--text-tertiary); }
-.fin-ai-textarea:focus { border-color: rgba(255,255,255,0.28); background: rgba(0,0,0,0.36); }
+.fin-ai-textarea:focus { border-color: rgba(255,255,255,0.22); background: rgba(0,0,0,0.36); }
 .fin-ai-submit-btn {
   width: 100%; margin-top: 10px; padding: 11px; border: 0; border-radius: 11px;
   background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); color: #0A0A0B;
@@ -376,7 +376,7 @@
 .fin-ai-answer { font-size: 13.5px; color: var(--text-primary); line-height: 1.65; white-space: pre-line; }
 .fin-ai-feed { max-height: 340px; overflow-y: auto; margin-bottom: 10px; }
 .fin-ai-q {
-  font-size: 13px; color: var(--text-secondary); background: rgba(255,255,255,0.05);
+  font-size: 13px; color: var(--text-secondary); background: rgba(255,255,255,0.032);
   border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 9px 12px 10px;
   margin-bottom: 12px; line-height: 1.5;
 }
@@ -403,7 +403,7 @@
 .fin-ai-hist-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
 .fin-ai-hist-type {
   font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--text-tertiary); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text-tertiary); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
   border-radius: 999px; padding: 2px 8px;
 }
 .fin-ai-hist-time { font-size: 10.5px; color: var(--text-tertiary); font-family: var(--font-mono); }
@@ -424,7 +424,7 @@
   font-size: 13px;
   color: var(--text-primary);
 }
-.custom-item:hover { background: rgba(255,255,255,0.05); }
+.custom-item:hover { background: rgba(255,255,255,0.032); }
 .custom-item .item-dot {
   width: 5px; height: 5px;
   border-radius: 50%;
@@ -475,7 +475,7 @@
   cursor: pointer; border-radius: 4px;
   padding: 2px 4px; margin: -2px -4px;
 }
-.nw-name-edit:hover, .nw-amt-edit:hover { background: rgba(255, 255, 255, 0.06); }
+.nw-name-edit:hover, .nw-amt-edit:hover { background: rgba(255,255,255,0.04); }
 .nw-del {
   background: none; border: none;
   color: var(--text-tertiary); cursor: pointer;
@@ -724,7 +724,7 @@
 }
 /* Subtle scroll affordance — shows there's more below */
 .nw-activity-list::-webkit-scrollbar { width: 4px !important; display: block !important; }
-.nw-activity-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 2px; }
+.nw-activity-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.065); border-radius: 2px; }
 .nw-activity-list::-webkit-scrollbar-track { background: transparent; }
 .nw-activity-row {
   display: grid; grid-template-columns: 4px 1fr auto auto;
@@ -735,7 +735,7 @@
   font-size: 12.5px;
   transition: background 0.15s;
 }
-.nw-activity-row:hover { background: rgba(255,255,255,0.05); }
+.nw-activity-row:hover { background: rgba(255,255,255,0.032); }
 .nw-activity-bar {
   width: 4px; height: 24px; border-radius: 2px;
   flex-shrink: 0;
@@ -817,7 +817,7 @@
 .ord-input::placeholder { color: var(--text-tertiary); }
 .ord-input-cost { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .ord-input-ccy, .ord-input-from {
-  background: rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.055);
   border-radius: 8px;
   cursor: pointer; font-weight: 600;
   appearance: none; -webkit-appearance: none;
@@ -870,7 +870,7 @@
   border-left: 3px solid var(--text-tertiary);
   transition: background 0.15s;
 }
-.ord-card:hover { background: rgba(255,255,255,0.09); }
+.ord-card:hover { background: rgba(255,255,255,0.055); }
 .ord-card.cat-bank   { border-left-color: #FAFAFA; }
 .ord-card.cat-stocks { border-left-color: #B8B6B0; }
 .ord-card.cat-crypto { border-left-color: #8A8880; }
@@ -909,7 +909,7 @@
 .ord-meta-pill {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 3px 9px; border-radius: 999px;
-  background: rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.055);
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -948,7 +948,7 @@
 /* Hero card */
 .wish-hero {
   background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)) !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
   position: relative; overflow: hidden;
 }
 .wish-hero::after {
@@ -992,7 +992,7 @@
 .wish-hero-pct-num.bad  { color: #FF8A8A; }
 .wish-hero-bar {
   height: 6px; border-radius: 3px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.04);
   overflow: hidden; position: relative;
 }
 .wish-hero-bar-fill {
@@ -1039,7 +1039,7 @@
 .wish-input-amt  { flex: 1; min-width: 80px; max-width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
 .wish-input-ccy {
   flex: 0 1 80px;
-  background: rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.055);
   border-radius: 9px;
   color: var(--text-primary);
   font-family: inherit; font-size: 12px;
@@ -1139,7 +1139,7 @@
 .wish-row-pct.bad  { color: #FF8A8A; }
 .wish-row-pct.flat { color: var(--text-tertiary); }
 .wish-row-x {
-  background: transparent; border: 1px solid rgba(255,255,255,0.10);
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
   color: var(--text-tertiary);
   cursor: pointer; font-size: 14px;
   padding: 4px 8px; border-radius: 6px;
@@ -1148,7 +1148,7 @@
 .wish-row-x:hover { color: #FF8A8A; }
 .wish-row-bar {
   height: 5px; border-radius: 3px;
-  background: rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.055);
   margin-top: 10px;
   overflow: hidden;
 }
@@ -1171,7 +1171,7 @@
   padding: 10px 14px;
   margin-bottom: 18px;
   background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 12px;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -1248,7 +1248,7 @@
 .ticker-dot {
   width: 5px; height: 5px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.12);
   transition: background 0.2s;
 }
 .ticker-dot.active { background: #D8D6D0; }
@@ -1303,7 +1303,7 @@
 }
 .ord-deduct-undo {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.08);
   color: var(--text-tertiary);
   font-family: inherit;
   font-size: 10.5px;
@@ -1319,7 +1319,7 @@
   margin-top: 10px;
   padding: 12px;
   background: rgba(0,0,0,0.30);
-  border: 1px solid rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.11);
   border-radius: 10px;
 }
 .ord-deduct-chooser-title {
@@ -1333,8 +1333,8 @@
   margin-bottom: 8px;
 }
 .ord-deduct-opt {
-  background: rgba(255,255,255,0.09);
-  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.14);
   color: var(--text-primary);
   font-family: inherit;
   font-size: 12px;
@@ -1345,7 +1345,7 @@
   transition: background 0.15s, border-color 0.15s;
 }
 .ord-deduct-opt:hover {
-  background: rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.065);
   border-color: rgba(255,255,255,0.26);
 }
 .ord-deduct-opt small {
@@ -1362,7 +1362,7 @@
   cursor: not-allowed;
 }
 .ord-deduct-opt.insufficient:hover {
-  background: rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.055);
   border-color: rgba(255,255,255,0.06);
 }
 .ord-deduct-cancel {
@@ -1503,7 +1503,7 @@
   gap: 8px;
   padding: 9px 12px;
   background: var(--bg-card);
-  border: 0.5px solid rgba(255,255,255,0.10);
+  border: 0.5px solid rgba(255,255,255,0.08);
   border-radius: var(--radius-md);
   font-family: inherit;
   color: var(--text-primary);
@@ -1552,7 +1552,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   gap: 8px;
   padding: 6px 12px;
   background: var(--bg-card);
-  border: 0.5px solid rgba(255,255,255,0.10);
+  border: 0.5px solid rgba(255,255,255,0.08);
   border-radius: var(--radius-md);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -1572,7 +1572,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   width: 30px;
   height: 16px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.065);
   transition: background 0.2s;
   flex-shrink: 0;
 }
@@ -1609,7 +1609,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  background: rgba(255,255,255,0.09);
+  background: rgba(255,255,255,0.055);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 999px;
   cursor: pointer;
@@ -1623,8 +1623,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-weight: 700;
 }
 .sub-row-toggle.is-on {
-  background: rgba(255,255,255,0.10);
-  border-color: rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.065);
+  border-color: rgba(255,255,255,0.22);
   color: var(--text-primary);
 }
 .sub-row-toggle .sub-row-toggle-dot {
@@ -1641,8 +1641,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   align-items: center;
   gap: 4px;
   padding: 3px 8px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.11);
   border-radius: 999px;
   font-family: var(--font-mono);
   font-size: 10px;
@@ -2128,7 +2128,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     input.type = 'text';
     input.inputMode = 'decimal';
     input.value = String(curDisplay.toFixed(curDisplay % 1 === 0 ? 0 : 2));
-    input.style.cssText = 'width:110px;padding:4px 8px;font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.30);border:1px solid rgba(255,255,255,0.10);color:var(--text-primary);border-radius:6px;text-align:right;font-variant-numeric:tabular-nums;outline:none;';
+    input.style.cssText = 'width:110px;padding:4px 8px;font-family:var(--font-mono);font-size:12px;background:rgba(0,0,0,0.30);border:1px solid rgba(255,255,255,0.08);color:var(--text-primary);border-radius:6px;text-align:right;font-variant-numeric:tabular-nums;outline:none;';
     amtEl.textContent = '';
     amtEl.appendChild(input);
     setTimeout(() => { input.focus(); input.select(); }, 0);
@@ -2167,7 +2167,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     const input = document.createElement('input');
     input.type = 'text';
     input.value = cur;
-    input.style.cssText = 'width:100%;padding:4px 8px;font-family:inherit;font-size:13px;background:rgba(0,0,0,0.30);border:1px solid rgba(255,255,255,0.10);color:var(--text-primary);border-radius:6px;outline:none;';
+    input.style.cssText = 'width:100%;padding:4px 8px;font-family:inherit;font-size:13px;background:rgba(0,0,0,0.30);border:1px solid rgba(255,255,255,0.08);color:var(--text-primary);border-radius:6px;outline:none;';
     nameEl.textContent = '';
     nameEl.appendChild(input);
     setTimeout(() => { input.focus(); input.select(); }, 0);
@@ -3249,12 +3249,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       actions.style.cssText = 'display:flex;flex-direction:column;gap:4px;align-items:center';
       const editBtn = document.createElement('button');
       editBtn.title = 'Edit';
-      editBtn.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.10);color:var(--text-tertiary);cursor:pointer;font-size:12px;padding:3px 7px;border-radius:5px;font-family:inherit;line-height:1';
+      editBtn.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-tertiary);cursor:pointer;font-size:12px;padding:3px 7px;border-radius:5px;font-family:inherit;line-height:1';
       editBtn.textContent = '✏';
       editBtn.addEventListener('click', () => editSubInline(idx));
       const del = document.createElement('button');
       del.title = 'Delete';
-      del.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.10);color:var(--text-tertiary);cursor:pointer;font-size:12px;padding:3px 7px;border-radius:5px;font-family:inherit;line-height:1';
+      del.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-tertiary);cursor:pointer;font-size:12px;padding:3px 7px;border-radius:5px;font-family:inherit;line-height:1';
       del.textContent = '×';
       del.addEventListener('click', () => {
         if (!confirm('Delete "' + it.name + '"?')) return;
@@ -3383,14 +3383,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     const form = document.createElement('div');
     form.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;align-items:center';
     form.innerHTML =
-      '<input type="text" class="se-name" value="' + escapeHtml(it.name) + '" style="flex:1.5;min-width:120px;padding:6px 10px;border:0.5px solid rgba(255,255,255,0.10);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary)" />' +
-      '<input type="number" step="0.01" class="se-amt" value="' + Number(enteredAmt).toFixed(2) + '" style="width:90px;padding:6px 10px;border:0.5px solid rgba(255,255,255,0.10);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary)" />' +
-      '<select class="se-per" style="padding:6px 10px;border:0.5px solid rgba(255,255,255,0.10);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary)">' + periodOpts + '</select>' +
+      '<input type="text" class="se-name" value="' + escapeHtml(it.name) + '" style="flex:1.5;min-width:120px;padding:6px 10px;border:0.5px solid rgba(255,255,255,0.08);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary)" />' +
+      '<input type="number" step="0.01" class="se-amt" value="' + Number(enteredAmt).toFixed(2) + '" style="width:90px;padding:6px 10px;border:0.5px solid rgba(255,255,255,0.08);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary)" />' +
+      '<select class="se-per" style="padding:6px 10px;border:0.5px solid rgba(255,255,255,0.08);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary)">' + periodOpts + '</select>' +
       '<label class="date-field" style="min-width:140px"><span class="date-emoji" aria-hidden="true">📅</span><input type="date" class="se-ren" value="' + (it.renewal && /^\d{4}-\d{2}-\d{2}/.test(it.renewal) ? it.renewal.slice(0,10) : '') + '" /></label>' +
-      '<select class="se-from" style="padding:6px 10px;border:0.5px solid rgba(255,255,255,0.10);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary);min-width:130px">' + fromOpts + '</select>' +
+      '<select class="se-from" style="padding:6px 10px;border:0.5px solid rgba(255,255,255,0.08);border-radius:var(--radius-md);font-size:12px;font-family:inherit;background:var(--bg-card);color:var(--text-primary);min-width:130px">' + fromOpts + '</select>' +
       '<label class="sub-auto-toggle" style="padding:6px 10px"><input type="checkbox" class="se-auto"' + (it.autoDeduct ? ' checked' : '') + ' /><span class="sub-auto-track"><span class="sub-auto-thumb"></span></span><span class="sub-auto-label">Auto-deduct</span></label>' +
       '<button class="se-save quick-add-btn">Save</button>' +
-      '<button class="se-cancel" style="background:transparent;border:1px solid rgba(255,255,255,0.10);color:var(--text-tertiary);cursor:pointer;font-size:12px;padding:6px 10px;border-radius:var(--radius-md);font-family:inherit">Cancel</button>';
+      '<button class="se-cancel" style="background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text-tertiary);cursor:pointer;font-size:12px;padding:6px 10px;border-radius:var(--radius-md);font-family:inherit">Cancel</button>';
     row.appendChild(form);
     const save = () => {
       const newName = row.querySelector('.se-name').value.trim();
