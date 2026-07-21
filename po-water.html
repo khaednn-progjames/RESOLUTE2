@@ -22,6 +22,7 @@ Contact: khaednnm@gmail.com
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
+<script src="liquid-glass.js" defer></script>
 
 <!-- =============================================================
      EDIT THIS BLOCK TO MAKE THE APP YOURS.
@@ -288,15 +289,19 @@ const CONFIG = {
 /* ----- Modal ----- */
 .modal-bg {
   display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);
   z-index: 100; align-items: center; justify-content: center; padding: 20px;
+  opacity: 0; transition: opacity var(--dur-base) ease;
 }
-.modal-bg.show { display: flex; }
+.modal-bg.show { display: flex; opacity: 1; }
 .modal {
   width: 100%; max-width: 480px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-strong);
-  border-radius: 16px;
+  background: rgba(20,20,24,0.68);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 26px;
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-shadow-lifted);
   padding: 22px; max-height: 88vh; overflow-y: auto;
 }
 .modal h3 {

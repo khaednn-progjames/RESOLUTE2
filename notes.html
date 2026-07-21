@@ -11,6 +11,7 @@
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
 <script src="sirius-usage.js" defer></script>
+<script src="liquid-glass.js" defer></script>
 
 <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
@@ -384,13 +385,15 @@
 .sirius-modal-bg {
   position: fixed; inset: 0; z-index: 220; display: none;
   align-items: center; justify-content: center; padding: 20px;
-  background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);
+  opacity: 0; transition: opacity var(--dur-base) ease;
 }
-.sirius-modal-bg.show { display: flex; }
+.sirius-modal-bg.show { display: flex; opacity: 1; }
 .sirius-modal {
   width: 100%; max-width: 480px; max-height: 82vh; overflow-y: auto;
-  background: #0e0e10; border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 18px; padding: 22px; box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+  background: rgba(20,20,24,0.68); border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border-radius: 26px; padding: 22px; box-shadow: var(--glass-shadow-lifted);
 }
 .sirius-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .sirius-modal-title { font-size: 16px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }

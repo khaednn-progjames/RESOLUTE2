@@ -25,7 +25,8 @@
 <!-- Shared dashboard scripts. Keep these in this order. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>     <!-- cloud sync across devices -->
-<script src="topbar.js" defer></script>   <!-- top water bar + bottom tab nav -->
+<script src="topbar.js" defer></script>
+<script src="liquid-glass.js" defer></script>   <!-- top water bar + bottom tab nav -->
 
 <link rel="stylesheet" href="design-system.css">
 <style>
@@ -72,13 +73,14 @@
 .gm-card {
   position: relative;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 16px;
+  border-radius: 22px;
   padding: 20px;
   margin-bottom: 14px;
-  backdrop-filter: blur(46px) saturate(2.2);
-  -webkit-backdrop-filter: blur(46px) saturate(2.2);
-  box-shadow: inset 0 1.5px 0 rgba(255,255,255,0.38), inset 0 0 60px rgba(255,255,255,0.05), 0 20px 50px rgba(0,0,0,0.55);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-shadow);
   overflow: hidden;
+  transition: transform var(--dur-base) var(--ease-spring-soft), box-shadow var(--dur-base) var(--ease-spring-soft);
 }
 
 /* Card header: an eyebrow label + a big number. */
