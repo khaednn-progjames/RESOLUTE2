@@ -21,29 +21,36 @@
 
   // -------- CSS --------
   const css = `
+/* No bar, no background — this is just a positioning shell so the
+   controls below float directly over the page as their own glass
+   pills in the top-right corner, instead of sitting inside a
+   separate opaque strip of chrome. */
 .topbar {
-  position: sticky; top: 0; z-index: 40;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 40;
   display: flex; justify-content: flex-end; align-items: center;
-  gap: 8px;
-  padding: max(10px, env(safe-area-inset-top)) 14px 8px;
-  background: #0a0a0b;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 8px; pointer-events: none;
+  padding: max(14px, env(safe-area-inset-top)) 14px 8px;
   font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
 }
+.topbar > * { pointer-events: auto; }
 .topbar-water-wrap {
   display: flex; align-items: stretch;
 }
 .topbar-water-pill {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 9px 14px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-right: none;
   border-radius: 12px 0 0 12px;
   text-decoration: none;
   color: #FAFAFA;
   -webkit-tap-highlight-color: transparent;
+  transition: transform var(--dur-fast, 0.22s) var(--ease-spring, ease), background 0.15s;
 }
+.topbar-water-pill:active { transform: scale(0.95); }
 .topbar-water-pill .topbar-pill-dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: #B8B6B0; flex-shrink: 0;
@@ -68,14 +75,16 @@
   width: 44px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.10));
+  backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   color: #FFFFFF;
   font-family: inherit; font-size: 20px; font-weight: 700; line-height: 1;
   cursor: pointer;
   border-radius: 0 12px 12px 0;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, transform 0.10s;
+  transition: background 0.15s, transform var(--dur-fast, 0.22s) var(--ease-spring, ease);
 }
-.topbar-water-add:active { transform: scale(0.94); }
+.topbar-water-add:active { transform: scale(0.90); }
 .topbar-water-add.flash {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(255, 255, 255, 0.35));
 }
@@ -83,13 +92,16 @@
   display: inline-flex; align-items: center; justify-content: center;
   width: 44px; height: 42px;
   border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   border-radius: 12px;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s;
+  transition: background 0.15s, transform var(--dur-fast, 0.22s) var(--ease-spring, ease);
 }
-.topbar-finance-btn:hover { background: rgba(255, 255, 255, 0.08); }
+.topbar-finance-btn:hover { background: rgba(255, 255, 255, 0.10); transform: translateY(-1px); }
+.topbar-finance-btn:active { transform: scale(0.92); }
 .topbar-finance-icon {
   font-size: 20px; line-height: 1;
   filter: grayscale(100%) brightness(1.4);
@@ -102,7 +114,9 @@
   display: inline-flex; align-items: center; gap: 7px;
   height: 42px; padding: 0 13px;
   border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   border-radius: 12px;
   color: rgba(255, 255, 255, 0.55);
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -110,9 +124,10 @@
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform var(--dur-fast, 0.22s) var(--ease-spring, ease);
 }
-.topbar-focus-btn:hover { background: rgba(255, 255, 255, 0.08); color: #FAFAFA; }
+.topbar-focus-btn:hover { background: rgba(255, 255, 255, 0.10); color: #FAFAFA; transform: translateY(-1px); }
+.topbar-focus-btn:active { transform: scale(0.94); }
 .topbar-focus-btn.running { color: #FAFAFA; border-color: rgba(255,255,255,0.30); background: rgba(255,255,255,0.09); }
 .topbar-focus-btn.done {
   color: #6BE3A4; border-color: rgba(107,227,164,0.45); background: rgba(107,227,164,0.10);
@@ -146,15 +161,18 @@
   display: inline-flex; align-items: center; gap: 7px;
   height: 42px; padding: 0 13px;
   border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   border-radius: 12px;
   color: rgba(255, 255, 255, 0.55);
   font-family: inherit; font-size: 12.5px; font-weight: 600;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, transform var(--dur-fast, 0.22s) var(--ease-spring, ease);
 }
-.topbar-cmdk-btn:hover { background: rgba(255, 255, 255, 0.08); color: #FAFAFA; }
+.topbar-cmdk-btn:hover { background: rgba(255, 255, 255, 0.10); color: #FAFAFA; transform: translateY(-1px); }
+.topbar-cmdk-btn:active { transform: scale(0.94); }
 .topbar-cmdk-kbd {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 10.5px; font-weight: 700;
