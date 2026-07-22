@@ -2212,11 +2212,11 @@
   $('copyBtn').addEventListener('click', copyForClaude);
   $('dashboardIdeasBtn').addEventListener('click', () => { selectIdeasView(); closeDrawer(); });
 
-  // Reads the live tile list straight from the hub pages, so this never goes
-  // stale when tiles are added, renamed, or moved (e.g. into Miscellaneous).
+  // Reads the live tile list straight from the hub page, so this never goes
+  // stale when tiles are added or renamed.
   async function fetchExistingTiles() {
     const tiles = [];
-    for (const page of ['index.html', 'misc.html']) {
+    for (const page of ['index.html']) {
       try {
         const res = await fetch(page, { cache: 'no-store' });
         const html = await res.text();

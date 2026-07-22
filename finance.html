@@ -127,6 +127,12 @@
   text-align: center;
 }
 
+.condor-iframe {
+  display: block; width: 100%; height: 880px; border: 0;
+  background: transparent; border-radius: 16px; overflow: hidden; color-scheme: dark;
+}
+@media (max-width: 480px) { .condor-iframe { height: 780px; } }
+
 /* Sections: hide non-active when bottom tabs are in use */
 .section[hidden] { display: none !important; }
 
@@ -1983,6 +1989,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   </div>
 </div>
 
+<div class="section" data-section="condor" hidden>
+  <div class="section-title">
+    <span class="section-title-text">IRON CONDOR BOT</span>
+  </div>
+  <iframe src="iron-condor.html" class="condor-iframe" loading="lazy" title="Iron Condor Bot"></iframe>
+</div>
+
 </div>
 
 <!-- ===== BOTTOM TAB BAR ===== -->
@@ -2006,6 +2019,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <button class="bot-tab" data-tab="spend">
     <span class="bot-tab-icon">🧾</span>
     <span class="bot-tab-label">Spending</span>
+  </button>
+  <button class="bot-tab" data-tab="condor">
+    <span class="bot-tab-icon">🦅</span>
+    <span class="bot-tab-label">Condor</span>
   </button>
 </nav>
 
@@ -2066,8 +2083,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
   tabs.forEach(b => b.addEventListener('click', () => setActiveTab(b.dataset.tab)));
+  const hashTab = (location.hash || '').replace('#', '');
   const savedTab = storeGet(TAB_KEY);
-  setActiveTab(savedTab && ['net','subs','incoming','wish','spend'].includes(savedTab) ? savedTab : 'net');
+  const validTabs = ['net','subs','incoming','wish','spend','condor'];
+  setActiveTab(validTabs.includes(hashTab) ? hashTab : (savedTab && validTabs.includes(savedTab) ? savedTab : 'net'));
 
   // ============================================================
   // NET WORTH (copied from the main dashboard, verbatim logic)
