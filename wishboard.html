@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/api/config"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050506">
+<title>Wish Board · Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js" defer></script>
+<script src="topbar.js" defer></script>
+<script src="sirius-usage.js" defer></script>
+<script src="liquid-glass.js" defer></script>
+
+<link rel="stylesheet" href="design-system.css">
+<style>
+:root {
+  --text-primary: #FAFAFA;
+  --text-secondary: #B8B6B0;
+  --text-tertiary: #76746E;
+  --success: #6BE3A4;
+  --warning: #F2C063;
+  --danger:  #FF6B6B;
+  --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+.gm-card {
+  position: relative; background: rgba(255,255,255,0.012);
+  border: 1px solid rgba(255,255,255,0.10); border-radius: 22px; padding: 20px;
+  margin-bottom: 14px; backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+  transition: transform var(--dur-base) var(--ease-spring-soft), box-shadow var(--dur-base) var(--ease-spring-soft);
+}
+.empty-state { text-align: center; font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 30px 20px; grid-column: 1 / -1; }
+
+/* ---------- stats ---------- */
+.wb-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; }
+.wb-stat { background: rgba(255,255,255,0.006); border: 1px solid rgba(255,255,255,0.10); border-radius: 12px; padding: 14px; }
+.wb-stat-num { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; color: var(--text-primary); line-height: 1; }
+.wb-stat-label { margin-top: 6px; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
+
+/* ---------- add row ---------- */
+.wb-add-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.wb-add-row .gm-input { flex: 1; min-width: 200px; }
+.gm-input {
+  padding: 11px 14px; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
+  background: rgba(0,0,0,0.12); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gm-input::placeholder { color: var(--text-tertiary); }
+.gm-input:focus { border-color: rgba(255,255,255,0.16); background: rgba(0,0,0,0.16); }
+.gm-btn {
+  padding: 11px 18px; border: 0; border-radius: 12px; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+  color: #0A0A0B; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 22px rgba(0,0,0,0.25); transition: transform 0.1s, filter 0.15s;
+}
+.gm-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.gm-btn:active { transform: translateY(0); }
+.gm-btn:disabled { opacity: 0.55; cursor: wait; transform: none; }
+.gm-btn-secondary {
+  padding: 11px 18px; border: 1px solid rgba(255,255,255,0.10); border-radius: 12px;
+  background: rgba(255,255,255,0.02); color: var(--text-primary); font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer; white-space: nowrap; transition: background 0.15s;
+}
+.gm-btn-secondary:hover { background: rgba(255,255,255,0.05); }
+.wb-status { font-size: 12px; color: var(--text-tertiary); line-height: 1.5; }
+.wb-status.err { color: var(--danger); }
+
+/* ---------- view toggle + category chips ---------- */
+.wb-view-toggle { display: flex; gap: 6px; margin-bottom: 12px; }
+.wb-view-btn {
+  flex: 1; padding: 9px 12px; border-radius: 11px; border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.006); color: var(--text-tertiary); font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.wb-view-btn:hover { background: rgba(255,255,255,0.012); color: var(--text-secondary); }
+.wb-view-btn.active { background: rgba(255,255,255,0.02); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
+.cat-chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+.cat-chip {
+  padding: 5px 9px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.005);
+  color: var(--text-tertiary); font-size: 10.5px; font-weight: 600; cursor: pointer; transition: background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.cat-chip:hover { background: rgba(255,255,255,0.01); color: var(--text-secondary); }
+.cat-chip.on { background: rgba(255,255,255,0.02); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
+
+/* ---------- grid ---------- */
+.wb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.wb-card {
+  position: relative; border-radius: 16px; overflow: hidden;
+  background: rgba(255,255,255,0.006); border: 1px solid rgba(255,255,255,0.10);
+  display: flex; flex-direction: column;
+  transition: transform var(--dur-base) var(--ease-spring-soft), border-color 0.15s;
+}
+.wb-card:hover { transform: translateY(-3px); }
+.wb-card.pending { opacity: 0.55; }
+.wb-card.got { opacity: 0.55; }
+.wb-card.got .wb-card-title { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.35); }
+.wb-card-image {
+  width: 100%; aspect-ratio: 1 / 1; background: rgba(255,255,255,0.02);
+  display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
+}
+.wb-card-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wb-card-image-fallback { font-size: 34px; opacity: 0.5; }
+.wb-card-cat {
+  position: absolute; top: 8px; left: 8px; font-size: 8.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: #0A0A0B; border-radius: 999px; padding: 3px 8px; background: var(--cat-color, #A9A6C4);
+}
+.wb-card-body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.wb-card-title {
+  font-size: 13px; font-weight: 600; color: var(--text-primary); outline: none; line-height: 1.35;
+  border-radius: 4px; padding: 1px 3px; margin: -1px -3px;
+}
+.wb-card-title[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.12); }
+.wb-card-price { font-size: 13px; font-weight: 700; color: var(--success); font-variant-numeric: tabular-nums; outline: none; border-radius: 4px; padding: 1px 3px; margin: -1px -3px; }
+.wb-card-price[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.12); }
+.wb-card-price:empty::before { content: 'Add price…'; color: var(--text-tertiary); font-weight: 500; }
+.wb-card-meta { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--text-tertiary); }
+.wb-card-site {
+  font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+  background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.06); border-radius: 999px; padding: 1px 6px;
+}
+.wb-card-link { color: var(--text-secondary); text-decoration: none; }
+.wb-card-link:hover { color: var(--text-primary); text-decoration: underline; }
+.wb-card-notes {
+  font-size: 11.5px; color: var(--text-secondary); outline: none; border-radius: 6px; padding: 4px 6px; margin: 0 -6px;
+  min-height: 20px; border: 1px solid transparent;
+}
+.wb-card-notes:empty::before { content: 'Add a note…'; color: var(--text-tertiary); }
+.wb-card-notes[contenteditable="true"]:focus { border-color: rgba(255,255,255,0.10); background: rgba(0,0,0,0.12); }
+.wb-card-actions { display: flex; gap: 6px; margin-top: 4px; }
+.wb-got-btn {
+  flex: 1; padding: 7px 8px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.005); color: var(--text-tertiary); font-family: inherit; font-size: 10.5px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.wb-got-btn:hover { background: rgba(255,255,255,0.012); color: var(--text-secondary); }
+.wb-got-btn.on { background: rgba(107,227,164,0.16); color: var(--success); border-color: rgba(107,227,164,0.4); }
+.wb-del-btn {
+  border: 0; background: transparent; color: var(--text-tertiary); font-size: 16px; cursor: pointer;
+  padding: 0 6px; opacity: 0.6; transition: opacity 0.2s, color 0.2s;
+}
+.wb-del-btn:hover { color: var(--danger); opacity: 1; }
+.wb-card-cat-select {
+  position: absolute; top: 8px; right: 8px; font-size: 9px; font-weight: 700; text-transform: uppercase;
+  background: rgba(0,0,0,0.45); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 999px; padding: 3px 6px; opacity: 0; transition: opacity 0.15s; cursor: pointer;
+}
+.wb-card:hover .wb-card-cat-select { opacity: 1; }
+
+@media (max-width: 480px) {
+  body { padding: max(78px, calc(env(safe-area-inset-top) + 64px)) 14px 50px; }
+  .gm-card { padding: 16px; }
+  .wb-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1 class="dash-title">Wish Board</h1>
+
+  <div class="section-eyebrow">Overview</div>
+  <div class="gm-card">
+    <div class="wb-stat-grid">
+      <div class="wb-stat"><div class="wb-stat-num" id="wbStatCount">0</div><div class="wb-stat-label">Want List</div></div>
+      <div class="wb-stat"><div class="wb-stat-num" id="wbStatValue">$0</div><div class="wb-stat-label">Est. Total</div></div>
+      <div class="wb-stat"><div class="wb-stat-num" id="wbStatGot">0</div><div class="wb-stat-label">Already Got</div></div>
+    </div>
+  </div>
+
+  <div class="section-eyebrow">Add Something</div>
+  <div class="gm-card">
+    <div class="wb-add-row">
+      <input class="gm-input" id="wbUrlInput" type="url" placeholder="Paste a product link…" autocomplete="off">
+      <button class="gm-btn" id="wbAddLinkBtn" type="button">+ Add</button>
+      <button class="gm-btn-secondary" id="wbUploadBtn" type="button">📷 Upload Screenshot(s)</button>
+      <input type="file" id="wbFileInput" accept="image/*" multiple style="display:none">
+    </div>
+    <div class="wb-status" id="wbStatus">Sirius names and categorizes whatever you add, clothes, electronics, home, anything. Upload a screenshot of a cart or product page and it'll pull out every item shown.</div>
+  </div>
+
+  <div class="section-eyebrow">Your List</div>
+  <div class="gm-card">
+    <div class="wb-view-toggle">
+      <button type="button" class="wb-view-btn active" data-view="want">Want</button>
+      <button type="button" class="wb-view-btn" data-view="got">Already Got</button>
+    </div>
+    <div class="cat-chip-row" id="wbCatChipRow"></div>
+    <div class="wb-grid" id="wbGrid"></div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const STORE_KEY = 'wishboard:items';
+  const KEY_LS = 'nova_lite_api_key';
+
+  const CATEGORIES = ['Clothing', 'Shoes', 'Accessories', 'Electronics', 'Home', 'Books', 'Beauty', 'Hobbies', 'Other'];
+  const CAT_COLORS = {
+    Clothing: '#FF8FA3', Shoes: '#D9A066', Accessories: '#9DE8C4', Electronics: '#5EC8F2',
+    Home: '#F2C063', Books: '#8FB9FF', Beauty: '#E39DD0', Hobbies: '#B39DDB', Other: '#A9A6C4',
+  };
+
+  function loadJSON(k, f) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; } catch (e) { return f; } }
+  function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+  function load() { return loadJSON(STORE_KEY, []); }
+  function save(items) { saveJSON(STORE_KEY, items); }
+  function newId() { return 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function apiKey() { try { return localStorage.getItem(KEY_LS) || ''; } catch (e) { return ''; } }
+  function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function hostnameOf(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
+  function fmtMoney(n) {
+    const num = Number(n);
+    if (!num || isNaN(num)) return '';
+    return '$' + num.toLocaleString('en-US', { minimumFractionDigits: num % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 });
+  }
+
+  function setStatus(msg, isErr) {
+    const el = $('wbStatus');
+    el.textContent = msg;
+    el.classList.toggle('err', !!isErr);
+  }
+
+  async function callSirius(system, content) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-5',
+        max_tokens: 1024,
+        system: system + ' Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.',
+        messages: [{ role: 'user', content: content }],
+      }),
+    });
+    const json = await res.json();
+    if (typeof logSiriusUsage === 'function' && json.usage) logSiriusUsage('wishboard', json.usage);
+    if (json.error) throw new Error(json.error.message || 'Something went wrong.');
+    return (json.content && json.content[0] && json.content[0].text) || '';
+  }
+
+  function parseCategory(raw) {
+    const found = CATEGORIES.find((c) => c.toLowerCase() === String(raw || '').trim().toLowerCase());
+    return found || 'Other';
+  }
+
+  // ---------- add via link ----------
+  async function identifyFromLink(url) {
+    let meta = null;
+    try {
+      const res = await fetch('/api/fetch-url?url=' + encodeURIComponent(url));
+      meta = await res.json();
+    } catch (e) { /* fall through, Sirius can still guess from the raw URL */ }
+
+    const context = meta && (meta.title || meta.description)
+      ? 'Page title: ' + (meta.title || '(none)') + '\nDescription: ' + (meta.description || '(none)') + '\nSite: ' + (meta.siteName || '(unknown)')
+      : 'No page metadata could be fetched (the site likely blocks automated requests), infer as best you can from the URL structure alone.';
+
+    const system = "You are Sirius, identifying and categorizing something the user wants to buy for their personal want list. " +
+      "Given a URL and whatever page metadata was fetched, respond in EXACTLY this format and nothing else:\n" +
+      "TITLE: <short clean item name, no marketing language, no site name, 2-8 words>\n" +
+      "CATEGORY: <exactly one of: " + CATEGORIES.join(', ') + ">\n" +
+      "PRICE: <plain number with no currency symbol or commas, or leave blank if you truly cannot find one>\n" +
+      "If you cannot tell what the item is at all, respond with TITLE: Unknown item, CATEGORY: Other, and a blank PRICE.";
+    const reply = await callSirius(system, 'URL: ' + url + '\n' + context);
+    const titleM = reply.match(/TITLE:\s*(.+)/i);
+    const catM = reply.match(/CATEGORY:\s*([A-Za-z]+)/i);
+    const priceM = reply.match(/PRICE:\s*([\d.]+)/i);
+    return {
+      title: (titleM ? titleM[1] : 'Unknown item').trim().replace(/^["']|["']$/g, ''),
+      category: parseCategory(catM && catM[1]),
+      price: priceM ? priceM[1] : (meta && meta.price) || '',
+      image: (meta && meta.image) || '',
+      siteName: (meta && meta.siteName) || hostnameOf(url),
+    };
+  }
+
+  async function addFromLink() {
+    const input = $('wbUrlInput');
+    const url = input.value.trim();
+    if (!url) return;
+    let parsed;
+    try { parsed = new URL(url); } catch (e) { setStatus("That doesn't look like a valid link.", true); return; }
+    if (!apiKey()) { setStatus('No API key yet, open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
+
+    const id = newId();
+    const items = load();
+    items.unshift({
+      id, url: parsed.toString(), title: '', image: '', price: '', siteName: hostnameOf(url),
+      category: 'Other', notes: '', status: 'want', addedAt: Date.now(), pending: true,
+    });
+    save(items);
+    input.value = '';
+    setStatus('Sirius is figuring out what that link goes to…');
+    $('wbAddLinkBtn').disabled = true;
+    render();
+
+    try {
+      const info = await identifyFromLink(parsed.toString());
+      const all = load();
+      const entry = all.find((x) => x.id === id);
+      if (entry) {
+        entry.title = info.title; entry.category = info.category; entry.price = info.price;
+        entry.image = info.image; entry.siteName = info.siteName; entry.pending = false;
+        save(all);
+      }
+      setStatus('Added to your want list.');
+    } catch (e) {
+      const all = load();
+      const entry = all.find((x) => x.id === id);
+      if (entry) { entry.title = 'Unknown item'; entry.pending = false; save(all); }
+      setStatus(e.message || 'Could not reach Sirius, you can rename it manually.', true);
+    } finally {
+      $('wbAddLinkBtn').disabled = false;
+      render();
+      renderStats();
+    }
+  }
+  $('wbAddLinkBtn').addEventListener('click', addFromLink);
+  $('wbUrlInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addFromLink(); });
+
+  // ---------- add via screenshot(s) ----------
+  function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ''));
+      r.onerror = () => reject(new Error('Could not read ' + file.name));
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function identifyFromScreenshots(files) {
+    const dataUrls = [];
+    const contentBlocks = [];
+    for (const file of files) {
+      const dataUrl = await readFileAsDataURL(file);
+      const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(dataUrl);
+      if (!match) continue;
+      dataUrls.push(dataUrl);
+      contentBlocks.push({ type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } });
+    }
+    if (contentBlocks.length === 0) throw new Error('Could not read those images.');
+    contentBlocks.push({ type: 'text', text: 'Find every distinct item shown across all of these images.' });
+
+    const system = "You are Sirius, identifying and categorizing items the user wants to buy for their personal want list, from a screenshot. " +
+      "The user uploaded one or more screenshots, a product page, a shopping cart, a clothing photo, a Pinterest style image, a price tag, anything. " +
+      "Find EVERY distinct item shown across all images and never merge separate items into one line. " +
+      "Respond with ONLY one line per item, in EXACTLY this format:\n" +
+      "ITEM: <short clean item name, 2-8 words> | CATEGORY: <exactly one of: " + CATEGORIES.join(', ') + "> | PRICE: <plain number, no currency symbol, or blank if not visible>\n" +
+      "(repeat for every item found)";
+    const reply = await callSirius(system, contentBlocks);
+    const items = [];
+    reply.split(/\r?\n/).forEach((line) => {
+      const m = line.match(/^ITEM:\s*(.+?)\s*\|\s*CATEGORY:\s*([A-Za-z]+)\s*\|\s*PRICE:\s*([\d.]*)/i);
+      if (!m) return;
+      items.push({ title: m[1].trim(), category: parseCategory(m[2]), price: m[3] || '' });
+    });
+    return { items, thumbnail: dataUrls[0] || '' };
+  }
+
+  async function addFromScreenshots(files) {
+    if (!apiKey()) { setStatus('No API key yet, open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
+    setStatus('Sirius is reading ' + (files.length > 1 ? 'those screenshots' : 'that screenshot') + '…');
+    $('wbUploadBtn').disabled = true;
+    try {
+      const { items, thumbnail } = await identifyFromScreenshots(files);
+      if (items.length === 0) { setStatus("Sirius couldn't find any items in that, try a clearer screenshot."); return; }
+      const all = load();
+      items.forEach((it) => {
+        all.unshift({
+          id: newId(), url: '', image: thumbnail, price: it.price, siteName: 'screenshot',
+          category: it.category, title: it.title, notes: '', status: 'want', addedAt: Date.now(), pending: false,
+        });
+      });
+      save(all);
+      setStatus(items.length + (items.length === 1 ? ' item added to your want list.' : ' items added to your want list.'));
+      render();
+      renderStats();
+    } catch (e) {
+      setStatus(e.message || 'Could not reach Sirius.', true);
+    } finally {
+      $('wbUploadBtn').disabled = false;
+    }
+  }
+  $('wbUploadBtn').addEventListener('click', () => $('wbFileInput').click());
+  $('wbFileInput').addEventListener('change', (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length) addFromScreenshots(files);
+    e.target.value = '';
+  });
+
+  // ---------- view + category filter ----------
+  let currentView = 'want';
+  let categoryFilter = null;
+  document.querySelectorAll('.wb-view-btn').forEach((b) => {
+    b.addEventListener('click', () => {
+      currentView = b.dataset.view;
+      document.querySelectorAll('.wb-view-btn').forEach((x) => x.classList.toggle('active', x === b));
+      render();
+    });
+  });
+
+  function renderCatChips(items) {
+    const row = $('wbCatChipRow');
+    const counts = {};
+    items.forEach((it) => { counts[it.category] = (counts[it.category] || 0) + 1; });
+    const present = CATEGORIES.filter((c) => counts[c]);
+    if (present.length === 0) { row.innerHTML = ''; return; }
+    row.innerHTML = '';
+    const allChip = document.createElement('button');
+    allChip.type = 'button';
+    allChip.className = 'cat-chip' + (categoryFilter === null ? ' on' : '');
+    allChip.textContent = 'All';
+    allChip.addEventListener('click', () => { categoryFilter = null; render(); });
+    row.appendChild(allChip);
+    present.forEach((c) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'cat-chip' + (categoryFilter === c ? ' on' : '');
+      chip.textContent = c + ' ' + counts[c];
+      chip.addEventListener('click', () => { categoryFilter = (categoryFilter === c ? null : c); render(); });
+      row.appendChild(chip);
+    });
+  }
+
+  function cardHtml(it) {
+    const img = it.image
+      ? '<img src="' + escHtml(it.image) + '" alt="" loading="lazy" onerror="this.parentElement.innerHTML=\'<span class=&quot;wb-card-image-fallback&quot;>🛍️</span>\'">'
+      : '<span class="wb-card-image-fallback">🛍️</span>';
+    const catSelect = '<select class="wb-card-cat-select" data-id="' + it.id + '">' +
+      CATEGORIES.map((c) => '<option value="' + c + '"' + (c === it.category ? ' selected' : '') + '>' + c + '</option>').join('') +
+      '</select>';
+    return '<div class="wb-card' + (it.pending ? ' pending' : '') + (it.status === 'got' ? ' got' : '') + '" data-id="' + it.id + '">' +
+      '<div class="wb-card-image" style="--cat-color:' + (CAT_COLORS[it.category] || '#A9A6C4') + '">' + img + '</div>' +
+      '<span class="wb-card-cat" style="--cat-color:' + (CAT_COLORS[it.category] || '#A9A6C4') + '">' + escHtml(it.category) + '</span>' +
+      catSelect +
+      '<div class="wb-card-body">' +
+        '<div class="wb-card-title" contenteditable="true" data-id="' + it.id + '">' + escHtml(it.pending ? 'Sirius is looking…' : (it.title || 'Unknown item')) + '</div>' +
+        '<div class="wb-card-price" contenteditable="true" data-id="' + it.id + '">' + (it.price ? fmtMoney(it.price) : '') + '</div>' +
+        (it.url || it.siteName !== 'screenshot'
+          ? '<div class="wb-card-meta"><span class="wb-card-site">' + escHtml(it.siteName || 'link') + '</span>' +
+            (it.url ? '<a class="wb-card-link" href="' + escHtml(it.url) + '" target="_blank" rel="noopener">Open ↗</a>' : '') + '</div>'
+          : '') +
+        '<div class="wb-card-notes" contenteditable="true" data-id="' + it.id + '">' + escHtml(it.notes || '') + '</div>' +
+        '<div class="wb-card-actions">' +
+          '<button type="button" class="wb-got-btn' + (it.status === 'got' ? ' on' : '') + '" data-id="' + it.id + '">' + (it.status === 'got' ? '✓ Got it' : 'Mark got') + '</button>' +
+          '<button type="button" class="wb-del-btn" data-id="' + it.id + '" aria-label="Delete">×</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function render() {
+    const all = load().slice().sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+    const byView = all.filter((it) => (it.status === 'got') === (currentView === 'got'));
+    renderCatChips(byView);
+    const list = categoryFilter ? byView.filter((it) => it.category === categoryFilter) : byView;
+    const grid = $('wbGrid');
+    if (list.length === 0) {
+      grid.innerHTML = '<div class="empty-state">' + (currentView === 'got' ? "Nothing marked as got yet." : "Nothing on your want list yet, paste a link or upload a screenshot above.") + '</div>';
+      return;
+    }
+    grid.innerHTML = list.map(cardHtml).join('');
+
+    grid.querySelectorAll('.wb-card-title').forEach((el) => {
+      el.addEventListener('blur', () => {
+        const all2 = load();
+        const e2 = all2.find((x) => x.id === el.dataset.id);
+        if (e2) { e2.title = el.textContent.trim() || 'Unknown item'; save(all2); }
+      });
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+    });
+    grid.querySelectorAll('.wb-card-price').forEach((el) => {
+      el.addEventListener('focus', () => {
+        const all2 = load();
+        const e2 = all2.find((x) => x.id === el.dataset.id);
+        if (e2 && e2.price) el.textContent = e2.price;
+      });
+      el.addEventListener('blur', () => {
+        const all2 = load();
+        const e2 = all2.find((x) => x.id === el.dataset.id);
+        if (e2) {
+          e2.price = el.textContent.replace(/[^0-9.]/g, '');
+          save(all2);
+          el.textContent = e2.price ? fmtMoney(e2.price) : '';
+          renderStats();
+        }
+      });
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+    });
+    grid.querySelectorAll('.wb-card-notes').forEach((el) => {
+      el.addEventListener('blur', () => {
+        const all2 = load();
+        const e2 = all2.find((x) => x.id === el.dataset.id);
+        if (e2) { e2.notes = el.textContent.trim(); save(all2); }
+      });
+    });
+    grid.querySelectorAll('.wb-card-cat-select').forEach((el) => {
+      el.addEventListener('change', () => {
+        const all2 = load();
+        const e2 = all2.find((x) => x.id === el.dataset.id);
+        if (e2) { e2.category = el.value; save(all2); render(); }
+      });
+    });
+    grid.querySelectorAll('.wb-got-btn').forEach((el) => {
+      el.addEventListener('click', () => {
+        const all2 = load();
+        const e2 = all2.find((x) => x.id === el.dataset.id);
+        if (e2) { e2.status = e2.status === 'got' ? 'want' : 'got'; save(all2); render(); renderStats(); }
+      });
+    });
+    grid.querySelectorAll('.wb-del-btn').forEach((el) => {
+      el.addEventListener('click', () => {
+        if (!confirm('Remove this from your want list?')) return;
+        save(load().filter((x) => x.id !== el.dataset.id));
+        render();
+        renderStats();
+      });
+    });
+  }
+
+  function renderStats() {
+    const all = load();
+    const want = all.filter((it) => it.status !== 'got');
+    const got = all.filter((it) => it.status === 'got');
+    const total = want.reduce((sum, it) => sum + (Number(it.price) || 0), 0);
+    $('wbStatCount').textContent = want.length;
+    $('wbStatValue').textContent = total ? fmtMoney(total) : '$0';
+    $('wbStatGot').textContent = got.length;
+  }
+
+  render();
+  renderStats();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof initCloudSync !== 'function') return;
+    initCloudSync({
+      appKey: 'wishboard',
+      syncedPrefixes: ['wishboard:'],
+      onApplied: function () { render(); renderStats(); },
+    });
+  });
+})();
+</script>
+</body>
+</html>

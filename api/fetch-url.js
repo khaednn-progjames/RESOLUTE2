@@ -80,12 +80,25 @@ export default async function handler(req, res) {
                 || grab(/<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description["']/i);
     const ogSite = grab(/<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']*)["']/i)
                 || grab(/<meta[^>]+content=["']([^"']*)["'][^>]+property=["']og:site_name["']/i);
+    const ogImage = grab(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']*)["']/i)
+                  || grab(/<meta[^>]+content=["']([^"']*)["'][^>]+property=["']og:image["']/i);
+    const ogPrice = grab(/<meta[^>]+property=["']product:price:amount["'][^>]+content=["']([^"']*)["']/i)
+                  || grab(/<meta[^>]+content=["']([^"']*)["'][^>]+property=["']product:price:amount["']/i)
+                  || grab(/<meta[^>]+property=["']og:price:amount["'][^>]+content=["']([^"']*)["']/i)
+                  || grab(/<meta[^>]+content=["']([^"']*)["'][^>]+property=["']og:price:amount["']/i);
+
+    let imageUrl = null;
+    if (ogImage) {
+      try { imageUrl = new URL(ogImage, parsed).toString(); } catch (e) { imageUrl = null; }
+    }
 
     res.status(200).json({
       url: parsed.toString(),
       title: decodeEntities(ogTitle || rawTitle),
       description: decodeEntities(ogDesc),
       siteName: decodeEntities(ogSite) || parsed.hostname.replace(/^www\./, ''),
+      image: imageUrl,
+      price: ogPrice ? ogPrice.replace(/[^0-9.]/g, '') || null : null,
     });
   } catch (e) {
     clearTimeout(timeout);

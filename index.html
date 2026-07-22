@@ -232,6 +232,16 @@
       </div>
     </a>
 
+    <!-- Small tile -->
+    <a class="tile" href="wishboard.html" style="--accent:#E39DD0">
+      <div class="tile-spacer"></div>
+      <h2 class="tile-title">Wish Board</h2>
+      <div class="tile-foot">
+        <span class="tile-sub lg-number" id="wishboardTileSub">Things you want</span>
+        <span class="tile-arrow">→</span>
+      </div>
+    </a>
+
   </div>
 </div>
 
@@ -709,6 +719,9 @@
     s.wishCount = wish.length;
     s.wishTotal = wish.reduce((t, it) => t + (Number(it.amount) || 0), 0);
 
+    const wishboard = loadJSON('wishboard:items', []) || [];
+    s.wishboardWantCount = wishboard.filter((it) => it && it.status !== 'got').length;
+
     const subs = loadJSON('subs', []) || [];
     s.subsMonthly = subs.reduce((t, it) => {
       const a = Number(it.amount) || 0;
@@ -724,6 +737,7 @@
     if (s.goalsTotal) $('mainTileSub').textContent = s.goalsDone + '/' + s.goalsTotal + ' goals done today';
     if (s.waterToday) $('waterTileSub').textContent = s.waterToday + ' logged today';
     if (s.mealsToday) $('healthTileSub').textContent = s.mealsToday + (s.mealsToday === 1 ? ' meal' : ' meals') + ' · ' + Math.round(s.caloriesToday) + ' cal today';
+    if (s.wishboardWantCount) $('wishboardTileSub').textContent = s.wishboardWantCount + (s.wishboardWantCount === 1 ? ' thing wanted' : ' things wanted');
     if (s.netWorth > 0) $('financeTileSub').textContent = fmtUsd(s.netWorth) + ' net worth';
     if (s.nextEvent) {
       $('plannerTileSub').textContent = s.nextEvent.days === 0
