@@ -29,15 +29,15 @@
 .mi-topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
 .key-btn {
   width: 40px; height: 40px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.055);
+  border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.025);
   color: var(--text-secondary); cursor: pointer; font-size: 17px; opacity: 0.6; transition: opacity 0.15s, background 0.15s, color 0.15s;
 }
-.key-btn:hover { opacity: 1; background: rgba(255,255,255,0.05); color: var(--text-primary); }
+.key-btn:hover { opacity: 1; background: rgba(255,255,255,0.025); color: var(--text-primary); }
 .key-btn.has-key { opacity: 1; border-color: rgba(255,255,255,0.3); }
 
 .gm-card {
-  position: relative; background: rgba(255,255,255,0.055);
-  border: 1px solid rgba(255,255,255,0.14); border-radius: 22px; padding: 18px;
+  position: relative; background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.10); border-radius: 22px; padding: 18px;
   margin-bottom: 16px; backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); box-shadow: var(--glass-shadow);
   transition: transform var(--dur-base) var(--ease-spring-soft), box-shadow var(--dur-base) var(--ease-spring-soft);
@@ -52,10 +52,10 @@
 .keypanel.open { display: block; }
 .keybar { display: flex; gap: 8px; }
 .keybar input {
-  flex: 1; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.08); color: var(--text-primary);
+  flex: 1; background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.06); color: var(--text-primary);
   border-radius: 11px; padding: 11px 13px; font-size: 13px; outline: none; font-family: inherit;
 }
-.keybar input:focus { border-color: rgba(255,255,255,0.22); }
+.keybar input:focus { border-color: rgba(255,255,255,0.16); }
 .keybar button {
   border: 0; border-radius: 11px; padding: 0 18px; cursor: pointer; color: #0A0A0B;
   background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); font-weight: 700; font-size: 13px; font-family: inherit;
@@ -66,22 +66,22 @@
 
 /* ---- context form ---- */
 .mi-textarea {
-  width: 100%; min-height: 90px; padding: 12px 14px; border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 12px; background: rgba(0,0,0,0.28); color: var(--text-primary);
+  width: 100%; min-height: 90px; padding: 12px 14px; border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px; background: rgba(0,0,0,0.18); color: var(--text-primary);
   font-family: inherit; font-size: 14px; outline: none; resize: vertical;
   transition: border-color 0.2s, background 0.2s;
 }
 .mi-textarea::placeholder { color: var(--text-tertiary); }
-.mi-textarea:focus { border-color: rgba(255,255,255,0.22); background: rgba(0,0,0,0.36); }
+.mi-textarea:focus { border-color: rgba(255,255,255,0.16); background: rgba(0,0,0,0.24); }
 .chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0 14px; }
 .chip {
-  padding: 8px 13px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.02); color: var(--text-tertiary); font-size: 12px; font-weight: 600;
+  padding: 8px 13px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.01); color: var(--text-tertiary); font-size: 12px; font-weight: 600;
   cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.chip:hover { background: rgba(255,255,255,0.045); color: var(--text-secondary); }
-.chip.on { background: rgba(255,255,255,0.09); color: var(--text-primary); border-color: rgba(255,255,255,0.22); }
+.chip:hover { background: rgba(255,255,255,0.022); color: var(--text-secondary); }
+.chip.on { background: rgba(255,255,255,0.045); color: var(--text-primary); border-color: rgba(255,255,255,0.16); }
 .generate-btn {
   width: 100%; padding: 13px; border: 0; border-radius: 12px;
   background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); color: #0A0A0B;
@@ -98,18 +98,18 @@
 .msg { max-width: 100%; }
 .msg.user { align-self: flex-end; max-width: 90%; }
 .bubble { border-radius: 14px; padding: 14px 16px; font-size: 14px; line-height: 1.6; }
-.msg.user .bubble { background: rgba(255,255,255,0.032); border: 1px solid rgba(255,255,255,0.08); }
-.msg.ai .bubble { background: rgba(255,255,255,0.022); border: 1px solid rgba(255,255,255,0.08); border-left: 2px solid rgba(255,255,255,0.4); }
+.msg.user .bubble { background: rgba(255,255,255,0.016); border: 1px solid rgba(255,255,255,0.06); }
+.msg.ai .bubble { background: rgba(255,255,255,0.012); border: 1px solid rgba(255,255,255,0.06); border-left: 2px solid rgba(255,255,255,0.4); }
 .reply-list { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 8px; }
 .reply-list li { line-height: 1.5; }
 .reply-list li b, .bubble b { color: var(--text-primary); }
 .msg-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
 .save-btn {
   font-size: 11px; font-weight: 700; letter-spacing: 0.04em; padding: 7px 12px; border-radius: 9px;
-  border: 1px solid rgba(255,255,255,0.11); background: rgba(255,255,255,0.055); color: var(--text-secondary);
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.025); color: var(--text-secondary);
   cursor: pointer; transition: background 0.15s, color 0.15s;
 }
-.save-btn:hover { background: rgba(255,255,255,0.055); color: var(--text-primary); }
+.save-btn:hover { background: rgba(255,255,255,0.025); color: var(--text-primary); }
 .save-btn.done { color: var(--success); border-color: rgba(107,227,164,0.4); }
 .dots { display: inline-flex; gap: 5px; } .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-primary); opacity: 0.4; animation: mi-d 1.2s ease-in-out infinite; }
 .dots i:nth-child(2){ animation-delay: 0.2s; } .dots i:nth-child(3){ animation-delay: 0.4s; }
@@ -118,10 +118,10 @@
 /* ---- follow-up composer ---- */
 .composer { display: flex; gap: 8px; margin-top: 16px; }
 .composer input {
-  flex: 1; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.08); color: var(--text-primary);
+  flex: 1; background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.06); color: var(--text-primary);
   border-radius: 12px; padding: 12px 15px; font-size: 14px; outline: none; font-family: inherit;
 }
-.composer input:focus { border-color: rgba(255,255,255,0.22); }
+.composer input:focus { border-color: rgba(255,255,255,0.16); }
 .composer button {
   width: 46px; border: 0; border-radius: 12px; cursor: pointer; color: #0A0A0B;
   background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); font-size: 17px;

@@ -28,8 +28,8 @@
 
 /* ===== Add-link card ===== */
 .gm-card {
-  position: relative; background: rgba(255,255,255,0.055);
-  border: 1px solid rgba(255,255,255,0.14); border-radius: 22px; padding: 18px;
+  position: relative; background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.10); border-radius: 22px; padding: 18px;
   margin-bottom: 18px; backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); box-shadow: var(--glass-shadow);
   transition: transform var(--dur-base) var(--ease-spring-soft), box-shadow var(--dur-base) var(--ease-spring-soft);
@@ -37,15 +37,15 @@
 .add-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .gm-input {
   flex: 1; min-width: 160px; padding: 11px 14px;
-  border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; background: rgba(0,0,0,0.18);
   color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
   transition: border-color 0.2s, background 0.2s;
 }
 .gm-input::placeholder { color: var(--text-tertiary); }
-.gm-input:focus { border-color: rgba(255,255,255,0.22); background: rgba(0,0,0,0.36); }
+.gm-input:focus { border-color: rgba(255,255,255,0.16); background: rgba(0,0,0,0.24); }
 .cat-select {
-  padding: 11px 12px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
-  background: rgba(0,0,0,0.28); color: var(--text-secondary); font-family: inherit;
+  padding: 11px 12px; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
+  background: rgba(0,0,0,0.18); color: var(--text-secondary); font-family: inherit;
   font-size: 13px; outline: none; cursor: pointer;
 }
 .gm-add {
@@ -63,22 +63,22 @@
 .links-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 20px; }
 .links-search {
   flex: 1; min-width: 180px; padding: 10px 14px;
-  border: 1px solid rgba(255,255,255,0.08); border-radius: 11px; background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 11px; background: rgba(255,255,255,0.01);
   color: var(--text-primary); font-family: inherit; font-size: 13px; outline: none;
   transition: border-color 0.2s;
 }
 .links-search::placeholder { color: var(--text-tertiary); }
-.links-search:focus { border-color: rgba(255,255,255,0.19); }
+.links-search:focus { border-color: rgba(255,255,255,0.14); }
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
   display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px;
-  border-radius: 999px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02);
+  border-radius: 999px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.01);
   color: var(--text-tertiary); font-size: 11.5px; font-weight: 600; cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s; white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
 }
-.chip:hover { background: rgba(255,255,255,0.045); color: var(--text-secondary); }
-.chip.on { background: rgba(255,255,255,0.12); color: var(--text-primary); border-color: rgba(255,255,255,0.22); }
+.chip:hover { background: rgba(255,255,255,0.022); color: var(--text-secondary); }
+.chip.on { background: rgba(255,255,255,0.06); color: var(--text-primary); border-color: rgba(255,255,255,0.16); }
 .chip .n { font-family: var(--font-mono); opacity: 0.7; }
 
 /* ===== Category sections ===== */
@@ -93,13 +93,13 @@
 
 .link-row {
   display: flex; align-items: center; gap: 12px; padding: 11px 12px;
-  margin-bottom: 6px; background: rgba(255,255,255,0.022); border: 1px solid rgba(255,255,255,0.14);
+  margin-bottom: 6px; background: rgba(255,255,255,0.012); border: 1px solid rgba(255,255,255,0.10);
   border-radius: 12px; text-decoration: none; transition: background 0.15s, border-color 0.15s;
 }
-.link-row:hover { background: rgba(255,255,255,0.065); border-color: rgba(255,255,255,0.10); }
+.link-row:hover { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.075); }
 .link-favicon {
   width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; object-fit: cover;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.02);
 }
 .link-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .link-title {
@@ -109,8 +109,8 @@
 .link-host { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
 .link-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .link-cat-select {
-  padding: 5px 8px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
-  background: rgba(0,0,0,0.28); color: var(--text-tertiary); font-family: inherit;
+  padding: 5px 8px; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;
+  background: rgba(0,0,0,0.18); color: var(--text-tertiary); font-family: inherit;
   font-size: 10.5px; outline: none; cursor: pointer; opacity: 0; transition: opacity 0.15s;
 }
 .link-row:hover .link-cat-select, .link-cat-select:focus { opacity: 1; }

@@ -39,10 +39,10 @@
 .topbar-water-pill {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 9px 14px;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.025);
   backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   -webkit-backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
-  border: 1px solid rgba(255,255,255,0.11);
+  border: 1px solid rgba(255,255,255,0.08);
   border-right: none;
   border-radius: 12px 0 0 12px;
   text-decoration: none;
@@ -73,7 +73,7 @@
 }
 .topbar-water-add {
   width: 44px;
-  border: 1px solid rgba(255,255,255,0.13);
+  border: 1px solid rgba(255,255,255,0.10);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.10));
   backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   -webkit-backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
@@ -91,8 +91,8 @@
 .topbar-finance-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 44px; height: 42px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
   backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   -webkit-backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   border-radius: 12px;
@@ -100,7 +100,7 @@
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, transform var(--dur-fast, 0.22s) var(--ease-spring, ease);
 }
-.topbar-finance-btn:hover { background: rgba(255,255,255,0.065); transform: translateY(-1px); }
+.topbar-finance-btn:hover { background: rgba(255,255,255,0.03); transform: translateY(-1px); }
 .topbar-finance-btn:active { transform: scale(0.92); }
 .topbar-finance-icon {
   font-size: 20px; line-height: 1;
@@ -113,8 +113,8 @@
 .topbar-focus-btn {
   display: inline-flex; align-items: center; gap: 7px;
   height: 42px; padding: 0 13px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
   backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   -webkit-backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   border-radius: 12px;
@@ -126,9 +126,9 @@
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, color 0.15s, border-color 0.15s, transform var(--dur-fast, 0.22s) var(--ease-spring, ease);
 }
-.topbar-focus-btn:hover { background: rgba(255,255,255,0.065); color: #FAFAFA; transform: translateY(-1px); }
+.topbar-focus-btn:hover { background: rgba(255,255,255,0.03); color: #FAFAFA; transform: translateY(-1px); }
 .topbar-focus-btn:active { transform: scale(0.94); }
-.topbar-focus-btn.running { color: #FAFAFA; border-color: rgba(255,255,255,0.24); background: rgba(255,255,255,0.055); }
+.topbar-focus-btn.running { color: #FAFAFA; border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.025); }
 .topbar-focus-btn.done {
   color: #6BE3A4; border-color: rgba(107,227,164,0.45); background: rgba(107,227,164,0.10);
   animation: focus-done-pulse 1.2s ease-in-out infinite;
@@ -142,7 +142,7 @@
   display: none; flex-direction: column; gap: 4px;
   min-width: 170px; padding: 7px;
   background: #101012;
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.075);
   border-radius: 13px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
 }
@@ -153,15 +153,15 @@
   color: #D8D6D0; font-family: inherit; font-size: 13px; font-weight: 600;
   cursor: pointer;
 }
-.focus-menu button:hover { background: rgba(255,255,255,0.055); color: #FFFFFF; }
+.focus-menu button:hover { background: rgba(255,255,255,0.025); color: #FFFFFF; }
 .focus-menu .focus-stop { color: #FF8A8A; }
 
 /* ===== Command palette (Cmd/Ctrl+K) ===== */
 .topbar-cmdk-btn {
   display: inline-flex; align-items: center; gap: 7px;
   height: 42px; padding: 0 13px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
   backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   -webkit-backdrop-filter: blur(var(--glass-blur, 24px)) saturate(var(--glass-sat, 180%));
   border-radius: 12px;
@@ -171,14 +171,14 @@
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, color 0.15s, transform var(--dur-fast, 0.22s) var(--ease-spring, ease);
 }
-.topbar-cmdk-btn:hover { background: rgba(255,255,255,0.065); color: #FAFAFA; transform: translateY(-1px); }
+.topbar-cmdk-btn:hover { background: rgba(255,255,255,0.03); color: #FAFAFA; transform: translateY(-1px); }
 .topbar-cmdk-btn:active { transform: scale(0.94); }
 .topbar-cmdk-kbd {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 10.5px; font-weight: 700;
   padding: 2px 6px; border-radius: 5px;
-  border: 1px solid rgba(255,255,255,0.11);
-  background: rgba(255,255,255,0.032);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.016);
   color: rgba(255, 255, 255, 0.5);
 }
 @media (max-width: 600px) {
@@ -197,7 +197,7 @@
 .cmdk {
   width: 100%; max-width: 560px;
   background: #101012;
-  border: 1px solid rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.075);
   border-radius: 16px;
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255,255,255,0.08);
   overflow: hidden;
@@ -227,7 +227,7 @@
 }
 .cmdk-item .cmdk-ic { width: 22px; text-align: center; font-size: 15px; flex-shrink: 0; filter: grayscale(100%) brightness(1.35); opacity: 0.8; }
 .cmdk-item .cmdk-sub { margin-left: auto; font-size: 11px; color: rgba(255,255,255,0.30); white-space: nowrap; }
-.cmdk-item.sel { background: rgba(255,255,255,0.065); color: #FFFFFF; }
+.cmdk-item.sel { background: rgba(255,255,255,0.03); color: #FFFFFF; }
 .cmdk-item.sel .cmdk-ic { opacity: 1; }
 .cmdk-empty { text-align: center; color: rgba(255,255,255,0.35); font-size: 13px; padding: 22px 0 26px; }
 .cmdk-foot {
@@ -240,8 +240,8 @@
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-weight: 700; font-size: 10px;
   padding: 1px 5px; border-radius: 4px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.075);
+  background: rgba(255,255,255,0.013);
   color: rgba(255,255,255,0.45);
 }
 
@@ -251,7 +251,7 @@
   display: flex; justify-content: space-around; align-items: stretch;
   padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
   background: #0a0a0b;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255,255,255,0.06);
   font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
 }
 .bottombar-tab {

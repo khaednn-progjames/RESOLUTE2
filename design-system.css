@@ -30,10 +30,10 @@
   --accent: #D8D6D0;
 
   /* ---- Surfaces (glass) ---- */
-  --surface: rgba(255, 255, 255, 0.045);
-  --surface-border: rgba(255,255,255,0.08);
-  --surface-hover: rgba(255, 255, 255, 0.07);
-  --surface-inset: rgba(0, 0, 0, 0.20);
+  --surface: rgba(255, 255, 255, 0.02);
+  --surface-border: rgba(255,255,255,0.05);
+  --surface-hover: rgba(255, 255, 255, 0.035);
+  --surface-inset: rgba(0, 0, 0, 0.13);
 
   /* ---- Type ---- */
   --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -156,8 +156,8 @@ body {
 body::before {
   content: ''; position: fixed; inset: 0;
   background:
-    radial-gradient(circle at 18% 0%, rgba(130, 170, 255, 0.14), transparent 55%),
-    radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.07), transparent 60%);
+    radial-gradient(circle at 18% 0%, rgba(130, 170, 255, 0.09), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(255, 255, 255, 0.045), transparent 60%);
   filter: blur(110px); pointer-events: none; z-index: -2;
   animation: ds-drift 60s ease-in-out infinite alternate;
 }
@@ -212,7 +212,7 @@ body::before {
 .btn-secondary:hover { background: var(--surface-hover); transform: translateY(-1px); }
 .btn-secondary:active { transform: scale(0.96); transition-duration: 0.1s; }
 .btn-ghost { background: transparent; border-color: var(--surface-border); color: var(--text-tertiary); font-weight: 600; }
-.btn-ghost:hover { color: var(--text-primary); background: rgba(255,255,255,0.032); }
+.btn-ghost:hover { color: var(--text-primary); background: rgba(255,255,255,0.016); }
 .btn-ghost:active { transform: scale(0.96); transition-duration: 0.1s; }
 .btn:disabled { opacity: 0.5; cursor: wait; transform: none; }
 
@@ -228,12 +228,12 @@ body::before {
 
 /* ---- Inputs ---- */
 .input {
-  width: 100%; padding: 11px 14px; border-radius: var(--r-sm); border: 1px solid rgba(255,255,255,0.08);
+  width: 100%; padding: 11px 14px; border-radius: var(--r-sm); border: 1px solid rgba(255,255,255,0.06);
   background: var(--surface-inset); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
   transition: border-color var(--dur-fast) ease, background var(--dur-fast) ease, box-shadow var(--dur-fast) var(--ease-spring-soft);
 }
 .input::placeholder { color: var(--text-tertiary); }
-.input:focus { border-color: rgba(255,255,255,0.22); background: rgba(0, 0, 0, 0.36); box-shadow: 0 0 0 4px rgba(255,255,255,0.06); }
+.input:focus { border-color: rgba(255,255,255,0.16); background: rgba(0,0,0,0.24); box-shadow: 0 0 0 4px rgba(255,255,255,0.06); }
 
 /* ---- Tile grid (hub-style bento) ---- */
 .bento { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 160px; grid-auto-flow: dense; gap: var(--sp-3); }
