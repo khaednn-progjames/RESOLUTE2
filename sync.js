@@ -49,6 +49,16 @@
     const TOMBSTONE_LS_KEY = 'sync:tombstones:' + appKey;
     const TOMBSTONE_MAX_AGE_MS = 30 * 86400000; // 30 days
 
+    // Guards against a delayed/out-of-order incoming snapshot (a slow
+    // network round trip, or a realtime echo of an earlier push that
+    // lands late) stomping a key we just wrote locally moments ago —
+    // e.g. rapid water +1 taps each kick off their own push, and a
+    // stale one landing after a newer local increment would otherwise
+    // silently roll the count back. Recent local writes win for a
+    // short window; the next merge cycle reconciles normally either way.
+    const RECENT_WRITE_GUARD_MS = 5000;
+    const recentLocalWrites = {};
+
     function matches(k) {
       if (!k) return false;
       if (syncedKeys.indexOf(k) !== -1) return true;
@@ -95,7 +105,12 @@
 
     localStorage.setItem = function (k, v) {
       origSet(k, v);
-      try { if (!suppressSync && matches(k)) schedulePush(); } catch (e) {}
+      try {
+        if (!suppressSync && matches(k)) {
+          recentLocalWrites[k] = Date.now();
+          schedulePush();
+        }
+      } catch (e) {}
     };
     localStorage.removeItem = function (k) {
       origRemove(k);
@@ -131,6 +146,7 @@
       try {
         for (const k of Object.keys(remote)) {
           if (k === '__tombstones__' || !matches(k)) continue;
+          if (recentLocalWrites[k] && (Date.now() - recentLocalWrites[k]) < RECENT_WRITE_GUARD_MS) continue;
           const incoming = JSON.stringify(remote[k]);
           const local = localStorage.getItem(k);
           if (local !== incoming) {

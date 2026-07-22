@@ -562,6 +562,20 @@ body.topbar-modal-open {
     } catch (e) { /* offline — local change will sync next time user visits health */ }
   }
 
+  // Debounced so a burst of rapid taps collapses into ONE push (reading
+  // the freshest count when it fires) instead of one overlapping
+  // network round trip per tap — those could complete out of order and
+  // roll the count back to whatever an earlier, now-stale tap saw.
+  let waterPushTimer = null;
+  function scheduleWaterPush() {
+    clearTimeout(waterPushTimer);
+    waterPushTimer = setTimeout(() => {
+      let state = null;
+      try { state = JSON.parse(localStorage.getItem('po_water_v1')); } catch (e) {}
+      if (state) pushWaterMergedToSupabase(state);
+    }, 600);
+  }
+
   function addWater() {
     let state = null;
     try { state = JSON.parse(localStorage.getItem('po_water_v1')); } catch (e) {}
@@ -578,7 +592,7 @@ body.topbar-modal-open {
       setTimeout(() => btn.classList.remove('flash'), 220);
     }
 
-    pushWaterMergedToSupabase(state);
+    scheduleWaterPush();
   }
 
   // -------- Focus timer (persists across pages via localStorage) --------
