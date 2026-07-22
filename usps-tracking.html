@@ -28,7 +28,7 @@
 .up-topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
 
 .gm-card {
-  position: relative; background: rgba(255,255,255,0.025);
+  position: relative; background: rgba(255,255,255,0.012);
   border: 1px solid rgba(255,255,255,0.10); border-radius: 22px; padding: 18px;
   margin-bottom: 16px; backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)); box-shadow: var(--glass-shadow);
@@ -37,12 +37,12 @@
 .add-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .gm-input {
   flex: 1; min-width: 160px; padding: 11px 14px;
-  border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; background: rgba(0,0,0,0.12);
   color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
   transition: border-color 0.2s, background 0.2s;
 }
 .gm-input::placeholder { color: var(--text-tertiary); }
-.gm-input:focus { border-color: rgba(255,255,255,0.16); background: rgba(0,0,0,0.24); }
+.gm-input:focus { border-color: rgba(255,255,255,0.16); background: rgba(0,0,0,0.16); }
 .gm-add {
   padding: 11px 22px; border: 0; border-radius: 12px;
   background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%); color: #0A0A0B;
@@ -58,7 +58,7 @@
 
 /* ---- package cards ---- */
 .pkg-card {
-  padding: 14px 16px; margin-bottom: 10px; background: rgba(255,255,255,0.012);
+  padding: 14px 16px; margin-bottom: 10px; background: rgba(255,255,255,0.006);
   border: 1px solid rgba(255,255,255,0.10); border-radius: 14px;
 }
 .pkg-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -68,10 +68,10 @@
 .pkg-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .icon-btn {
   width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.01);
+  border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.005);
   color: var(--text-tertiary); cursor: pointer; font-size: 14px; transition: background 0.15s, color 0.15s;
 }
-.icon-btn:hover { background: rgba(255,255,255,0.025); color: var(--text-primary); }
+.icon-btn:hover { background: rgba(255,255,255,0.012); color: var(--text-primary); }
 .icon-btn.danger:hover { color: var(--danger); background: rgba(255,107,107,0.10); }
 
 .pkg-status-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }

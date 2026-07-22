@@ -27,7 +27,7 @@
 }
 
 .gm-card {
-  position: relative; background: rgba(255,255,255,0.025);
+  position: relative; background: rgba(255,255,255,0.012);
   border: 1px solid rgba(255,255,255,0.10); border-radius: 22px; padding: 20px;
   margin-bottom: 14px; backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
@@ -40,18 +40,18 @@
 .month-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
 .month-nav-btn {
   width: 32px; height: 32px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 9px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.016);
+  border-radius: 9px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.008);
   color: var(--text-secondary); font-size: 17px; cursor: pointer; transition: background 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.month-nav-btn:hover { background: rgba(255,255,255,0.03); color: var(--text-primary); }
+.month-nav-btn:hover { background: rgba(255,255,255,0.015); color: var(--text-primary); }
 .month-nav-label { flex: 1; font-size: 19px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; text-align: center; }
 .month-today-btn {
-  padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.025);
+  padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.012);
   color: var(--text-primary); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
   transition: background 0.15s;
 }
-.month-today-btn:hover { background: rgba(255,255,255,0.022); }
+.month-today-btn:hover { background: rgba(255,255,255,0.01); }
 
 .gm-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
 .gm-header-left { display: flex; flex-direction: column; }
@@ -63,28 +63,28 @@
 
 .gm-streak {
   display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px;
-  background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.012); border: 1px solid rgba(255,255,255,0.10);
   color: var(--text-tertiary); font-size: 11px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase;
 }
 
 .gm-bar { display: flex; gap: 4px; height: 6px; margin-bottom: 16px; }
 .gm-bar:empty { display: none; }
-.gm-bar-seg { flex: 1; background: rgba(255,255,255,0.02); border-radius: 3px; transition: background 0.3s, box-shadow 0.3s; }
+.gm-bar-seg { flex: 1; background: rgba(255,255,255,0.01); border-radius: 3px; transition: background 0.3s, box-shadow 0.3s; }
 .gm-bar-seg-done { background: var(--success); box-shadow: 0 0 6px rgba(107,227,164,0.40); }
 
 .goal-list { list-style: none; margin: 0; padding: 0; }
 .empty-state { text-align: center; font-size: 12px; font-style: italic; color: var(--text-tertiary); padding: 14px 0; }
 .gm-row {
   display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 6px;
-  background: rgba(255,255,255,0.012); border: 1px solid rgba(255,255,255,0.10); border-radius: 12px;
+  background: rgba(255,255,255,0.006); border: 1px solid rgba(255,255,255,0.10); border-radius: 12px;
   transition: background 0.2s, opacity 0.3s;
 }
-.gm-row:hover { background: rgba(255,255,255,0.02); }
+.gm-row:hover { background: rgba(255,255,255,0.01); }
 .gm-row.gm-row-done { opacity: 0.45; background: rgba(107,227,164,0.04); }
 .gm-row.gm-row-done .gm-text { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
 .gm-check {
   appearance: none; -webkit-appearance: none; width: 22px; height: 22px; flex-shrink: 0; margin: 0;
-  border: 1.5px solid rgba(255,255,255,0.10); background: rgba(0,0,0,0.18); border-radius: 7px;
+  border: 1.5px solid rgba(255,255,255,0.10); background: rgba(0,0,0,0.12); border-radius: 7px;
   position: relative; cursor: pointer; transition: background 0.2s, border-color 0.2s, box-shadow 0.25s, transform var(--dur-fast) var(--ease-spring);
 }
 .gm-check:active { transform: scale(0.85); }
@@ -94,7 +94,7 @@
   border: solid #0A0A0B; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
 }
 .gm-text { flex: 1; font-size: 14px; color: var(--text-primary); outline: none; border-radius: 4px; padding: 2px 4px; margin: -2px -4px; }
-.gm-text[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.18); }
+.gm-text[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.12); }
 .goal-delete { border: 0; background: transparent; color: var(--text-tertiary); font-size: 18px; cursor: pointer; padding: 0 4px; opacity: 0.5; transition: opacity 0.2s, color 0.2s; }
 .gm-row:hover .goal-delete { opacity: 1; }
 .goal-delete:hover { color: var(--danger); }
@@ -102,11 +102,11 @@
 .gm-input-wrap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); }
 .gm-input {
   flex: 1; min-width: 0; padding: 11px 14px; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
-  background: rgba(0,0,0,0.18); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  background: rgba(0,0,0,0.12); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
   transition: border-color 0.2s, background 0.2s;
 }
 .gm-input::placeholder { color: var(--text-tertiary); }
-.gm-input:focus { border-color: rgba(255,255,255,0.16); background: rgba(0,0,0,0.24); }
+.gm-input:focus { border-color: rgba(255,255,255,0.16); background: rgba(0,0,0,0.16); }
 .gm-add {
   padding: 11px 20px; border: 0; border-radius: 12px; background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
   color: #0A0A0B; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
@@ -120,23 +120,23 @@
 .planner-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
 .planner-tab {
   flex: 1; padding: 10px 14px; border-radius: 11px; border: 1px solid rgba(255,255,255,0.06);
-  background: rgba(255,255,255,0.013); color: var(--text-tertiary); font-family: inherit; font-size: 13px; font-weight: 600;
+  background: rgba(255,255,255,0.006); color: var(--text-tertiary); font-family: inherit; font-size: 13px; font-weight: 600;
   cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.planner-tab:hover { background: rgba(255,255,255,0.025); color: var(--text-secondary); }
-.planner-tab.active { background: rgba(255,255,255,0.045); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
+.planner-tab:hover { background: rgba(255,255,255,0.012); color: var(--text-secondary); }
+.planner-tab.active { background: rgba(255,255,255,0.02); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
 
 /* Cross-view "next event" banner shown inside the Goals tab */
 .next-event-pill {
   display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
   padding: 10px 13px; margin-bottom: 16px; border-radius: 11px;
-  border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.016);
+  border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.008);
   color: var(--text-secondary); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
   transition: background 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
-.next-event-pill:hover { background: rgba(255,255,255,0.025); color: var(--text-primary); }
+.next-event-pill:hover { background: rgba(255,255,255,0.012); color: var(--text-primary); }
 .next-event-pill b { color: var(--text-primary); font-weight: 700; }
 .next-event-pill .arrow { opacity: 0.6; flex-shrink: 0; }
 
@@ -144,16 +144,16 @@
 .event-list { list-style: none; margin: 0; padding: 0; }
 .event-row {
   display: flex; align-items: center; gap: 14px; padding: 14px;
-  margin-bottom: 8px; background: rgba(255,255,255,0.012);
+  margin-bottom: 8px; background: rgba(255,255,255,0.006);
   border: 1px solid rgba(255,255,255,0.10); border-radius: 12px;
   transition: background 0.2s, opacity 0.3s;
 }
-.event-row:hover { background: rgba(255,255,255,0.02); }
+.event-row:hover { background: rgba(255,255,255,0.01); }
 .event-row.past { opacity: 0.4; }
 .event-count {
   flex-shrink: 0; min-width: 74px; text-align: center;
   padding: 9px 8px; border-radius: 10px;
-  background: rgba(255,255,255,0.016); border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.008); border: 1px solid rgba(255,255,255,0.06);
 }
 .event-count .n {
   display: block; font-size: 21px; font-weight: 700; line-height: 1;
@@ -169,7 +169,7 @@
 .event-row.today-row .event-count .n { color: var(--success); font-size: 14px; line-height: 1.5; }
 .event-main { flex: 1; min-width: 0; }
 .event-name { font-size: 15px; font-weight: 600; color: var(--text-primary); outline: none; border-radius: 4px; padding: 1px 4px; margin: -1px -4px; }
-.event-name[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.18); }
+.event-name[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.12); }
 .event-date { font-size: 11.5px; color: var(--text-tertiary); font-family: var(--font-mono); margin-top: 3px; }
 .event-del {
   border: 0; background: transparent; color: var(--text-tertiary);
@@ -185,12 +185,12 @@ input.gm-input[type="date"] { flex: 0 1 175px; color-scheme: dark; }
 .month-strip::-webkit-scrollbar { display: none; }
 .month-chip {
   flex-shrink: 0; padding: 8px 12px; border-radius: 11px; border: 1px solid rgba(255,255,255,0.06);
-  background: rgba(255,255,255,0.01); color: var(--text-tertiary); font-family: inherit; font-size: 11.5px; font-weight: 600;
+  background: rgba(255,255,255,0.005); color: var(--text-tertiary); font-family: inherit; font-size: 11.5px; font-weight: 600;
   cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
 }
-.month-chip:hover { background: rgba(255,255,255,0.022); color: var(--text-secondary); }
-.month-chip.active { background: rgba(255,255,255,0.045); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
+.month-chip:hover { background: rgba(255,255,255,0.01); color: var(--text-secondary); }
+.month-chip.active { background: rgba(255,255,255,0.02); color: var(--text-primary); border-color: rgba(255,255,255,0.26); }
 .month-chip .n { display: block; font-family: var(--font-mono); font-size: 9.5px; color: var(--text-tertiary); margin-top: 2px; }
 .month-chip.active .n { color: var(--text-secondary); }
 
@@ -200,11 +200,11 @@ input.gm-input[type="date"] { flex: 0 1 175px; color-scheme: dark; }
   margin-bottom: 10px; font-size: 11.5px; color: var(--text-tertiary);
 }
 .dayplan-location-row button {
-  border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.013); color: var(--text-secondary);
+  border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.006); color: var(--text-secondary);
   font-family: inherit; font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 999px;
   cursor: pointer; transition: background 0.15s, color 0.15s; flex-shrink: 0;
 }
-.dayplan-location-row button:hover { background: rgba(255,255,255,0.025); color: var(--text-primary); }
+.dayplan-location-row button:hover { background: rgba(255,255,255,0.012); color: var(--text-primary); }
 .dayplan-context-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
 .dayplan-context-row .gm-input { min-width: 220px; }
 .dayplan-status { font-size: 12px; color: var(--text-tertiary); margin: -6px 0 14px; line-height: 1.5; }
@@ -212,25 +212,25 @@ input.gm-input[type="date"] { flex: 0 1 175px; color-scheme: dark; }
 .dayplan-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 10px; line-height: 1.5; }
 .dayplan-row {
   display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; margin-bottom: 6px;
-  background: rgba(255,255,255,0.012); border: 1px solid rgba(255,255,255,0.10); border-radius: 12px;
+  background: rgba(255,255,255,0.006); border: 1px solid rgba(255,255,255,0.10); border-radius: 12px;
   transition: background 0.2s, opacity 0.3s;
 }
-.dayplan-row:hover { background: rgba(255,255,255,0.02); }
+.dayplan-row:hover { background: rgba(255,255,255,0.01); }
 .dayplan-row.gm-row-done { opacity: 0.45; background: rgba(107,227,164,0.04); }
 .dayplan-row.gm-row-done .dayplan-title { text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4); }
 .dayplan-check { margin-top: 2px; }
 .dayplan-time {
   flex-shrink: 0; min-width: 62px; text-align: center; padding: 5px 6px; margin-top: 1px;
-  border-radius: 8px; background: rgba(255,255,255,0.016); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px; background: rgba(255,255,255,0.008); border: 1px solid rgba(255,255,255,0.06);
   font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: var(--text-primary);
 }
 .dayplan-main { flex: 1; min-width: 0; }
 .dayplan-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dayplan-title { font-size: 14px; font-weight: 600; color: var(--text-primary); outline: none; border-radius: 4px; padding: 1px 4px; margin: -1px -4px; }
-.dayplan-title[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.18); }
+.dayplan-title[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.12); }
 .dayplan-tag {
   font-size: 9.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-tertiary);
-  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 999px; padding: 2px 8px; flex-shrink: 0;
+  background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.06); border-radius: 999px; padding: 2px 8px; flex-shrink: 0;
 }
 .dayplan-duration { font-size: 10.5px; color: var(--text-tertiary); font-family: var(--font-mono); flex-shrink: 0; }
 .dayplan-meta { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.4; }

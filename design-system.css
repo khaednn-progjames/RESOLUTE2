@@ -30,10 +30,10 @@
   --accent: #D8D6D0;
 
   /* ---- Surfaces (glass) ---- */
-  --surface: rgba(255, 255, 255, 0.02);
+  --surface: rgba(255, 255, 255, 0.01);
   --surface-border: rgba(255,255,255,0.05);
-  --surface-hover: rgba(255, 255, 255, 0.035);
-  --surface-inset: rgba(0, 0, 0, 0.13);
+  --surface-hover: rgba(255, 255, 255, 0.02);
+  --surface-inset: rgba(0, 0, 0, 0.10);
 
   /* ---- Type ---- */
   --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;

@@ -72,7 +72,7 @@
 /* THE GLASS CARD — the main building block. Wrap any section in this. */
 .gm-card {
   position: relative;
-  background: rgba(255,255,255,0.013);
+  background: rgba(255,255,255,0.006);
   border-radius: 22px;
   padding: 20px;
   margin-bottom: 14px;
@@ -111,7 +111,7 @@
 .gm-streak {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 12px; border-radius: 999px;
-  background: rgba(255,255,255,0.025);
+  background: rgba(255,255,255,0.012);
   border: 1px solid rgba(255,255,255,0.10);
   color: var(--text-tertiary);
   font-size: 11px; font-weight: 600;
@@ -125,7 +125,7 @@
   gap: 12px;
 }
 .stat {
-  background: rgba(255,255,255,0.012);
+  background: rgba(255,255,255,0.006);
   border: 1px solid rgba(255,255,255,0.10);
   border-radius: 12px; padding: 14px;
 }
@@ -150,12 +150,12 @@
 .gm-row {
   display: flex; align-items: center; gap: 12px;
   padding: 12px 14px; margin-bottom: 6px;
-  background: rgba(255,255,255,0.012);
+  background: rgba(255,255,255,0.006);
   border: 1px solid rgba(255,255,255,0.10);
   border-radius: 12px;
   transition: background 0.2s, opacity 0.3s;
 }
-.gm-row:hover { background: rgba(255,255,255,0.02); }
+.gm-row:hover { background: rgba(255,255,255,0.01); }
 .gm-row.gm-row-done { opacity: 0.45; background: rgba(107,227,164,0.04); }
 .gm-row.gm-row-done .gm-text {
   text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.4);
@@ -164,7 +164,7 @@
   appearance: none; -webkit-appearance: none;
   width: 22px; height: 22px; flex-shrink: 0; margin: 0;
   border: 1.5px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.18); border-radius: 7px;
+  background: rgba(0,0,0,0.12); border-radius: 7px;
   position: relative; cursor: pointer;
   transition: background 0.2s, border-color 0.2s, box-shadow 0.25s, transform var(--dur-fast) var(--ease-spring);
 }
@@ -185,7 +185,7 @@
   outline: none; border-radius: 4px; padding: 2px 4px; margin: -2px -4px;
 }
 .gm-text[contenteditable="true"] {
-  outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.18);
+  outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.12);
 }
 .goal-delete {
   border: 0; background: transparent; color: var(--text-tertiary);
@@ -205,13 +205,13 @@
   flex: 1; min-width: 0;
   padding: 11px 14px;
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px; background: rgba(0,0,0,0.18);
+  border-radius: 12px; background: rgba(0,0,0,0.12);
   color: var(--text-primary);
   font-family: inherit; font-size: 14px; outline: none;
   transition: border-color 0.2s, background 0.2s;
 }
 .gm-input::placeholder { color: var(--text-tertiary); }
-.gm-input:focus { border-color: rgba(255,255,255,0.16); background: rgba(0,0,0,0.24); }
+.gm-input:focus { border-color: rgba(255,255,255,0.16); background: rgba(0,0,0,0.16); }
 
 /* Primary (light) button. */
 .gm-add {
@@ -232,12 +232,12 @@
 .gm-ghost {
   padding: 11px 18px;
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 12px; background: rgba(255,255,255,0.025);
+  border-radius: 12px; background: rgba(255,255,255,0.012);
   color: var(--text-primary);
   font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
-.gm-ghost:hover { background: rgba(255,255,255,0.022); border-color: rgba(255,255,255,0.10); }
+.gm-ghost:hover { background: rgba(255,255,255,0.01); border-color: rgba(255,255,255,0.10); }
 
 @media (max-width: 480px) {
   body { padding: max(78px, calc(env(safe-area-inset-top) + 64px)) 14px 50px; }

@@ -26,7 +26,7 @@
 }
 
 .gm-card {
-  position: relative; background: rgba(255,255,255,0.025);
+  position: relative; background: rgba(255,255,255,0.012);
   border: 1px solid rgba(255,255,255,0.10); border-radius: 22px; padding: 20px;
   margin-bottom: 14px; backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
@@ -39,15 +39,15 @@
 .maint-list { list-style: none; margin: 0; padding: 0; }
 .maint-row {
   display: flex; align-items: center; gap: 14px; padding: 14px;
-  margin-bottom: 8px; background: rgba(255,255,255,0.012);
+  margin-bottom: 8px; background: rgba(255,255,255,0.006);
   border: 1px solid rgba(255,255,255,0.10); border-radius: 12px;
   transition: background 0.2s;
 }
-.maint-row:hover { background: rgba(255,255,255,0.02); }
+.maint-row:hover { background: rgba(255,255,255,0.01); }
 .maint-status {
   flex-shrink: 0; min-width: 78px; text-align: center;
   padding: 9px 8px; border-radius: 10px;
-  background: rgba(255,255,255,0.016); border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.008); border: 1px solid rgba(255,255,255,0.06);
 }
 .maint-status .n { display: block; font-size: 15px; font-weight: 700; line-height: 1.2; color: var(--text-primary); }
 .maint-status .u { display: block; font-size: 8.5px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-tertiary); margin-top: 3px; }
@@ -57,12 +57,12 @@
 .maint-row.soon .maint-status .n { color: #F2C063; }
 .maint-main { flex: 1; min-width: 0; }
 .maint-name { font-size: 15px; font-weight: 600; color: var(--text-primary); outline: none; border-radius: 4px; padding: 1px 4px; margin: -1px -4px; }
-.maint-name[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.18); }
+.maint-name[contenteditable="true"] { outline: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.12); }
 .maint-meta { font-size: 11.5px; color: var(--text-tertiary); font-family: var(--font-mono); margin-top: 3px; }
 .maint-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .maint-done-btn {
   padding: 7px 12px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.02); color: var(--text-secondary);
+  background: rgba(255,255,255,0.01); color: var(--text-secondary);
   font-family: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer; transition: background 0.15s, color 0.15s;
   white-space: nowrap;
 }
@@ -78,11 +78,11 @@
 .gm-input-wrap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); }
 .gm-input {
   flex: 1; min-width: 140px; padding: 11px 14px; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px;
-  background: rgba(0,0,0,0.18); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
+  background: rgba(0,0,0,0.12); color: var(--text-primary); font-family: inherit; font-size: 14px; outline: none;
   transition: border-color 0.2s, background 0.2s;
 }
 .gm-input::placeholder { color: var(--text-tertiary); }
-.gm-input:focus { border-color: rgba(255,255,255,0.16); background: rgba(0,0,0,0.24); }
+.gm-input:focus { border-color: rgba(255,255,255,0.16); background: rgba(0,0,0,0.16); }
 .gm-input.maint-interval-num { flex: 0 1 80px; }
 .gm-input.maint-interval-unit { flex: 0 1 110px; cursor: pointer; }
 .gm-add {
