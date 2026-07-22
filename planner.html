@@ -280,7 +280,7 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
     <div class="gm-card">
       <div class="month-nav">
         <button class="month-nav-btn" id="prevMonthBtn" type="button" aria-label="Previous month">‹</button>
-        <div class="month-nav-label" id="monthLabel">—</div>
+        <div class="month-nav-label" id="monthLabel">-</div>
         <button class="month-nav-btn" id="nextMonthBtn" type="button" aria-label="Next month">›</button>
         <button class="month-today-btn" id="todayBtn" type="button" style="display:none">Today</button>
       </div>
@@ -301,7 +301,7 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
       <div class="gm-bar" id="gmBar"></div>
 
       <ul class="goal-list" id="goalList"></ul>
-      <div class="empty-state" id="emptyState">No goals for this month yet — add one below.</div>
+      <div class="empty-state" id="emptyState">No goals for this month yet, add one below.</div>
 
       <div class="gm-input-wrap">
         <input class="gm-input" id="goalInput" type="text" placeholder="Add a goal for this month…" autocomplete="off">
@@ -325,32 +325,32 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
       <div class="gm-bar" id="dayplanBar"></div>
 
       <div class="dayplan-location-row" id="dayplanLocationRow">
-        <span id="dayplanLocationLabel">Planning without a location — suggestions will be general.</span>
+        <span id="dayplanLocationLabel">Planning without a location, suggestions will be general.</span>
         <button type="button" id="dayplanLocationBtn">Share my location</button>
       </div>
 
       <div class="dayplan-context-row">
-        <input class="gm-input" id="dayplanPreferenceInput" type="text" placeholder="Anything specific? (optional — e.g. outdoors, budget-friendly, with the dog)">
+        <input class="gm-input" id="dayplanPreferenceInput" type="text" placeholder="Anything specific? (optional, e.g. outdoors, budget-friendly, with the dog)">
         <button class="gm-add" id="dayplanGenerateBtn" type="button">Generate ideas</button>
       </div>
       <div class="dayplan-status" id="dayplanStatus"></div>
 
       <ul class="goal-list" id="dayplanList"></ul>
-      <div class="empty-state" id="dayplanEmpty">Nothing planned yet — let Sirius suggest something, or add your own below.</div>
+      <div class="empty-state" id="dayplanEmpty">Nothing planned yet, let Sirius suggest something, or add your own below.</div>
 
       <div class="dayplan-manual-row">
         <input class="gm-input" id="dayplanTimeInput" type="time" value="12:00">
         <input class="gm-input" id="dayplanTitleInput" type="text" placeholder="Add something yourself…" style="flex:2; min-width:140px">
         <button class="gm-add" id="dayplanAddBtn" type="button">+ Add</button>
       </div>
-      <div class="dayplan-hint">Generating replaces old AI suggestions with new ones based on your preference — tap ☆ on any you want to keep so it survives. Things you add yourself are never cleared. Parking/hours notes are Sirius's best-guess based on the type of place — worth a quick check before you go.</div>
+      <div class="dayplan-hint">Generating replaces old AI suggestions with new ones based on your preference, tap ☆ on any you want to keep so it survives. Things you add yourself are never cleared. Parking/hours notes are Sirius's best-guess based on the type of place, worth a quick check before you go.</div>
     </div>
   </div>
 
   <div id="eventsView" style="display:none">
     <div class="gm-card">
       <ul class="event-list" id="eventList"></ul>
-      <div class="empty-state" id="eventsEmpty">Nothing coming up — add a birthday, deadline, or trip below.</div>
+      <div class="empty-state" id="eventsEmpty">Nothing coming up, add a birthday, deadline, or trip below.</div>
 
       <div class="gm-input-wrap">
         <input class="gm-input" id="eventName" type="text" placeholder="Event (e.g. Mom's birthday)" autocomplete="off">
@@ -445,7 +445,7 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
     if (!next) { pill.style.display = 'none'; return; }
     pill.style.display = 'flex';
     const when = next.days === 0 ? 'today' : next.days === 1 ? 'tomorrow' : 'in ' + next.days + ' days';
-    pill.innerHTML = '<span>Next up: <b>' + escHtml(next.name) + '</b> — ' + when + '</span><span class="arrow">Events →</span>';
+    pill.innerHTML = '<span>Next up: <b>' + escHtml(next.name) + '</b>, ' + when + '</span><span class="arrow">Events →</span>';
   }
 
   function renderEvents() {
@@ -577,7 +577,7 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
-        system: system,
+        system: system + ' Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.',
         messages: [{ role: 'user', content: userText }],
       }),
     });
@@ -602,10 +602,10 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
       label.textContent = 'Planning for: ' + loc.label;
       btn.textContent = 'Update';
     } else if (loc && loc.denied) {
-      label.textContent = 'Location not shared — suggestions will be general.';
+      label.textContent = 'Location not shared, suggestions will be general.';
       btn.textContent = 'Try again';
     } else {
-      label.textContent = 'Planning without a location — suggestions will be general.';
+      label.textContent = 'Planning without a location, suggestions will be general.';
       btn.textContent = 'Share my location';
     }
   }
@@ -653,7 +653,7 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
 
   async function generateDayPlan() {
     if (!apiKey()) {
-      dayPlanStatus('No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.', true);
+      dayPlanStatus('No API key yet, open the Sirius tile from the home screen and paste your Anthropic key there first.', true);
       return;
     }
     const btn = $('dayplanGenerateBtn');
@@ -674,13 +674,13 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
     const location = await ensureLocation();
 
     const system = "You are Sirius, planning the user's day. " +
-      "If they gave a stated preference, that is your FIRST job: read it and pull out every concrete constraint in it — a time window or range ('5pm-9pm', 'after 6'), a mode of transport ('with car', 'on foot', 'no car'), a budget, an activity type, who's involved, anything specific — and treat each one as a hard requirement every single suggestion must satisfy. This is not a vibe to reference, it's a spec to follow exactly. " +
-      "If they gave a specific time window, EVERY suggested time must fall inside that exact window — do not spread suggestions across the rest of the day instead; only fill the window they gave, even if that means fewer suggestions. If no window was given, spread sensibly across the hours actually left in the day. " +
+      "If they gave a stated preference, that is your FIRST job: read it and pull out every concrete constraint in it, a time window or range ('5pm-9pm', 'after 6'), a mode of transport ('with car', 'on foot', 'no car'), a budget, an activity type, who's involved, anything specific, and treat each one as a hard requirement every single suggestion must satisfy. This is not a vibe to reference, it's a spec to follow exactly. " +
+      "If they gave a specific time window, EVERY suggested time must fall inside that exact window, do not spread suggestions across the rest of the day instead; only fill the window they gave, even if that means fewer suggestions. If no window was given, spread sensibly across the hours actually left in the day. " +
       "If they mentioned a mode of transport, every suggestion must be consistent with it (e.g. 'with car' means lean into things worth driving to, not just walkable/at-home ideas; 'no car' or 'on foot' means nothing that requires driving). " +
-      "Prioritize a small number of genuinely good, specific suggestions over hitting a target count — 2 suggestions that actually fit their constraints beats 5 that ignore them. " +
+      "Prioritize a small number of genuinely good, specific suggestions over hitting a target count, 2 suggestions that actually fit their constraints beats 5 that ignore them. " +
       "For EACH suggestion give: a specific time in 24-hour HH:MM format, a short title (3-8 words), a category (one of: Food, Outdoor, Errand, Social, Fitness, Relaxation, Other), an estimated duration (e.g. '45 min', '2 hr'), and a parking note. " +
-      "For the parking note: ONLY if the activity involves going somewhere by car, give brief, general, realistic guidance based on the TYPE of place (e.g. 'usually metered street parking nearby', 'often has a free lot on-site') — never invent a specific named business you can't verify exists; describe the type of venue instead (e.g. 'a nearby coffee shop', 'the local park'). If parking isn't relevant, write exactly n/a. " +
-      "If a location is given, use your general knowledge of that city/area (climate, geography, typical local activity types) to make suggestions feel genuinely local — but still never invent a specific real business name or address you can't verify; describe generic venue types instead (e.g. 'a local taco spot' not a made-up restaurant name). " +
+      "For the parking note: ONLY if the activity involves going somewhere by car, give brief, general, realistic guidance based on the TYPE of place (e.g. 'usually metered street parking nearby', 'often has a free lot on-site'), never invent a specific named business you can't verify exists; describe the type of venue instead (e.g. 'a nearby coffee shop', 'the local park'). If parking isn't relevant, write exactly n/a. " +
+      "If a location is given, use your general knowledge of that city/area (climate, geography, typical local activity types) to make suggestions feel genuinely local, but still never invent a specific real business name or address you can't verify; describe generic venue types instead (e.g. 'a local taco spot' not a made-up restaurant name). " +
       "Don't repeat their existing goals or what's already kept on today's plan. " +
       "Respond with ONLY one line per suggestion, in EXACTLY this format:\n" +
       "ITEM: <HH:MM> | <title> | <category> | <duration> | <parking note or n/a>\n" +
@@ -719,11 +719,11 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
         survivorTitles.add(title.toLowerCase());
       });
       if (added.length === 0) {
-        dayPlanStatus("Sirius didn't find anything new to add — try a more specific preference.");
+        dayPlanStatus("Sirius didn't find anything new to add, try a more specific preference.");
       } else {
         saveDayPlan(survivors.concat(added));
         dayPlanStatus(
-          (clearedCount > 0 ? 'Replaced ' + clearedCount + ' idea' + (clearedCount === 1 ? '' : 's') + ' — a' : 'A') +
+          (clearedCount > 0 ? 'Replaced ' + clearedCount + ' idea' + (clearedCount === 1 ? '' : 's') + ', a' : 'A') +
           'dded ' + added.length + ' new idea' + (added.length === 1 ? '' : 's') + '.'
         );
         renderDayPlan();
@@ -820,7 +820,7 @@ input.gm-input[type="time"] { flex: 0 1 130px; min-width: 130px; color-scheme: d
         keepBtn.type = 'button';
         keepBtn.className = 'dayplan-keep-btn' + (it.kept ? ' on' : '');
         keepBtn.textContent = it.kept ? '★' : '☆';
-        keepBtn.title = it.kept ? 'Kept — survives the next Generate' : 'Keep this — survives the next Generate';
+        keepBtn.title = it.kept ? 'Kept, survives the next Generate' : 'Keep this, survives the next Generate';
         keepBtn.addEventListener('click', () => {
           const arr = loadDayPlan();
           const entry = arr.find((x) => x.id === it.id);

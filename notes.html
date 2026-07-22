@@ -532,7 +532,7 @@
           </div>
         </div>
         <div class="notes-meta-row">
-          <div class="notes-meta" id="notesMeta">—</div>
+          <div class="notes-meta" id="notesMeta">-</div>
           <select class="notes-cat-select" id="notesCatSelect"></select>
         </div>
         <div id="editor"></div>
@@ -564,13 +564,13 @@
         <div class="gm-bar" id="gmBar"></div>
 
         <ul class="idea-list" id="ideaList"></ul>
-        <div id="ideasEmptyState" class="notes-empty">No ideas yet — jot one below.</div>
+        <div id="ideasEmptyState" class="notes-empty">No ideas yet, jot one below.</div>
 
         <div class="gm-input-wrap">
           <input id="ideaInput" class="gm-input" type="text" placeholder="A feature idea for the dashboard…" autocomplete="off">
           <button type="button" id="ideaAddBtn" class="gm-add">+ Add</button>
         </div>
-        <div class="ideas-hint">Check an idea off once it's built. Hover an idea for a "»" button to have Sirius flesh it out. "Copy for Claude" puts the whole list on your clipboard — paste it into a Claude Code chat to have it built.</div>
+        <div class="ideas-hint">Check an idea off once it's built. Hover an idea for a "»" button to have Sirius flesh it out. "Copy for Claude" puts the whole list on your clipboard, paste it into a Claude Code chat to have it built.</div>
       </div>
     </section>
   </div>
@@ -602,7 +602,7 @@
   <div class="graph-hint" id="graphAutoLinkStatus" style="display:none"></div>
   <div class="graph-canvas-wrap">
     <svg id="graphSvg"></svg>
-    <div class="graph-empty" id="graphEmpty" style="display:none">Link notes with <code>[[Note Title]]</code> — or connect them yourself, or let "Auto Link" above find the connections for you.</div>
+    <div class="graph-empty" id="graphEmpty" style="display:none">Link notes with <code>[[Note Title]]</code>, or connect them yourself, or let "Auto Link" above find the connections for you.</div>
   </div>
 </div>
 
@@ -612,7 +612,7 @@
   const $ = (id) => document.getElementById(id);
   const INDEX_KEY = 'notes:index';
   const DOC_PREFIX = 'notes:doc:';
-  const ACTIVE_KEY = 'notesActiveId'; // deliberately NOT prefixed 'notes:' — local-only, not synced
+  const ACTIVE_KEY = 'notesActiveId'; // deliberately NOT prefixed 'notes:', local-only, not synced
   const IDEAS_ID = '__IDEAS__'; // sentinel activeId for the pinned Dashboard Ideas view
   const IDEAS_KEY = 'ideas:items';
   const DAILY_MAP_KEY = 'notes:dailyMap'; // maps 'YYYY-MM-DD' -> note id
@@ -883,22 +883,22 @@
     const m = SCRIPTURE_RE.exec(textBefore);
     if (!m) { hideScriptureSuggest(); return; }
     const start = lineStartIndex + m.index;
-    if (start === scriptureDismissedAt) return; // user explicitly closed this one — don't reopen until they type more
+    if (start === scriptureDismissedAt) return; // user explicitly closed this one, don't reopen until they type more
     showScriptureSuggest(start, lineStartIndex + m.index + m[0].length, m[0]);
   }
 
   async function confirmScripture() {
     const start = scriptureStart, end = scriptureEnd, ref = scriptureRef;
     hideScriptureSuggest();
-    if (!ref || !siriusKey()) return; // quiet background convenience — no key configured means no-op, not an error popup
+    if (!ref || !siriusKey()) return; // quiet background convenience, no key configured means no-op, not an error popup
     const system = "You are a Bible reference lookup embedded in a note-taking app. The user typed the reference below. " +
-      "Respond with ONLY the exact verse text from the New World Translation of the Holy Scriptures (NWT) for that reference — nothing else: no preamble, no repeated reference, no surrounding quotation marks. " +
+      "Respond with ONLY the exact verse text from the New World Translation of the Holy Scriptures (NWT) for that reference, nothing else: no preamble, no repeated reference, no surrounding quotation marks. " +
       "For a verse range, include every verse, each preceded by its verse number in square brackets, like [16] verse text [17] next verse text. " +
       "If you are not confident of the precise NWT wording for this exact reference, respond with exactly: UNSURE";
     try {
       const reply = await callSirius(system, ref, 'notes-scripture');
       const text = (reply || '').trim();
-      if (!text || /^unsure$/i.test(text)) return; // fail silently — this is a passive convenience, not a user-initiated action worth an error dialog
+      if (!text || /^unsure$/i.test(text)) return; // fail silently, this is a passive convenience, not a user-initiated action worth an error dialog
       const Delta = Quill.import('delta');
       const delta = new Delta().retain(start).delete(end - start)
         .insert(ref, { bold: true })
@@ -1206,7 +1206,7 @@
     if (!id || !idx.find((n) => n.id === id)) {
       id = newId();
       const dateLabel = weekOccurrenceDate(meeting.weekday).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
-      const title = meeting.label + ' — ' + dateLabel;
+      const title = meeting.label + ', ' + dateLabel;
       idx.unshift({ id, title, category: 'Meeting Notes', updatedAt: Date.now(), pinned: false });
       saveIndex(idx);
       saveJSON(DOC_PREFIX + id, { ops: [{ insert: '\n' }] });
@@ -1356,7 +1356,7 @@
       '<div class="sirius-key-form">' +
       '<div class="sirius-key-row"><input id="siriusKeyInput" type="password" placeholder="paste your Anthropic API key (sk-ant-…)" autocomplete="off">' +
       '<button id="siriusKeySave" type="button">Save</button></div>' +
-      '<div class="sirius-key-hint">Stored only in this browser, sent straight to Anthropic. Shared with the Sirius mentor tile — paste it once. ' +
+      '<div class="sirius-key-hint">Stored only in this browser, sent straight to Anthropic. Shared with the Sirius mentor tile, paste it once. ' +
       'Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.</div>' +
       '</div>';
     $('siriusKeySave').addEventListener('click', () => {
@@ -1389,7 +1389,7 @@
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1024,
-        system: systemPrompt,
+        system: systemPrompt + ' Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.',
         messages: messages,
       }),
     });
@@ -1414,14 +1414,14 @@
 
     const existingTitles = sortedIndex().slice(0, 30).map(n => n.title || 'Untitled');
     const system = "You are Sirius, the user's personal mentor embedded in their notes app. " +
-      "Suggest fresh, specific things they could write a note about — a mix of reflections, plans, and ideas worth capturing. " +
+      "Suggest fresh, specific things they could write a note about, a mix of reflections, plans, and ideas worth capturing. " +
       "Avoid repeating topics too close to their existing note titles listed below. " +
       "Format every suggestion as a '- ' bullet point, one short sentence each, no preamble. Give 6-8 suggestions.\n\n" +
       "Existing note titles: " + (existingTitles.length ? existingTitles.join(', ') : '(no notes yet)');
 
     callSirius(system, 'Give me ideas for notes to write.', 'notes-ideas').then(reply => {
       const ideas = bulletLines(reply);
-      if (ideas.length === 0) { renderSiriusError('Sirius didn\'t return any ideas — try again.'); return; }
+      if (ideas.length === 0) { renderSiriusError('Sirius didn\'t return any ideas, try again.'); return; }
       $('siriusModalBody').innerHTML = ideas.map((idea, i) =>
         '<div class="sirius-idea-row"><div class="sirius-idea-text">' + siriusEsc(idea) + '</div>' +
         '<button class="sirius-idea-add" data-idea="' + i + '" type="button">+ New note</button></div>'
@@ -1444,12 +1444,12 @@
     openSiriusModal('Summarize this note');
     if (!activeId) { renderSiriusError('Open a note first.'); return; }
     const text = quill.getText().trim();
-    if (!text) { renderSiriusError('This note is empty — write something first.'); return; }
+    if (!text) { renderSiriusError('This note is empty, write something first.'); return; }
     if (!siriusKey()) { renderKeyForm(runSiriusSummarize); return; }
     renderSiriusLoading();
 
     const system = "You are Sirius, the user's personal mentor embedded in their notes app. " +
-      "Summarize the note below concisely — 2-4 short bullet points capturing the key ideas, formatted as '- ' bullet points. No preamble.";
+      "Summarize the note below concisely, 2-4 short bullet points capturing the key ideas, formatted as '- ' bullet points. No preamble.";
 
     callSirius(system, text, 'notes-summarize').then(reply => {
       const lines = bulletLines(reply);
@@ -1502,7 +1502,7 @@
         }
       }
     }
-    lines.push('Goals this week — ' + goalsDone + '/' + goalsTotal + ' done across ' + daysWithGoals + ' active days:');
+    lines.push('Goals this week, ' + goalsDone + '/' + goalsTotal + ' done across ' + daysWithGoals + ' active days:');
     lines.push(perDay.length ? perDay.join('\n') : '(no goals set this week)');
 
     const water = loadJSON('po_water_v1', null);
@@ -1534,7 +1534,7 @@
   }
 
   let solutionMessages = [];  // conversation so far, for follow-ups within this modal session
-  let solutionSummary = '';   // parsed out of the FIRST reply only — what the Insert button uses
+  let solutionSummary = '';   // parsed out of the FIRST reply only, what the Insert button uses
   let solutionPlanText = '';
   let solutionLines = [];
 
@@ -1542,7 +1542,7 @@
     openSiriusModal('Get a Solution');
     if (!activeId || activeId === IDEAS_ID) { renderSiriusError('Open a note first.'); return; }
     const text = quill.getText().trim();
-    if (!text) { renderSiriusError('This note is empty — write something first.'); return; }
+    if (!text) { renderSiriusError('This note is empty, write something first.'); return; }
     if (!siriusKey()) { renderKeyForm(openSiriusSolution); return; }
     solutionMessages = [];
     solutionSummary = '';
@@ -1616,11 +1616,11 @@
       ? "You are Sirius, the user's personal mentor. The note below describes a situation, problem, or something " +
         "they're working through. Using the real context about their life below, respond in EXACTLY this format:\n" +
         "SUMMARY: <one plain sentence capturing what the note is actually about>\n" +
-        "PLAN:\n<a detailed, concrete, actionable plan to address it — specific steps as '- ' bullet points, not generic advice. " +
-        "Reference their actual context (goals, finances, time, etc.) where it genuinely makes the plan more realistic or personal — don't force it if a data point isn't relevant.>\n\n" +
+        "PLAN:\n<a detailed, concrete, actionable plan to address it, specific steps as '- ' bullet points, not generic advice. " +
+        "Reference their actual context (goals, finances, time, etc.) where it genuinely makes the plan more realistic or personal, don't force it if a data point isn't relevant.>\n\n" +
         "Their current context:\n" + collectUserContext()
       : "You are Sirius, continuing the conversation about the plan you already gave for this note. " +
-        "Answer the follow-up directly and specifically, staying consistent with the plan and context already established — don't restate the whole plan. " +
+        "Answer the follow-up directly and specifically, staying consistent with the plan and context already established, don't restate the whole plan. " +
         "A few sentences or a short bullet list, plain text, no preamble.";
 
     callSirius(system, solutionMessages, 'notes-solution').then((reply) => {
@@ -1671,12 +1671,12 @@
     snapshotMessages = [];
     snapshotResultTitle = ''; snapshotResultPurpose = ''; snapshotResultExcerpt = '';
     $('siriusModalBody').innerHTML =
-      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px">Paste an excerpt, or upload one or more screenshots of the article — Sirius reads them and files it into this note.</div>' +
+      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px">Paste an excerpt, or upload one or more screenshots of the article, Sirius reads them and files it into this note.</div>' +
       '<textarea id="snapshotArticleInput" class="sirius-textarea" style="min-height:110px" placeholder="Paste the article or excerpt…"></textarea>' +
       '<button class="sirius-btn" id="snapshotImageBtn" type="button" style="width:100%; margin-top:8px; justify-content:center">Upload screenshot(s) instead</button>' +
       '<input type="file" id="snapshotImageInput" accept="image/*" multiple style="display:none">' +
       '<div id="snapshotImageStatus" style="font-size:11px;color:var(--text-tertiary);margin-top:6px"></div>' +
-      '<input type="text" id="snapshotPurposeInput" class="gm-input" style="width:100%; margin-top:8px" placeholder="What\'s this for? (optional — e.g. &quot;quote for my essay on X&quot;)">' +
+      '<input type="text" id="snapshotPurposeInput" class="gm-input" style="width:100%; margin-top:8px" placeholder="What\'s this for? (optional, e.g. &quot;quote for my essay on X&quot;)">' +
       '<button class="gm-add" id="snapshotSubmitBtn" type="button" style="width:100%; margin-top:12px">Capture</button>';
     $('snapshotArticleInput').focus();
     $('snapshotImageBtn').addEventListener('click', () => $('snapshotImageInput').click());
@@ -1692,7 +1692,7 @@
           pending--;
           if (pending === 0) {
             e.target.value = ''; // allow re-selecting the same file(s) / adding more later
-            $('snapshotArticleInput').placeholder = 'Optional — add anything the screenshots might miss…';
+            $('snapshotArticleInput').placeholder = 'Optional, add anything the screenshots might miss…';
             renderSnapshotImageStatus();
           }
         };
@@ -1708,7 +1708,7 @@
     if (!article && snapshotImages.length === 0) return;
     renderSiriusLoading();
 
-    const purposeLine = purpose ? "Intended use: " + purpose : "(No stated purpose — infer one from the content.)";
+    const purposeLine = purpose ? "Intended use: " + purpose : "(No stated purpose, infer one from the content.)";
     const usedImages = snapshotImages.length > 0;
 
     let system, firstUserContent;
@@ -1720,11 +1720,11 @@
       const multi = snapshotImages.length > 1;
       system = "You are Sirius, helping the user file " + (multi ? "a multi-screenshot article" : "a screenshot of an article") + " into their note. " +
         "Transcribe the readable article text from the image" + (multi ? "s, in the order given, into one continuous excerpt" : "") +
-        " as accurately as possible — verbatim wording, do not summarize or paraphrase it. " +
+        " as accurately as possible, verbatim wording, do not summarize or paraphrase it. " +
         "If the user also typed extra text, treat it as additional context (not part of the transcription). " +
         "Respond in EXACTLY this format and nothing else:\n" +
         "TITLE: <a short 3-7 word title summarizing what this excerpt is about>\n" +
-        "PURPOSE: <one plain sentence on why this is worth keeping or how it should be used — refine their stated intent if given, or infer a sensible one>\n" +
+        "PURPOSE: <one plain sentence on why this is worth keeping or how it should be used, refine their stated intent if given, or infer a sensible one>\n" +
         "EXCERPT:\n<the transcribed article text>";
       firstUserContent = snapshotImages.map((im) => (
         { type: 'image', source: { type: 'base64', media_type: im.mediaType, data: im.base64 } }
@@ -1734,7 +1734,7 @@
       system = "You are Sirius, helping the user file a saved article excerpt into their note. " +
         "Given the excerpt below and, if provided, what they intend to use it for, respond in EXACTLY this format and nothing else:\n" +
         "TITLE: <a short 3-7 word title summarizing what this excerpt is about>\n" +
-        "PURPOSE: <one plain sentence on why this is worth keeping or how it should be used — refine their stated intent if given, or infer a sensible one from the excerpt if they left it blank>";
+        "PURPOSE: <one plain sentence on why this is worth keeping or how it should be used, refine their stated intent if given, or infer a sensible one from the excerpt if they left it blank>";
       firstUserContent = "Excerpt:\n" + article.slice(0, 4000) + "\n\n" + purposeLine;
     }
 
@@ -1855,7 +1855,7 @@
     renderSnapshotResult(true);
 
     const system = "You are Sirius, continuing to help the user with the article excerpt/screenshot(s) they shared earlier in this conversation. " +
-      "Answer the follow-up directly using what's already in the conversation (and any newly attached screenshots) — don't re-transcribe or restate the whole thing unless asked. " +
+      "Answer the follow-up directly using what's already in the conversation (and any newly attached screenshots), don't re-transcribe or restate the whole thing unless asked. " +
       "A few sentences or a short list, plain text, no preamble.";
     callSirius(system, snapshotMessages, 'notes-snapshot').then((reply) => {
       snapshotMessages.push({ role: 'assistant', content: reply });
@@ -1983,7 +1983,7 @@
       : '(none yet)';
 
     const system = "You are Sirius, analyzing the user's notes to find which ones share a central idea and should be linked together. " +
-      "Given the notes below (title + excerpt) and the connections that already exist, identify NEW pairs that genuinely share a topic, theme, or idea — be selective, only suggest connections that are actually meaningful, not superficial word overlaps. " +
+      "Given the notes below (title + excerpt) and the connections that already exist, identify NEW pairs that genuinely share a topic, theme, or idea, be selective, only suggest connections that are actually meaningful, not superficial word overlaps. " +
       "Respond with ONLY one line per new connection, in EXACTLY this format:\n" +
       "LINK: <exact title A> | <exact title B>\n" +
       "If there are no meaningful new connections to make, respond with exactly: NONE";
@@ -2006,7 +2006,7 @@
       });
 
       if (pairs.length === 0) {
-        status.textContent = 'No new connections found — your notes are either already linked or too different.';
+        status.textContent = 'No new connections found, your notes are either already linked or too different.';
       } else {
         pairs.forEach(([a, b]) => appendWikilinkToNote(a.id, b.title, b.id));
         const msg = 'Linked ' + pairs.length + ' new connection' + (pairs.length === 1 ? '' : 's') + '.';
@@ -2066,7 +2066,7 @@
           d3.select(event.currentTarget).classed('gnode-selected', true);
           return;
         }
-        if (graphLinkFirstNode.id === d.id) return; // same node clicked twice — ignore
+        if (graphLinkFirstNode.id === d.id) return; // same node clicked twice, ignore
         appendWikilinkToNote(graphLinkFirstNode.id, d.title, d.id);
         graphLinkFirstNode = null;
         openGraphOverlay(); // rebuild so the new edge shows up immediately
@@ -2225,7 +2225,7 @@
           const sub = el.closest('.tile') ? el.closest('.tile').querySelector('.tile-sub') : null;
           tiles.push(el.textContent.trim() + (sub ? ' (' + sub.textContent.trim() + ')' : ''));
         });
-      } catch (e) { /* fine — just brainstorm with less context */ }
+      } catch (e) { /* fine, just brainstorm with less context */ }
     }
     return tiles;
   }
@@ -2257,9 +2257,9 @@
     const existingTiles = await fetchExistingTiles();
     const angle = BRAINSTORM_ANGLES[Math.floor(Math.random() * BRAINSTORM_ANGLES.length)];
     const system = "You are Sirius, embedded in the user's personal life-tracking dashboard as a feature-idea brainstorm partner. " +
-      "Suggest fresh, concrete NEW feature ideas for this dashboard that aren't already covered by the tiles, backlog items, or previously-suggested ideas listed below — " +
+      "Suggest fresh, concrete NEW feature ideas for this dashboard that aren't already covered by the tiles, backlog items, or previously-suggested ideas listed below, " +
       "avoid repeating or closely overlapping with anything already there, including your own past suggestions. " +
-      "Every time you're asked, give genuinely different ideas from last time — vary the angle, don't default to the same obvious first picks. " +
+      "Every time you're asked, give genuinely different ideas from last time, vary the angle, don't default to the same obvious first picks. " +
       "For this batch, lean especially toward ideas related to " + angle + ", but don't force it if a better idea doesn't fit. " +
       "Format every suggestion as a '- ' bullet point, one short sentence each, no preamble. Give 6-8 suggestions.\n\n" +
       "Existing tiles: " + (existingTiles.length ? existingTiles.join(', ') : '(unknown)') + "\n" +
@@ -2268,7 +2268,7 @@
 
     callSirius(system, 'Give me new dashboard feature ideas.', 'notes-brainstorm').then(reply => {
       const suggestions = bulletLines(reply);
-      if (suggestions.length === 0) { renderSiriusError('Sirius didn\'t return any ideas — try again.'); return; }
+      if (suggestions.length === 0) { renderSiriusError('Sirius didn\'t return any ideas, try again.'); return; }
       rememberSeen(suggestions);
       $('siriusModalBody').innerHTML = suggestions.map((s, i) =>
         '<div class="sirius-idea-row"><div class="sirius-idea-text">' + siriusEsc(s) + '</div>' +
@@ -2301,7 +2301,7 @@
 
     const system = "You are Sirius, embedded in the user's personal dashboard, helping flesh out a one-line feature idea before it's handed to a coding assistant to build. " +
       "Expand the idea into 2-3 concise sentences: what it does, why it's useful, and a rough approach for how it could work. " +
-      "No preamble, no bullet points, no markdown — just the expanded description as plain text, written to directly replace the original one-liner.";
+      "No preamble, no bullet points, no markdown, just the expanded description as plain text, written to directly replace the original one-liner.";
 
     callSirius(system, 'Idea to expand: ' + entry.text, 'notes-expand-idea').then(reply => {
       const all = loadIdeas();

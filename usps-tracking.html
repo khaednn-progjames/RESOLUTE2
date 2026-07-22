@@ -136,7 +136,7 @@
     const items = load();
     const list = $('pkgList');
     if (items.length === 0) {
-      list.innerHTML = '<div class="gm-card"><div class="empty-state">No packages tracked yet — add one above.</div></div>';
+      list.innerHTML = '<div class="gm-card"><div class="empty-state">No packages tracked yet, add one above.</div></div>';
       return;
     }
     list.innerHTML = items.map(it => {

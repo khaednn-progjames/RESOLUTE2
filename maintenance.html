@@ -107,7 +107,7 @@
 
   <div class="gm-card">
     <ul class="maint-list" id="maintList"></ul>
-    <div class="empty-state" id="maintEmpty">Nothing tracked yet — add a recurring task below (oil change, air filter, dentist…).</div>
+    <div class="empty-state" id="maintEmpty">Nothing tracked yet, add a recurring task below (oil change, air filter, dentist…).</div>
 
     <div class="gm-input-wrap">
       <input class="gm-input" id="maintName" type="text" placeholder="Task (e.g. Change air filter)" autocomplete="off">
@@ -144,7 +144,7 @@
     return 'every ' + days + ' ' + (days === 1 ? 'day' : 'days');
   }
   function daysUntilDue(it) {
-    if (!it.lastDone) return -Infinity; // never done — due now
+    if (!it.lastDone) return -Infinity; // never done, due now
     const dueTs = it.lastDone + it.intervalDays * 86400000;
     return Math.round((dueTs - Date.now()) / 86400000);
   }

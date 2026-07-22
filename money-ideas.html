@@ -149,7 +149,7 @@
       <button id="keySave" type="button">Save</button>
     </div>
     <div class="key-hint" id="keyHint">
-      Stored only in this browser, sent straight to Anthropic. Shared with the Sirius mentor tile — paste it once.
+      Stored only in this browser, sent straight to Anthropic. Shared with the Sirius mentor tile, paste it once.
       Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.
     </div>
   </div>
@@ -292,13 +292,14 @@
   let busy = false;
 
   function systemPrompt() {
-    const ctx = ($('contextInput').value || '').trim() || '(no context given yet — ask a clarifying question if needed)';
+    const ctx = ($('contextInput').value || '').trim() || '(no context given yet, ask a clarifying question if needed)';
     const methods = selectedMethods.length ? selectedMethods.join(', ') : '(open to anything)';
     return "You are a practical, no-hype money-making idea generator embedded in the user's personal dashboard. " +
       "Suggest concrete, realistic ways they could make more money, tailored specifically to their context and preferred methods below. " +
-      "Prefer ideas achievable with what they already have — skip generic get-rich-quick advice, MLMs, and anything requiring large upfront capital unless they mention having capital. " +
+      "Prefer ideas achievable with what they already have, skip generic get-rich-quick advice, MLMs, and anything requiring large upfront capital unless they mention having capital. " +
       "Format every idea as a '- ' bullet point. Bold the idea name with **double asterisks**, then a short reason it fits them, then a concrete first step, all in one bullet. " +
-      "Give 4-6 ideas unless asked for more or fewer. Keep each bullet to 1-2 sentences.\n\n" +
+      "Give 4-6 ideas unless asked for more or fewer. Keep each bullet to 1-2 sentences. " +
+      "Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.\n\n" +
       "User's context: " + ctx + "\n" +
       "Preferred methods: " + methods;
   }
@@ -339,7 +340,7 @@
       const json = await res.json();
       if (typeof logSiriusUsage === 'function') logSiriusUsage('money-ideas', json.usage);
       if (json.error) {
-        loading.querySelector('.bubble').innerHTML = renderBody('- ' + (json.error.message || 'Something went wrong — check your API key.'));
+        loading.querySelector('.bubble').innerHTML = renderBody('- ' + (json.error.message || 'Something went wrong, check your API key.'));
         loading.querySelector('.msg-actions').remove();
       } else {
         const reply = (json.content && json.content[0] && json.content[0].text) || 'Hmm, no reply.';
@@ -349,7 +350,7 @@
         saveBtn.addEventListener('click', () => saveIdeasFromText(reply, saveBtn));
       }
     } catch (e) {
-      loading.querySelector('.bubble').innerHTML = renderBody('- Could not reach Anthropic — check your connection and key.');
+      loading.querySelector('.bubble').innerHTML = renderBody('- Could not reach Anthropic, check your connection and key.');
       loading.querySelector('.msg-actions').remove();
     }
     busy = false;

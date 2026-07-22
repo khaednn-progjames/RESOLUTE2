@@ -167,13 +167,13 @@
       <div class="study-stat"><div class="study-stat-num" id="studyStreakNum">0</div><div class="study-stat-label">Day Streak</div></div>
       <div class="study-stat"><div class="study-stat-num" id="studyWeekNum">0</div><div class="study-stat-label">This Week</div></div>
       <div class="study-stat"><div class="study-stat-num" id="studyTotalNum">0</div><div class="study-stat-label">All Time</div></div>
-      <div class="study-stat"><div class="study-stat-num" id="studyLastLabel" style="font-size:15px">—</div><div class="study-stat-label">Last Studied</div></div>
+      <div class="study-stat"><div class="study-stat-num" id="studyLastLabel" style="font-size:15px">-</div><div class="study-stat-label">Last Studied</div></div>
     </div>
   </div>
 
   <div class="section-eyebrow">Meetings</div>
   <div class="gm-card">
-    <div class="study-meeting-next" id="studyNextMeeting">—</div>
+    <div class="study-meeting-next" id="studyNextMeeting">-</div>
     <div class="study-meeting-links">
       <a class="btn btn-secondary" href="notes.html">Monday Meeting notes →</a>
       <a class="btn btn-secondary" href="notes.html">Saturday Meeting notes →</a>
@@ -184,7 +184,7 @@
   <div class="gm-card">
     <div class="study-source-note">
       Every answer here is grounded in a live search of <b style="color:var(--text-secondary)">jw.org</b> and
-      <b style="color:var(--text-secondary)">wol.jw.org</b> only — Sirius is instructed to search those sites first
+      <b style="color:var(--text-secondary)">wol.jw.org</b> only, Sirius is instructed to search those sites first
       and answer from what it actually finds, never from its own memory alone. Sources are only ever links the
       search itself returned, filtered again here to just those two sites before anything is shown to you.
     </div>
@@ -196,7 +196,7 @@
     <div class="study-quick-row" id="studyQuickRow"></div>
 
     <div class="study-input-row">
-      <textarea class="input" id="studyInput" placeholder="Type anything — a topic, a struggle, a question, a scripture you want explained…"></textarea>
+      <textarea class="input" id="studyInput" placeholder="Type anything, a topic, a struggle, a question, a scripture you want explained…"></textarea>
       <button class="btn btn-primary" id="studySearchBtn" type="button">Search</button>
     </div>
     <div class="study-status" id="studyStatus"></div>
@@ -221,7 +221,7 @@
   function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
   function escHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
   function relTime(ts) {
-    if (!ts) return '—';
+    if (!ts) return '-';
     const s = Math.floor((Date.now() - ts) / 1000);
     if (s < 60) return 'just now';
     if (s < 3600) return Math.floor(s / 60) + 'm ago';
@@ -301,19 +301,20 @@
     $('studyStreakNum').textContent = computeStreak(all);
     $('studyWeekNum').textContent = all.filter((e) => e.ts >= startOfWeek).length;
     $('studyTotalNum').textContent = all.length;
-    $('studyLastLabel').textContent = all.length ? relTime(all[0].ts) : '—';
+    $('studyLastLabel').textContent = all.length ? relTime(all[0].ts) : '-';
   }
 
   // ---------- Sirius call, grounded to jw.org / wol.jw.org only ----------
   const STUDY_SYSTEM =
     "You are Sirius, helping a Jehovah's Witness with personal Bible study to deepen their relationship with Jehovah. " +
-    "You have a web_search tool restricted to jw.org and wol.jw.org — use it for every question, even ones you think you already know, because the user wants an answer grounded in official material, not your own recollection. Search first, then write your answer using what you actually found; run more than one search if the first doesn't turn up enough. " +
+    "You have a web_search tool restricted to jw.org and wol.jw.org, use it for every question, even ones you think you already know, because the user wants an answer grounded in official material, not your own recollection. Search first, then write your answer using what you actually found; run more than one search if the first doesn't turn up enough. " +
     "Never mention, cite, or draw from any source outside jw.org or wol.jw.org. If your searches genuinely don't turn up anything solid after a couple of tries, say so honestly in the ANSWER section instead of answering from memory. " +
     "Respond in EXACTLY this structure, with these exact plain-text labels each on their own line and nothing before ANSWER or after CATEGORY:\n" +
     "ANSWER:\n<a warm, direct, pastoral answer to what they asked, grounded in what you found, 3-6 sentences>\n\n" +
-    "SCRIPTURES:\n<one or more relevant scriptures, each on its own line as '<Reference> — <short line of context or the point it makes>'; if genuinely none fit, write 'None found.'>\n\n" +
+    "SCRIPTURES:\n<one or more relevant scriptures, each on its own line as '<Reference>, <short line of context or the point it makes>'; if genuinely none fit, write 'None found.'>\n\n" +
     "APPLY:\n<2-4 short, concrete, practical steps for actually working through or acting on this in daily life, each on its own line starting with '- '>\n\n" +
-    "CATEGORY: <single word from this list that best fits, nothing else on the line: " + STUDY_CATEGORIES.join(', ') + ">";
+    "CATEGORY: <single word from this list that best fits, nothing else on the line: " + STUDY_CATEGORIES.join(', ') + ">\n\n" +
+    "Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.";
 
   function isAllowedSource(url) {
     try {
@@ -393,7 +394,7 @@
   function turnBodyHtml(parsed, sources) {
     let html = '';
     if (sources && sources.length === 0) {
-      html += '<div class="study-caveat">No jw.org or wol.jw.org sources came back for this — treat this answer with extra caution, or try rephrasing.</div>';
+      html += '<div class="study-caveat">No jw.org or wol.jw.org sources came back for this, treat this answer with extra caution, or try rephrasing.</div>';
     }
     if (parsed.answer) html += '<div class="study-block"><div class="study-block-label">Answer</div><div class="study-block-body">' + linesToHtml(parsed.answer) + '</div></div>';
     if (parsed.scriptures) html += '<div class="study-block"><div class="study-block-label">Scriptures</div><div class="study-block-body">' + linesToHtml(parsed.scriptures) + '</div></div>';
@@ -486,7 +487,7 @@
     const q = (input.value || '').trim();
     if (!q) return;
     if (!apiKey()) {
-      if (statusEl) { statusEl.textContent = 'No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.'; statusEl.classList.add('err'); }
+      if (statusEl) { statusEl.textContent = 'No API key yet, open the Sirius tile from the home screen and paste your Anthropic key there first.'; statusEl.classList.add('err'); }
       return;
     }
     const list = loadJSON(JOURNAL_KEY, []);
@@ -525,7 +526,7 @@
   async function runStudySearch(query, displayLabel) {
     query = (query || '').trim();
     if (!query || studyBusy) return;
-    if (!apiKey()) { studyStatus('No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
+    if (!apiKey()) { studyStatus('No API key yet, open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
     studyBusy = true;
     setStudyBusyUI(true);
     studyStatus('Searching jw.org and wol.jw.org…');
@@ -557,7 +558,7 @@
     const input = $('studyFollowupInput');
     const q = (input.value || '').trim();
     if (!q || studyBusy || studyTurns.length === 0) return;
-    if (!apiKey()) { studyStatus('No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
+    if (!apiKey()) { studyStatus('No API key yet, open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
     studyBusy = true;
     setStudyBusyUI(true);
     studyStatus('Searching jw.org and wol.jw.org…');
@@ -587,7 +588,7 @@
   $('studyDailyTextBtn').addEventListener('click', () => {
     const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
     const query = "Find today's Watchtower \"Examining the Scriptures Daily\" daily text for " + today + " on wol.jw.org, including the scripture and the comments beneath it.";
-    runStudySearch(query, 'Daily Text — ' + new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+    runStudySearch(query, 'Daily Text, ' + new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
   });
 
   (function renderQuickTopics() {
@@ -658,7 +659,7 @@
       ? [keepOpenId]
       : Array.from(wrap.querySelectorAll('.journal-entry.open')).map((el) => el.dataset.id));
     if (list.length === 0) {
-      wrap.innerHTML = '<div class="empty-state">Nothing studied yet — ask something above and it\'ll show up here.</div>';
+      wrap.innerHTML = '<div class="empty-state">Nothing studied yet, ask something above and it\'ll show up here.</div>';
       return;
     }
     wrap.innerHTML = list.map((e) => journalEntryHtml(e, openIds.has(e.id))).join('');

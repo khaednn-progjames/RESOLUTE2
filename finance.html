@@ -1699,7 +1699,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <div class="nw-chart-wrap" id="nwChartWrap">
         <div class="nw-chart-head">
           <span class="nw-chart-label">All-time</span>
-          <span class="nw-chart-delta" id="nwChartDelta">—</span>
+          <span class="nw-chart-delta" id="nwChartDelta">-</span>
         </div>
         <svg class="nw-chart-svg" id="nwChartSvg" viewBox="0 0 600 200" preserveAspectRatio="none" aria-hidden="true">
           <defs>
@@ -1723,19 +1723,19 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <div class="nw-chart-stats" id="nwChartStats">
           <div class="nw-stat">
             <div class="nw-stat-label">1% =</div>
-            <div class="nw-stat-val" id="nwStat1pct">—</div>
+            <div class="nw-stat-val" id="nwStat1pct">-</div>
           </div>
           <div class="nw-stat">
             <div class="nw-stat-label">All-time high</div>
-            <div class="nw-stat-val" id="nwStatHigh">—</div>
+            <div class="nw-stat-val" id="nwStatHigh">-</div>
           </div>
           <div class="nw-stat">
             <div class="nw-stat-label">All-time low</div>
-            <div class="nw-stat-val" id="nwStatLow">—</div>
+            <div class="nw-stat-val" id="nwStatLow">-</div>
           </div>
           <div class="nw-stat">
             <div class="nw-stat-label">Snapshots</div>
-            <div class="nw-stat-val" id="nwStatCount">—</div>
+            <div class="nw-stat-val" id="nwStatCount">-</div>
           </div>
         </div>
         <div class="nw-chart-empty" id="nwChartEmpty">Add or edit an asset to start tracking your net worth over time.</div>
@@ -1744,12 +1744,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <div class="nw-donut-wrap">
         <div class="nw-chart-head">
           <span class="nw-chart-label">Allocation</span>
-          <span class="nw-chart-delta" id="nwDonutCount">—</span>
+          <span class="nw-chart-delta" id="nwDonutCount">-</span>
         </div>
         <div class="nw-donut-stage">
           <svg class="nw-donut-svg" id="nwDonutSvg" viewBox="0 0 140 140" aria-hidden="true"></svg>
           <div class="nw-donut-center">
-            <div class="nw-donut-num" id="nwDonutTotal">—</div>
+            <div class="nw-donut-num" id="nwDonutTotal">-</div>
             <div class="nw-donut-sub">total</div>
           </div>
         </div>
@@ -1762,10 +1762,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     <div class="nw-activity" id="nwActivity">
       <div class="nw-activity-h">
         <span class="nw-chart-label">Recent activity</span>
-        <span class="nw-chart-delta" id="nwActivityCount">—</span>
+        <span class="nw-chart-delta" id="nwActivityCount">-</span>
       </div>
       <div class="nw-activity-list" id="nwActivityList"></div>
-      <div class="nw-activity-empty" id="nwActivityEmpty">No activity yet — add your first account.</div>
+      <div class="nw-activity-empty" id="nwActivityEmpty">No activity yet, add your first account.</div>
     </div>
 
     <div class="card-grid" style="gap:10px">
@@ -1794,7 +1794,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <div class="label" style="display:flex;justify-content:space-between;align-items:center"><span>🪙 Crypto <button id="cryptoRefreshBtn" type="button" title="Update live prices for holdings named like &quot;0.5 BTC&quot;" style="border:0;background:transparent;color:var(--text-tertiary);cursor:pointer;font-size:12px;padding:2px 4px;vertical-align:1px">↻</button><span id="cryptoPriceStatus" style="font-size:9.5px;color:var(--text-tertiary);font-weight:500"></span></span><span id="cryptoTotal" style="font-size:13px;color:var(--text-primary);font-weight:600">0</span></div>
         <div id="cryptoList" class="nw-list"></div>
         <div class="quick-add">
-          <input type="text" placeholder='Coin — name it "0.5 BTC" for live prices' id="cryptoName" />
+          <input type="text" placeholder='Coin, name it "0.5 BTC" for live prices' id="cryptoName" />
           <input type="number" placeholder="Value" id="cryptoAmount" step="0.01" />
           <button class="quick-add-btn" id="cryptoAddBtn">+</button>
         </div>
@@ -1847,7 +1847,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <span class="sub-auto-track"><span class="sub-auto-thumb"></span></span>
         <span class="sub-auto-label">Auto-deduct</span>
       </label>
-      <label class="sub-auto-toggle" title="Mark as a free trial — the auditor will flag it more urgently as the renewal date nears">
+      <label class="sub-auto-toggle" title="Mark as a free trial, the auditor will flag it more urgently as the renewal date nears">
         <input type="checkbox" id="subIsTrial" />
         <span class="sub-auto-track"><span class="sub-auto-thumb"></span></span>
         <span class="sub-auto-label">Free trial</span>
@@ -1875,7 +1875,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <label class="date-field ord-input-date" title="Expected arrival"><span class="date-emoji" aria-hidden="true">📅</span><input type="date" id="ordArrival" /></label>
       <button class="ord-add-btn" id="ordAddBtn" onclick="window.__addOrder && window.__addOrder()">+ Add Order</button>
     </div>
-    <div class="ord-add-preview" id="ordAddPreview">Type a cost — preview will show what % of net worth it takes.</div>
+    <div class="ord-add-preview" id="ordAddPreview">Type a cost, preview will show what % of net worth it takes.</div>
   </div>
 
   <!-- Items list -->
@@ -1905,14 +1905,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       </div>
       <div class="wish-hero-pct-wrap">
         <div class="wish-hero-pct-label">% OF NET WORTH</div>
-        <div class="wish-hero-pct-num" id="wishPctOfNwHero">—</div>
+        <div class="wish-hero-pct-num" id="wishPctOfNwHero">-</div>
       </div>
     </div>
     <div class="wish-hero-bar">
       <div class="wish-hero-bar-fill" id="wishHeroFill" style="width:0%"></div>
     </div>
     <div class="wish-hero-foot" id="wishPctOfNw">Add net worth first to see this as a %</div>
-    <button class="scan-bank-btn" id="wishBudgetBtn" type="button" style="margin-top:14px">Budget check — what can I afford?</button>
+    <button class="scan-bank-btn" id="wishBudgetBtn" type="button" style="margin-top:14px">Budget check, what can I afford?</button>
   </div>
 
   <!-- Add row -->
@@ -1935,7 +1935,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <div class="wish-empty-card" id="wishEmpty">
     <div class="wish-empty-icon">🎯</div>
     <div class="wish-empty-title">No wishes yet</div>
-    <div class="wish-empty-sub">Add anything you're saving for — the dashboard will calculate what % of your net worth it'd cost.</div>
+    <div class="wish-empty-sub">Add anything you're saving for, the dashboard will calculate what % of your net worth it'd cost.</div>
   </div>
 </div>
 
@@ -1956,7 +1956,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <div class="wish-hero-pct-num" id="spendMonthCount" style="color:var(--text-primary)">0</div>
       </div>
     </div>
-    <div class="wish-hero-foot" id="spendVsLast">—</div>
+    <div class="wish-hero-foot" id="spendVsLast">-</div>
   </div>
 
   <div class="card wish-add-card">
@@ -1965,7 +1965,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       <button class="scan-bank-btn" id="receiptScanBtn" type="button" style="width:auto;margin-top:0;padding:10px 16px">📷 Scan a receipt</button>
     </div>
     <div class="wish-add-row">
-      <input type="text"   id="spendName"   placeholder="What was it? (e.g. Groceries — Trader Joe's)" class="wish-input wish-input-name">
+      <input type="text"   id="spendName"   placeholder="What was it? (e.g. Groceries, Trader Joe's)" class="wish-input wish-input-name">
       <input type="number" id="spendAmount" placeholder="Total" step="0.01" class="wish-input wish-input-amt">
       <button class="wish-add-btn" id="spendAddBtn" type="button">+ Add</button>
     </div>
@@ -1979,7 +1979,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <div class="wish-empty-card" id="spendEmpty">
     <div class="wish-empty-icon">🧾</div>
     <div class="wish-empty-title">Nothing logged yet</div>
-    <div class="wish-empty-sub">Scan a receipt and Sirius reads the store, date, and total for you — or log one manually above.</div>
+    <div class="wish-empty-sub">Scan a receipt and Sirius reads the store, date, and total for you, or log one manually above.</div>
   </div>
 </div>
 
@@ -2240,7 +2240,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     if (!arr.length) {
       list.classList.add('hidden');
       empty.classList.remove('hidden');
-      count.textContent = '—';
+      count.textContent = '-';
       return;
     }
     list.classList.remove('hidden');
@@ -2248,7 +2248,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     count.textContent = arr.length + ' event' + (arr.length === 1 ? '' : 's');
     list.innerHTML = arr.slice(0, 30).map(e => {
       const meta = NW_SLICE_META[e.cat] || { name: e.cat, color: '#FFFFFF' };
-      const sign = e.delta >= 0 ? '+' : '—';
+      const sign = e.delta >= 0 ? '+' : '-';
       const cls = e.delta >= 0 ? 'up' : 'down';
       const amt = fmtMoney(Math.abs(e.delta));
       const kind = e.kind === 'edit' ? 'EDIT' : (e.kind === 'delete' ? 'DELETE' : 'ADD');
@@ -2333,10 +2333,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     if (!slices.length || sliceTotal <= 0) {
       svg.innerHTML = '<circle cx="70" cy="70" r="60" fill="rgba(255,255,255,0.025)"/>'
                     + '<circle cx="70" cy="70" r="44" fill="#0A0A0B"/>';
-      total.textContent = '—';
+      total.textContent = '-';
       empty.classList.remove('hidden');
       legend.innerHTML = '';
-      count.textContent = '—';
+      count.textContent = '-';
       return;
     }
     empty.classList.add('hidden');
@@ -2410,7 +2410,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       wrap.classList.remove('has-data');
       linePath.setAttribute('d', '');
       areaPath.setAttribute('d', '');
-      if (deltaEl) { deltaEl.textContent = '—'; deltaEl.classList.remove('up', 'down'); }
+      if (deltaEl) { deltaEl.textContent = '-'; deltaEl.classList.remove('up', 'down'); }
       renderChartStats([]);
       return;
     }
@@ -2430,11 +2430,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       } else if (Math.abs(first) < 0.5) {
         // Baseline was effectively zero — % would be infinite. Show the
         // absolute amount instead so "added 1,276" reads clearly.
-        const sign = change > 0 ? '+' : '—';
+        const sign = change > 0 ? '+' : '-';
         deltaEl.textContent = sign + fmtMoney(Math.abs(change));
       } else {
         const pct = (change / Math.abs(first)) * 100;
-        const sign = change > 0 ? '+' : '—';
+        const sign = change > 0 ? '+' : '-';
         const absPct = Math.abs(pct);
         const pctStr = absPct >= 100 ? absPct.toFixed(0) : absPct >= 10 ? absPct.toFixed(1) : absPct.toFixed(2);
         deltaEl.textContent = sign + pctStr + '%';
@@ -2473,9 +2473,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     const countEl = document.getElementById('nwStatCount');
     if (!oneEl) return;
     if (!hist || !hist.length) {
-      oneEl.textContent = '—';
-      highEl.textContent = '—';
-      lowEl.textContent = '—';
+      oneEl.textContent = '-';
+      highEl.textContent = '-';
+      lowEl.textContent = '-';
       countEl.textContent = '0';
       return;
     }
@@ -2542,7 +2542,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       '<div style="display:flex;flex-direction:column;gap:10px">' +
       '<div class="fin-ai-key-row"><input id="finAiKeyInput" type="password" placeholder="paste your Anthropic API key (sk-ant-…)" autocomplete="off">' +
       '<button id="finAiKeySave" type="button">Save</button></div>' +
-      '<div style="font-size:11.5px;color:var(--text-tertiary);line-height:1.5">Stored only in this browser, sent straight to Anthropic. Shared with the Sirius mentor tile — paste it once. ' +
+      '<div style="font-size:11.5px;color:var(--text-tertiary);line-height:1.5">Stored only in this browser, sent straight to Anthropic. Shared with the Sirius mentor tile, paste it once. ' +
       'Get one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:var(--text-secondary)">console.anthropic.com</a>.</div>' +
       '</div>';
     document.getElementById('finAiKeySave').addEventListener('click', () => {
@@ -2623,7 +2623,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     openFinAiModal();
     if (!finAiKey()) { finAiRenderKeyForm(openBankScanModal); return; }
     document.getElementById('finAiModalBody').innerHTML =
-      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">Upload a screenshot of any account balance — bank, brokerage, crypto, whatever. If it shows several accounts at once, Sirius reads every one of them separately (never just one merged total), figures out which net worth category each belongs in, adds them all, and writes you a short wealth plan.</div>' +
+      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">Upload a screenshot of any account balance, bank, brokerage, crypto, whatever. If it shows several accounts at once, Sirius reads every one of them separately (never just one merged total), figures out which net worth category each belongs in, adds them all, and writes you a short wealth plan.</div>' +
       '<input type="file" id="bankScanFileInput" class="fin-ai-file-input" accept="image/*">';
     document.getElementById('bankScanFileInput').addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
@@ -2636,29 +2636,30 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     const reader = new FileReader();
     reader.onload = () => {
       const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
-      if (!match) { finAiRenderError('Could not read that image — try a different file.'); return; }
+      if (!match) { finAiRenderError('Could not read that image, try a different file.'); return; }
       runBankScan(match[1], match[2]);
     };
-    reader.onerror = () => finAiRenderError('Could not read that image — try a different file.');
+    reader.onerror = () => finAiRenderError('Could not read that image, try a different file.');
     reader.readAsDataURL(file);
   }
 
   async function runBankScan(mediaType, base64) {
     const system = "You are Sirius, a financial mentor embedded in the user's net worth dashboard. " +
-      "The user has uploaded a screenshot of financial account(s) — it may show a SINGLE account, or it may show MULTIPLE " +
+      "The user has uploaded a screenshot of financial account(s), it may show a SINGLE account, or it may show MULTIPLE " +
       "accounts at once (e.g. a banking app listing Checking, Savings, and a credit card together, or a brokerage summary " +
       "with several holdings). Find EVERY distinct account/balance shown in the image. This is critical: if more than one " +
-      "account or balance is visible, list EACH ONE separately — never merge, sum, or summarize multiple accounts into a " +
+      "account or balance is visible, list EACH ONE separately, never merge, sum, or summarize multiple accounts into a " +
       "single combined number. " +
       "For each account found: give it a short name (e.g. \"Chase Checking\", \"Coinbase\"), read its exact balance, and " +
       "classify it into exactly one category: bank (checking/savings/cash), stocks (brokerage, index funds, retirement " +
       "accounts), crypto (exchanges or wallets), or other (anything else, e.g. real estate, collectibles). " +
-      "Then write ONE short, concrete wealth-building plan considering all the accounts together — 2-4 sentences, " +
+      "Then write ONE short, concrete wealth-building plan considering all the accounts together, 2-4 sentences, " +
       "practical and specific (e.g. emergency fund status, diversification, an obvious next step), no fluff. " +
       "Respond in EXACTLY this format and nothing else, with one ACCOUNT line per account found in the image:\n" +
       "ACCOUNT: <name> | BALANCE: <plain number, no currency symbol or commas> | CATEGORY: <bank|stocks|crypto|other>\n" +
       "(repeat the ACCOUNT line for every additional account visible)\n" +
-      "PLAN: <the wealth plan>";
+      "PLAN: <the wealth plan>\n" +
+      "Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.";
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -2695,7 +2696,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         const category = ['bank', 'stocks', 'crypto', 'other'].includes(catRaw) ? catRaw : 'other';
         accounts.push({ name: m[1].trim(), balance: balance, category: category });
       });
-      if (accounts.length === 0) { finAiRenderError("Sirius couldn't find any account balances in that screenshot — try a clearer image."); return; }
+      if (accounts.length === 0) { finAiRenderError("Sirius couldn't find any account balances in that screenshot, try a clearer image."); return; }
       const planMatch = reply.match(/PLAN:\s*([\s\S]*)/i);
       const plan = planMatch ? planMatch[1].trim() : '';
       finAiShowResult(accounts, plan);
@@ -2785,7 +2786,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
           ? '<div class="fin-ai-q">' + finAiEsc(m.content) + '</div>'
           : '<div class="fin-ai-answer" style="margin-bottom:14px">' + finAiEsc(m.content) + '</div>'
         ).join('')
-      : '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5">Ask about anything you want to spend on, or how to budget — Sirius sees your real net worth, subscriptions, and wishlist. You can ask follow-ups too.</div>';
+      : '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5">Ask about anything you want to spend on, or how to budget, Sirius sees your real net worth, subscriptions, and wishlist. You can ask follow-ups too.</div>';
     const loadingHtml = loading ? '<div class="fin-ai-loading"><span class="fin-ai-dots"><i></i><i></i><i></i></span> Sirius is thinking…</div>' : '';
     const errorHtml = errorMsg ? '<div class="fin-ai-err" style="margin-top:6px">' + finAiEsc(errorMsg) + '</div>' : '';
     document.getElementById('finAiModalBody').innerHTML =
@@ -2810,9 +2811,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     askSiriusMessages.push({ role: 'user', content: question });
     renderAskSiriusModal(true);
     const system = "You are Sirius, a financial mentor embedded in the user's net worth dashboard. " +
-      "Answer their budgeting question using the real financial context below — be specific with numbers, direct, and practical. " +
+      "Answer their budgeting question using the real financial context below, be specific with numbers, direct, and practical. " +
       "If this is a follow-up to earlier questions in this conversation, build on what you already told them rather than repeating it. " +
-      "3-6 sentences per answer, plain conversational text, no markdown headers or bullet lists.\n\n" +
+      "3-6 sentences per answer, plain conversational text, no markdown headers or bullet lists. " +
+      "Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.\n\n" +
       "Their current finances:\n" + buildFinanceContext();
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -2875,7 +2877,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       "Respond in EXACTLY this format and nothing else, one ITEM line per wishlist item in the order given:\n" +
       "ITEM: <name> | VERDICT: <NOW|SOON|NOT_YET> | NOTE: <one short sentence explaining why>\n" +
       "(repeat for every wishlist item)\n" +
-      "SUMMARY: <2-3 sentence overall recommendation on what to prioritize and why>\n\n" +
+      "SUMMARY: <2-3 sentence overall recommendation on what to prioritize and why>\n" +
+      "Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.\n\n" +
       "Their current finances:\n" + buildFinanceContext() +
       "\nTheir wishlist, in order: " + wishlist.map((it) => it.name + ' (' + fmtMoney(it.amount) + ')').join(', ');
     try {
@@ -2905,7 +2908,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       });
       const summaryMatch = reply.match(/SUMMARY:\s*([\s\S]*)/i);
       const summary = summaryMatch ? summaryMatch[1].trim() : '';
-      if (verdicts.length === 0) { finAiRenderError("Sirius couldn't evaluate your wishlist — try again."); return; }
+      if (verdicts.length === 0) { finAiRenderError("Sirius couldn't evaluate your wishlist, try again."); return; }
       const badgeMeta = { NOW: { cls: 'now', label: 'Can afford now' }, SOON: { cls: 'soon', label: 'Soon' }, NOT_YET: { cls: 'not-yet', label: 'Not yet' } };
       const rowsHtml = verdicts.map((v) => {
         const meta = badgeMeta[v.verdict] || badgeMeta.NOT_YET;
@@ -2933,7 +2936,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     openFinAiModal();
     if (!finAiKey()) { finAiRenderKeyForm(openWishScanModal); return; }
     document.getElementById('finAiModalBody').innerHTML =
-      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">Upload a screenshot of a product — a shopping page, a cart, a price tag. If it shows multiple items, Sirius adds each one to your wishlist separately.</div>' +
+      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">Upload a screenshot of a product, a shopping page, a cart, a price tag. If it shows multiple items, Sirius adds each one to your wishlist separately.</div>' +
       '<input type="file" id="wishScanFileInput" class="fin-ai-file-input" accept="image/*">';
     document.getElementById('wishScanFileInput').addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
@@ -2946,20 +2949,21 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     const reader = new FileReader();
     reader.onload = () => {
       const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
-      if (!match) { finAiRenderError('Could not read that image — try a different file.'); return; }
+      if (!match) { finAiRenderError('Could not read that image, try a different file.'); return; }
       runWishScan(match[1], match[2]);
     };
-    reader.onerror = () => finAiRenderError('Could not read that image — try a different file.');
+    reader.onerror = () => finAiRenderError('Could not read that image, try a different file.');
     reader.readAsDataURL(file);
   }
 
   async function runWishScan(mediaType, base64) {
     const system = "You are Sirius, a financial mentor embedded in the user's net worth dashboard. " +
-      "The user has uploaded a screenshot of something they want to buy — a product page, a shopping cart, a price tag, a wishlist screenshot, etc. " +
-      "Find EVERY distinct item and its price shown in the image. If there is more than one item, list each one separately — never merge them into one. " +
+      "The user has uploaded a screenshot of something they want to buy, a product page, a shopping cart, a price tag, a wishlist screenshot, etc. " +
+      "Find EVERY distinct item and its price shown in the image. If there is more than one item, list each one separately, never merge them into one. " +
       "Respond in EXACTLY this format and nothing else, with one ITEM line per item found:\n" +
       "ITEM: <short item name> | PRICE: <plain number, no currency symbol or commas>\n" +
-      "(repeat for every additional item visible)";
+      "(repeat for every additional item visible)\n" +
+      "Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.";
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -2994,7 +2998,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         if (isNaN(price)) return;
         items.push({ name: m[1].trim(), price: price });
       });
-      if (items.length === 0) { finAiRenderError("Sirius couldn't find any items in that screenshot — try a clearer image."); return; }
+      if (items.length === 0) { finAiRenderError("Sirius couldn't find any items in that screenshot, try a clearer image."); return; }
       finAiShowWishResult(items);
     } catch (e) {
       finAiRenderError(e.message || String(e));
@@ -3033,7 +3037,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     if (entry.type === 'ask') {
       body = '<div><b>Q:</b> ' + finAiEsc(entry.question) + '</div><div style="margin-top:4px">' + finAiEsc(entry.answer) + '</div>';
     } else if (entry.type === 'budget') {
-      const list = (entry.verdicts || []).map((v) => finAiEsc(v.name) + ' — <b>' + finAiEsc(String(v.verdict || '').replace('_', ' ')) + '</b>').join('<br>');
+      const list = (entry.verdicts || []).map((v) => finAiEsc(v.name) + ', <b>' + finAiEsc(String(v.verdict || '').replace('_', ' ')) + '</b>').join('<br>');
       body = list + (entry.summary ? '<div style="margin-top:6px">' + finAiEsc(entry.summary) + '</div>' : '');
     } else if (entry.type === 'bankscan') {
       const list = (entry.accounts || []).map((a) => finAiEsc(a.name) + ' ' + fmtMoney(a.balance) + ' (' + finAiEsc(FIN_AI_CAT_LABELS[a.category] || 'Other') + ')').join('<br>');
@@ -3052,7 +3056,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     openFinAiModal();
     const hist = (storeGet(FIN_AI_HISTORY_KEY) || []).slice().reverse();
     if (hist.length === 0) {
-      document.getElementById('finAiModalBody').innerHTML = '<div class="fin-ai-hist-empty">Nothing yet — ask Sirius a question, scan a screenshot, or run a budget check.</div>';
+      document.getElementById('finAiModalBody').innerHTML = '<div class="fin-ai-hist-empty">Nothing yet, ask Sirius a question, scan a screenshot, or run a budget check.</div>';
       return;
     }
     document.getElementById('finAiModalBody').innerHTML = hist.map(renderAiHistoryEntry).join('');
@@ -3133,9 +3137,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       if (days < 0 || days > 7) return;
       const when = days === 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days';
       if (it.isTrial) {
-        flags.push({ severity: 'high', html: '⚠️ <b>' + escapeHtml(it.name) + '</b> trial ends ' + when + ' — will start charging ' + fmtMoney(monthlyEquivalent(it)) + '/' + it.period + ' unless canceled.' });
+        flags.push({ severity: 'high', html: '⚠️ <b>' + escapeHtml(it.name) + '</b> trial ends ' + when + ', will start charging ' + fmtMoney(monthlyEquivalent(it)) + '/' + it.period + ' unless canceled.' });
       } else {
-        flags.push({ severity: 'low', html: '🔔 <b>' + escapeHtml(it.name) + '</b> renews ' + when + ' — ' + fmtMoney(monthlyEquivalent(it)) + '.' });
+        flags.push({ severity: 'low', html: '🔔 <b>' + escapeHtml(it.name) + '</b> renews ' + when + ', ' + fmtMoney(monthlyEquivalent(it)) + '.' });
       }
     });
 
@@ -3143,7 +3147,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       const keywords = SUB_CATEGORIES[label];
       const matches = items.filter(it => keywords.some(k => (it.name || '').toLowerCase().includes(k)));
       if (matches.length >= 2) {
-        flags.push({ severity: 'med', html: '👀 ' + matches.length + ' ' + label.toLowerCase() + ' subscriptions active: ' + matches.map(m => escapeHtml(m.name)).join(', ') + ' — worth trimming?' });
+        flags.push({ severity: 'med', html: '👀 ' + matches.length + ' ' + label.toLowerCase() + ' subscriptions active: ' + matches.map(m => escapeHtml(m.name)).join(', ') + ', worth trimming?' });
       }
     });
 
@@ -3152,7 +3156,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       const avg = annualized.reduce((s, x) => s + x.yr, 0) / annualized.length;
       const priciest = annualized.reduce((a, b) => (b.yr > a.yr ? b : a));
       if (avg > 0 && priciest.yr > avg * 1.8) {
-        flags.push({ severity: 'med', html: '💸 <b>' + escapeHtml(priciest.it.name) + '</b> is your priciest subscription at ' + fmtMoney(priciest.yr) + '/yr — still worth it?' });
+        flags.push({ severity: 'med', html: '💸 <b>' + escapeHtml(priciest.it.name) + '</b> is your priciest subscription at ' + fmtMoney(priciest.yr) + '/yr, still worth it?' });
       }
     }
 
@@ -3405,7 +3409,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         if (ix > 0) { newFromCat = newFromVal.slice(0, ix); newFromAccount = newFromVal.slice(ix + 2); }
       }
       if (newAuto && (!newFromCat || !newFromAccount)) {
-        alert('Pick a "From account" — auto-deduct needs somewhere to take the money from.');
+        alert('Pick a "From account", auto-deduct needs somewhere to take the money from.');
         return;
       }
       if (!newName || isNaN(newAmtRaw)) return;
@@ -3446,7 +3450,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       const autoDeduct = !!(tEl && tEl.checked);
       // Guard: auto-deduct requires a linked account
       if (autoDeduct && (!fromCat || !fromAccount)) {
-        alert('Pick a "From account" first — auto-deduct needs to know where to take the money from.');
+        alert('Pick a "From account" first, auto-deduct needs to know where to take the money from.');
         return;
       }
       const items = storeGet('subs') || [];
@@ -3522,7 +3526,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       if (heroFill) heroFill.style.width = Math.min(100, pct) + '%';
       if (wishPctEl) wishPctEl.textContent = 'Your wishlist is ' + pct.toFixed(2) + '% of your ' + fmtMoney(grand) + ' net worth';
     } else {
-      if (heroPctEl) { heroPctEl.textContent = '—'; heroPctEl.className = 'wish-hero-pct-num'; }
+      if (heroPctEl) { heroPctEl.textContent = '-'; heroPctEl.className = 'wish-hero-pct-num'; }
       if (heroFill) heroFill.style.width = '0%';
       if (wishPctEl) wishPctEl.textContent = 'Add accounts in Net Worth first to see this as a %';
     }
@@ -3538,7 +3542,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       const cost = Number(it.amount) || 0;
       const pct = grand > 0 ? (cost / grand) * 100 : null;
       const cls = pct == null ? 'flat' : pctClass(pct);
-      const pctText = pct == null ? '—' : pct.toFixed(2) + '%';
+      const pctText = pct == null ? '-' : pct.toFixed(2) + '%';
       const fillPct = Math.min(100, pct == null ? 0 : pct);
       const monthsToSave = (grand > 0 && cost > 0) ? Math.ceil(cost / Math.max(1, grand * 0.05)) : null; // rough: if you saved 5%/mo
       const row = document.createElement('div');
@@ -3717,7 +3721,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         pctCls = ordPctClass(pct);
       } else {
         pct = null;
-        pctText = '— of NW';
+        pctText = '- of NW';
         pctCls = '';
       }
       const fromMeta = ORD_FROM_META[o.fromCat] || ORD_FROM_META.bank;
@@ -3808,7 +3812,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     chooser.querySelectorAll('.ord-deduct-opt').forEach(b => {
       b.addEventListener('click', () => {
         if (b.dataset.insuf === '1') {
-          if (!confirm('That account doesn\'t have enough — deduct anyway? (it will go negative)')) return;
+          if (!confirm('That account doesn\'t have enough, deduct anyway? (it will go negative)')) return;
         }
         confirmDeduct(orderId, b.dataset.cat, b.dataset.name);
       });
@@ -3879,7 +3883,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     if (!prev) return;
     const aRaw = parseFloat(costEl && costEl.value);
     if (!costEl || isNaN(aRaw) || aRaw <= 0) {
-      prev.textContent = 'Type a cost — preview will show what % of net worth it takes.';
+      prev.textContent = 'Type a cost, preview will show what % of net worth it takes.';
       prev.className = 'ord-add-preview';
       return;
     }
@@ -3988,7 +3992,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
   let tickerIdx = 0;
   let tickerTimer = null;
-  let tickerLastSig = '';   // signature of last-painted entries — skip re-paint if unchanged
+  let tickerLastSig = '';   // signature of last-painted entries, skip re-paint if unchanged
   let tickerLastEntries = [];
   function tickerSig(entries) {
     return entries.map(e => e.name + '|' + e.amount + '|' + e.days + '|' + (e.period || '')).join('~');
@@ -4109,7 +4113,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       const diff = totalThis - totalLast;
       vs.textContent = (diff >= 0 ? '+' : '−') + fmtMoney(Math.abs(diff)).replace('$', '$') + ' vs last month (' + fmtMoney(totalLast) + ')';
     } else {
-      vs.textContent = 'First month of tracking — scan receipts as you go.';
+      vs.textContent = 'First month of tracking, scan receipts as you go.';
     }
 
     document.getElementById('spendCount').textContent = items.length + (items.length === 1 ? ' item' : ' items');
@@ -4170,7 +4174,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     openFinAiModal();
     if (!finAiKey()) { finAiRenderKeyForm(openReceiptScanModal); return; }
     document.getElementById('finAiModalBody').innerHTML =
-      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">Photo or screenshot of any receipt — Sirius reads the store, date, total, and category, and logs it under Spending.</div>' +
+      '<div style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">Photo or screenshot of any receipt, Sirius reads the store, date, total, and category, and logs it under Spending.</div>' +
       '<input type="file" id="receiptFileInput" class="fin-ai-file-input" accept="image/*">';
     document.getElementById('receiptFileInput').addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
@@ -4179,10 +4183,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       const reader = new FileReader();
       reader.onload = () => {
         const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
-        if (!match) { finAiRenderError('Could not read that image — try a different file.'); return; }
+        if (!match) { finAiRenderError('Could not read that image, try a different file.'); return; }
         runReceiptScan(match[1], match[2]);
       };
-      reader.onerror = () => finAiRenderError('Could not read that image — try a different file.');
+      reader.onerror = () => finAiRenderError('Could not read that image, try a different file.');
       reader.readAsDataURL(file);
     });
   }
@@ -4190,13 +4194,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   async function runReceiptScan(mediaType, base64) {
     const system = "You are Sirius, a finance assistant embedded in the user's spending tracker. " +
       "The user uploaded a photo or screenshot of a receipt. Read it and extract the merchant/store name, the purchase date, " +
-      "the final total actually paid (after tax, tips, and discounts — the grand total, not the subtotal), and classify the purchase " +
+      "the final total actually paid (after tax, tips, and discounts, the grand total, not the subtotal), and classify the purchase " +
       "into exactly one category from: " + SPEND_CATS.join(', ') + ". " +
       "If the date isn't visible, use UNKNOWN. Respond in EXACTLY this format and nothing else:\n" +
       "MERCHANT: <store name>\n" +
       "DATE: <YYYY-MM-DD or UNKNOWN>\n" +
       "TOTAL: <plain number, no currency symbol or commas>\n" +
-      "CATEGORY: <one category from the list>";
+      "CATEGORY: <one category from the list>\n" +
+      "Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.";
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -4227,7 +4232,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       const totalRaw = (reply.match(/TOTAL:\s*\$?([\d,]+\.?\d*)/i) || [])[1];
       const dateRaw = ((reply.match(/DATE:\s*(.+)/i) || [])[1] || '').trim();
       const catRaw = ((reply.match(/CATEGORY:\s*(.+)/i) || [])[1] || '').trim();
-      if (!totalRaw) { finAiRenderError("Sirius couldn't find a total on that receipt — try a clearer photo."); return; }
+      if (!totalRaw) { finAiRenderError("Sirius couldn't find a total on that receipt, try a clearer photo."); return; }
       const total = parseFloat(totalRaw.replace(/,/g, ''));
       const date = /^\d{4}-\d{2}-\d{2}$/.test(dateRaw) ? dateRaw : new Date().toISOString().slice(0, 10);
       const category = SPEND_CATS.find((c) => c.toLowerCase() === catRaw.toLowerCase()) || 'Other';

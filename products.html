@@ -131,7 +131,7 @@
       <input class="gm-input" id="productUrl" type="url" placeholder="Paste a product link…" autocomplete="off">
       <button class="gm-add" id="productAddBtn" type="button">+ Add</button>
     </div>
-    <div class="products-status" id="productsStatus">Sirius reads the page and names the product automatically — mark it good or bad once you've tried it.</div>
+    <div class="products-status" id="productsStatus">Sirius reads the page and names the product automatically, mark it good or bad once you've tried it.</div>
   </div>
 
   <div class="gm-card">
@@ -139,7 +139,7 @@
       <span>Product</span><span>Verdict</span><span>Notes</span><span></span>
     </div>
     <ul class="product-list" id="productList"></ul>
-    <div class="empty-state" id="productsEmpty">Nothing tracked yet — paste a link above.</div>
+    <div class="empty-state" id="productsEmpty">Nothing tracked yet, paste a link above.</div>
   </div>
 
 </div>
@@ -178,7 +178,7 @@
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 200,
-        system: system,
+        system: system + ' Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.',
         messages: [{ role: 'user', content: userText }],
       }),
     });
@@ -193,14 +193,14 @@
     try {
       const res = await fetch('/api/fetch-url?url=' + encodeURIComponent(url));
       meta = await res.json();
-    } catch (e) { /* fall through — Sirius can still guess from the raw URL */ }
+    } catch (e) { /* fall through, Sirius can still guess from the raw URL */ }
 
     const context = meta && (meta.title || meta.description)
       ? 'Page title: ' + (meta.title || '(none)') + '\nDescription: ' + (meta.description || '(none)') + '\nSite: ' + (meta.siteName || '(unknown)')
-      : 'No page metadata could be fetched (the site likely blocks automated requests) — infer as best you can from the URL structure alone.';
+      : 'No page metadata could be fetched (the site likely blocks automated requests), infer as best you can from the URL structure alone.';
 
     const system = "You are Sirius, identifying what a saved product link is for in a personal purchase-tracking spreadsheet. " +
-      "Given a URL and whatever page metadata was fetched, respond with ONLY a short, clean product name — no marketing language, no site name, no trailing punctuation, 2-8 words. " +
+      "Given a URL and whatever page metadata was fetched, respond with ONLY a short, clean product name, no marketing language, no site name, no trailing punctuation, 2-8 words. " +
       "If you truly cannot tell what it is, respond with exactly: Unknown product";
     const reply = await callSirius(system, 'URL: ' + url + '\n' + context);
     return {
@@ -290,7 +290,7 @@
     if (!url) return;
     let parsed;
     try { parsed = new URL(url); } catch (e) { setStatus('That doesn\'t look like a valid link.', true); return; }
-    if (!apiKey()) { setStatus('No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
+    if (!apiKey()) { setStatus('No API key yet, open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
 
     const id = newId();
     const items = load();
@@ -306,12 +306,12 @@
       const all = load();
       const entry = all.find((x) => x.id === id);
       if (entry) { entry.title = info.title; entry.siteName = info.siteName; entry.pending = false; save(all); }
-      setStatus('Added — mark it good or bad once you\'ve tried it.');
+      setStatus('Added, mark it good or bad once you\'ve tried it.');
     } catch (e) {
       const all = load();
       const entry = all.find((x) => x.id === id);
       if (entry) { entry.title = 'Unknown product'; entry.pending = false; save(all); }
-      setStatus(e.message || 'Could not reach Sirius — you can rename it manually.', true);
+      setStatus(e.message || 'Could not reach Sirius, you can rename it manually.', true);
     } finally {
       $('productAddBtn').disabled = false;
       render();

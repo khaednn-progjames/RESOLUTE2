@@ -139,7 +139,7 @@ input:checked + .slider::before { transform: translateX(22px); background: var(-
   </div>
 
   <div class="gm-card">
-    <div class="section-title">0DTE SPY Iron Condor — Master Switch</div>
+    <div class="section-title">0DTE SPY Iron Condor, Master Switch</div>
     <div class="kill-row">
       <div class="kill-left">
         <div class="kill-title">Bot enabled</div>
@@ -188,7 +188,7 @@ input:checked + .slider::before { transform: translateX(22px); background: var(-
         <button class="gm-btn" id="connectBtn" type="button">Connect</button>
       </div>
     </div>
-    <div class="hint">Credentials go straight to Tastytrade to create a session — never stored here. Only the resulting session token is kept, server-side only, in a Supabase table with no public access.</div>
+    <div class="hint">Credentials go straight to Tastytrade to create a session, never stored here. Only the resulting session token is kept, server-side only, in a Supabase table with no public access.</div>
   </div>
 
   <div class="gm-card">
@@ -208,7 +208,7 @@ input:checked + .slider::before { transform: translateX(22px); background: var(-
     </div>
     <button class="gm-btn" id="saveSettingsBtn" type="button" style="margin-top:14px; width:100%">Save Settings</button>
     <div class="hint" style="margin-top:12px">
-      Runs once per weekday during the entry window via a scheduled job — checked every 15 minutes, only acts once conditions
+      Runs once per weekday during the entry window via a scheduled job, checked every 15 minutes, only acts once conditions
       are met and it hasn't already traded today. <b>Max risk per trade</b> is enforced against the worst case (wing width, assuming
       $0 credit), so it can never be exceeded even if the live credit estimate is off.
     </div>
@@ -324,7 +324,7 @@ input:checked + .slider::before { transform: translateX(22px); background: var(-
       $('tradeList').innerHTML = trades.map(t => {
         const badge = t.status === 'submitted' ? 'submitted' : (t.status === 'simulated' ? 'simulated' : 'skipped');
         return '<div class="trade-row"><div class="trade-main">' +
-          '<div class="trade-strikes">' + esc(t.symbol) + ' ' + esc(t.expiration || '') + ' — ' +
+          '<div class="trade-strikes">' + esc(t.symbol) + ' ' + esc(t.expiration || '') + ', ' +
           (t.short_put_strike != null ? t.short_put_strike + '/' + t.long_put_strike + 'P · ' + t.short_call_strike + '/' + t.long_call_strike + 'C' : '(no strikes)') +
           '</div><div class="trade-meta">' + new Date(t.opened_at).toLocaleString() +
           (t.credit != null ? ' · credit $' + t.credit : '') + (t.note ? ' · ' + esc(t.note) : '') + '</div>' +

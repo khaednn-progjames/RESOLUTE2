@@ -664,7 +664,7 @@
       <div class="goal-ticker-label">GOALS</div>
       <div class="goal-ticker-stage" id="goalTickerStage">
         <div class="goal-ticker-row">
-          <span class="goal-ticker-status" data-status="">—</span>
+          <span class="goal-ticker-status" data-status="">-</span>
           <span class="goal-ticker-text">Loading…</span>
         </div>
       </div>
@@ -685,14 +685,14 @@
         <circle class="day-ring-fill"  cx="60" cy="60" r="52" id="dayRingFill" filter="url(#dayRingGlow)" />
       </svg>
       <div class="day-ring-overlay">
-        <div class="day-ring-percent" id="dayRingPercent">—</div>
-        <div class="day-ring-phase"   id="dayRingPhase">—</div>
-        <div class="day-ring-clock"   id="dayRingClock">—</div>
+        <div class="day-ring-percent" id="dayRingPercent">-</div>
+        <div class="day-ring-phase"   id="dayRingPhase">-</div>
+        <div class="day-ring-clock"   id="dayRingClock">-</div>
       </div>
     </div>
     <div class="day-ring-text">
       <div class="day-ring-status"    id="dayRingStatus">Loading…</div>
-      <div class="day-ring-remaining" id="dayRingRemaining">—</div>
+      <div class="day-ring-remaining" id="dayRingRemaining">-</div>
       <div class="day-ring-hours">8:00 AM – 12:00 AM</div>
     </div>
   </div>
@@ -709,17 +709,17 @@
       </div>
 
       <div class="lifegoal-count-row">
-        <div class="lifegoal-unit"><span class="lifegoal-num lg-number" id="lgDays">—</span><span class="lifegoal-label">Days</span></div>
-        <div class="lifegoal-unit"><span class="lifegoal-num lg-number" id="lgHours">—</span><span class="lifegoal-label">Hrs</span></div>
-        <div class="lifegoal-unit"><span class="lifegoal-num lg-number" id="lgMins">—</span><span class="lifegoal-label">Min</span></div>
-        <div class="lifegoal-unit"><span class="lifegoal-num lg-number" id="lgSecs">—</span><span class="lifegoal-label">Sec</span></div>
+        <div class="lifegoal-unit"><span class="lifegoal-num lg-number" id="lgDays">-</span><span class="lifegoal-label">Days</span></div>
+        <div class="lifegoal-unit"><span class="lifegoal-num lg-number" id="lgHours">-</span><span class="lifegoal-label">Hrs</span></div>
+        <div class="lifegoal-unit"><span class="lifegoal-num lg-number" id="lgMins">-</span><span class="lifegoal-label">Min</span></div>
+        <div class="lifegoal-unit"><span class="lifegoal-num lg-number" id="lgSecs">-</span><span class="lifegoal-label">Sec</span></div>
       </div>
 
       <div class="lifegoal-bar"><div class="lifegoal-bar-fill" id="lifeGoalBarFill"></div></div>
       <div class="lifegoal-foot">
-        <span id="lifeGoalStartLabel">Started —</span>
+        <span id="lifeGoalStartLabel">Started -</span>
         <span id="lifeGoalPct">0% elapsed</span>
-        <span id="lifeGoalEndLabel">Target —</span>
+        <span id="lifeGoalEndLabel">Target -</span>
       </div>
     </div>
   </div>
@@ -731,7 +731,7 @@
     <div class="gm-card" id="gmCardToday">
       <div class="gm-header">
         <div class="gm-header-left">
-          <div class="gm-eyebrow" id="todayLabel">Today —</div>
+          <div class="gm-eyebrow" id="todayLabel">Today -</div>
           <div class="gm-progress-row">
             <span class="gm-progress-num"   id="gmProgressNum">0</span>
             <span class="gm-progress-total" id="gmProgressTotal">/ 0</span>
@@ -746,7 +746,7 @@
       </div>
       <div class="gm-bar" id="gmBar"></div>
       <ul id="goalList" class="goal-list gm-list"></ul>
-      <div id="emptyState" class="empty-state">No goals for today yet — add one below.</div>
+      <div id="emptyState" class="empty-state">No goals for today yet, add one below.</div>
       <button type="button" id="gmPushBtn" class="gm-push-btn" style="display:none;">Push remaining to tomorrow</button>
       <div class="goal-input-wrap gm-input-wrap">
         <input id="goalInput" class="gm-input" type="text" placeholder="Add a goal for today…" autocomplete="off">
@@ -760,7 +760,7 @@
     <div class="gm-card gm-card-tomorrow" id="gmCardTomorrow">
       <div class="gm-header">
         <div class="gm-header-left">
-          <div class="gm-eyebrow" id="tomorrowLabel">Plan tomorrow —</div>
+          <div class="gm-eyebrow" id="tomorrowLabel">Plan tomorrow -</div>
           <div class="gm-tomorrow-sub">Write tonight, locked until 6 AM.</div>
         </div>
         <div class="gm-tomorrow-count" id="gmTomorrowCount">0 planned</div>
@@ -932,8 +932,8 @@
     const goals = getGoals(todayKey());
     const total = goals.length;
     const done  = goals.filter(g => g.done).length;
-    if (total === 0) return { items: [{ status: 'empty',   text: 'No goals set for today — add one to get rolling.' }], done, total };
-    if (done === total) return { items: [{ status: 'done', text: '✓ All goals done — solid day.' }], done, total };
+    if (total === 0) return { items: [{ status: 'empty',   text: 'No goals set for today, add one to get rolling.' }], done, total };
+    if (done === total) return { items: [{ status: 'done', text: '✓ All goals done, solid day.' }], done, total };
     const items = goals.filter(g => !g.done).map(g => ({ status: 'pending', text: g.text }));
     return { items, done, total };
   }
@@ -1047,7 +1047,7 @@
     if (hours < WAKE_HOUR) {
       fillEl.setAttribute('stroke-dashoffset', C);
       fillEl.style.stroke = '#57554F';
-      percentEl.textContent = '—';
+      percentEl.textContent = '-';
       phaseEl.textContent   = 'SLEEPING';
       statusEl.textContent  = '😴 Still sleeping';
       const minsUntil = (WAKE_HOUR - hours) * 60;
@@ -1072,10 +1072,10 @@
     percentEl.textContent = Math.floor(percent) + '%';
 
     let phase, status;
-    if (percent < 25)      { phase = 'MORNING';   status = '☀️ Morning — fresh start'; }
-    else if (percent < 50) { phase = 'MIDDAY';    status = '⚡ Midday — keep moving'; }
-    else if (percent < 75) { phase = 'AFTERNOON'; status = '🔥 Afternoon — push it'; }
-    else if (percent < 90) { phase = 'EVENING';   status = '⏳ Evening — wrap up'; }
+    if (percent < 25)      { phase = 'MORNING';   status = '☀️ Morning, fresh start'; }
+    else if (percent < 50) { phase = 'MIDDAY';    status = '⚡ Midday, keep moving'; }
+    else if (percent < 75) { phase = 'AFTERNOON'; status = '🔥 Afternoon, push it'; }
+    else if (percent < 90) { phase = 'EVENING';   status = '⏳ Evening, wrap up'; }
     else                   { phase = 'BEDTIME';   status = '🌙 Bedtime soon'; }
     phaseEl.textContent  = phase;
     statusEl.textContent = status;
@@ -1221,11 +1221,11 @@
     document.getElementById('gmProgressTotal').textContent = '/ ' + total;
     const label = document.getElementById('gmProgressLabel');
     if (total === 0)        label.textContent = 'no goals yet';
-    else if (done === total) label.textContent = 'all done — solid day';
+    else if (done === total) label.textContent = 'all done, solid day';
     else                     label.textContent = 'complete';
 
     document.getElementById('todayLabel').textContent =
-      'Today — ' + formatDate(getActiveDateString());
+      'Today, ' + formatDate(getActiveDateString());
 
     const bar = document.getElementById('gmBar');
     bar.innerHTML = '';
@@ -1252,7 +1252,7 @@
     const list = getGoals(tomorrowKey());
     document.getElementById('gmTomorrowCount').textContent = list.length + ' planned';
     document.getElementById('tomorrowLabel').textContent =
-      'Plan tomorrow — ' + formatDate(getTomorrowDateString());
+      'Plan tomorrow, ' + formatDate(getTomorrowDateString());
   }
 
   function renderListInto(goals, listEl, emptyEl, key, readOnly) {
@@ -1340,6 +1340,7 @@
           role: 'user',
           content:
             'Rewrite this single goal so it is concrete, action-oriented, and under 60 characters. ' +
+            'Never use an em dash or a double hyphen (--) in it; use a comma, period, colon, or parentheses instead. ' +
             'Return ONLY a JSON array with exactly one string, no preamble, no code fences.\n\nGoal: ' + text
         }]
       })
@@ -1373,7 +1374,7 @@
       if (!text) return;
       if (!ANTHROPIC_API_KEY()) {
         plainAdd(text);
-        showStatus(statusEl, 'Polish needs an Anthropic API key — added as-typed.', false);
+        showStatus(statusEl, 'Polish needs an Anthropic API key, added as-typed.', false);
         return;
       }
       polishBtn.disabled = true;
@@ -1382,7 +1383,7 @@
         plainAdd(polished);
       } catch (e) {
         plainAdd(text);
-        showStatus(statusEl, 'Polish failed — added as-typed.', true);
+        showStatus(statusEl, 'Polish failed, added as-typed.', true);
       } finally {
         polishBtn.disabled = false;
       }
@@ -1430,7 +1431,7 @@
     const panel = document.getElementById('suggestGoalsPanel');
     if (!ANTHROPIC_API_KEY()) {
       panel.style.display = 'block';
-      panel.innerHTML = '<div class="suggest-goals-status">No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.</div>';
+      panel.innerHTML = '<div class="suggest-goals-status">No API key yet, open the Sirius tile from the home screen and paste your Anthropic key there first.</div>';
       return;
     }
     btn.disabled = true;
@@ -1439,9 +1440,10 @@
 
     const system = "You are Sirius, the user's personal mentor helping them plan tomorrow's goals. " +
       "Using today's actual results below, suggest goals for tomorrow: carry forward anything left unfinished today (rephrased tighter if it helps), " +
-      "plus 2-3 fresh extra goals worth tackling — small concrete wins, and if a 1-year goal is given, at least one suggestion should genuinely move that forward. " +
+      "plus 2-3 fresh extra goals worth tackling, small concrete wins, and if a 1-year goal is given, at least one suggestion should genuinely move that forward. " +
       "Respond with ONLY a JSON array of objects, no preamble, no code fences: [{\"text\": \"<goal, under 60 chars>\", \"carry\": true|false}, ...]. " +
-      "\"carry\": true for a goal continued from today's unfinished list, false for a fresh suggestion. 4-6 items total.";
+      "\"carry\": true for a goal continued from today's unfinished list, false for a fresh suggestion. 4-6 items total. " +
+      "Never use an em dash or a double hyphen (--) in any goal text; use a comma, period, colon, or parentheses instead.";
 
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1464,7 +1466,7 @@
       if (data.error) throw new Error(data.error.message || 'Something went wrong.');
       const raw = (data.content && data.content[0] && data.content[0].text) || '';
       const suggestions = JSON.parse(raw);
-      if (!Array.isArray(suggestions) || suggestions.length === 0) throw new Error('No suggestions came back — try again.');
+      if (!Array.isArray(suggestions) || suggestions.length === 0) throw new Error('No suggestions came back, try again.');
 
       panel.innerHTML = suggestions.map((s, i) =>
         '<div class="suggest-row"><div class="suggest-row-text">' +
@@ -1656,7 +1658,7 @@ document.addEventListener('DOMContentLoaded', function () {
       d.setDate(d.getDate() - i);
       const s = dayStats(d);
       const full = s.total > 0 && s.done >= s.total;
-      if (i === 0 && !full) continue; // today may still be in progress — don't break the streak yet
+      if (i === 0 && !full) continue; // today may still be in progress, don't break the streak yet
       if (full) streak++;
       else break;
       if (i > 400) break;
@@ -1669,7 +1671,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const s = dayStats(d);
       if (s.total > 0) { activeDays++; if (s.done >= s.total) doneDays++; }
       cell.className = 'hm l' + levelFor(s) + (d.getTime() === today.getTime() ? ' today' : '');
-      cell.title = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + (s.total ? ' — ' + s.done + '/' + s.total + ' done' : ' — no goals');
+      cell.title = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + (s.total ? ', ' + s.done + '/' + s.total + ' done' : ', no goals');
       grid.appendChild(cell);
       if (d.getDay() === 0) {
         if (d.getDate() <= 7) monthPositions.push({ col, label: d.toLocaleDateString(undefined, { month: 'short' }) });

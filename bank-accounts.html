@@ -108,7 +108,7 @@
   <div class="gm-card">
     <div class="section-title">Total Balance</div>
     <div class="ba-total-row">
-      <span class="ba-total-num" id="totalNum">—</span>
+      <span class="ba-total-num" id="totalNum">-</span>
       <span class="ba-total-label" id="totalCurrency"></span>
     </div>
   </div>
@@ -128,7 +128,7 @@
   const $ = (id) => document.getElementById(id);
 
   function fmtMoney(n, code) {
-    if (n == null) return '—';
+    if (n == null) return '-';
     try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: code || 'USD' }).format(n); }
     catch (e) { return (code || '') + ' ' + n.toFixed(2); }
   }
@@ -142,7 +142,7 @@
     $('content').innerHTML =
       '<div class="ba-empty">' +
       '<div class="ba-empty-title">No banks connected</div>' +
-      '<div class="ba-empty-sub">Securely link a bank account with Plaid to see real, live balances here. Your login credentials go straight to your bank/Plaid — never to this app.</div>' +
+      '<div class="ba-empty-sub">Securely link a bank account with Plaid to see real, live balances here. Your login credentials go straight to your bank/Plaid, never to this app.</div>' +
       '<button class="connect-btn" id="connectBtn" type="button">🏦 Connect a bank</button>' +
       '</div>';
     $('connectBtn').addEventListener('click', startLink);
@@ -195,9 +195,9 @@
       if (json.error) {
         showError(
           'Bank connections aren\'t set up yet. ',
-          'This needs <code>PLAID_CLIENT_ID</code>, <code>PLAID_SECRET</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code> in Vercel, plus the <code>plaid_items</code> table in Supabase — see SETUP.md.<br><br>' + esc(json.error)
+          'This needs <code>PLAID_CLIENT_ID</code>, <code>PLAID_SECRET</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code> in Vercel, plus the <code>plaid_items</code> table in Supabase, see SETUP.md.<br><br>' + esc(json.error)
         );
-        $('totalNum').textContent = '—';
+        $('totalNum').textContent = '-';
         $('content').innerHTML = '';
         return;
       }

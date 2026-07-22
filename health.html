@@ -576,7 +576,7 @@ main {
   <div class="stack-card" id="mealsCard">
     <div class="stack-head">
       <div class="sf-eyebrow">Food log</div>
-      <div class="sf-title">Snap a photo — Sirius counts the calories</div>
+      <div class="sf-title">Snap a photo, Sirius counts the calories</div>
     </div>
     <div class="meal-totals">
       <div class="meal-total"><div class="n" id="mealCals">0</div><div class="l">Calories today</div></div>
@@ -667,15 +667,16 @@ main {
 
   async function analyzeMeal(mediaType, base64) {
     const system = "You are Sirius, a nutrition assistant. The user photographed a meal. " +
-      "Identify what it is and estimate the full meal's nutrition — be realistic about portion size from the photo. " +
-      "Also guess 2-5 raw ingredients this meal likely used that are worth restocking (e.g. \"chicken breast, rice, black beans\") — skip this if it's clearly takeout/restaurant food with no home restocking to do. " +
+      "Identify what it is and estimate the full meal's nutrition, be realistic about portion size from the photo. " +
+      "Also guess 2-5 raw ingredients this meal likely used that are worth restocking (e.g. \"chicken breast, rice, black beans\"), skip this if it's clearly takeout/restaurant food with no home restocking to do. " +
       "Respond in EXACTLY this format and nothing else:\n" +
       "NAME: <short name of the meal, e.g. \"Chicken burrito bowl\">\n" +
       "CALORIES: <number>\n" +
       "PROTEIN: <grams, number>\n" +
       "CARBS: <grams, number>\n" +
       "FAT: <grams, number>\n" +
-      "INGREDIENTS: <comma-separated list, or leave blank after the colon if not applicable>";
+      "INGREDIENTS: <comma-separated list, or leave blank after the colon if not applicable>\n" +
+      "Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.";
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -704,7 +705,7 @@ main {
     const name = ((reply.match(/NAME:\s*(.+)/i) || [])[1] || 'Meal').trim();
     const num = (re) => parseFloat((reply.match(re) || [])[1]) || 0;
     const cal = num(/CALORIES:\s*([\d.]+)/i);
-    if (!cal) throw new Error("Sirius couldn't read that photo as a meal — try another angle.");
+    if (!cal) throw new Error("Sirius couldn't read that photo as a meal, try another angle.");
     const ingredientsRaw = ((reply.match(/INGREDIENTS:\s*(.*)/i) || [])[1] || '').trim();
     const ingredients = ingredientsRaw ? ingredientsRaw.split(',').map((s) => s.trim()).filter(Boolean) : [];
     return { name, cal, protein: num(/PROTEIN:\s*([\d.]+)/i), carbs: num(/CARBS:\s*([\d.]+)/i), fat: num(/FAT:\s*([\d.]+)/i), ingredients };
@@ -794,7 +795,7 @@ main {
 
   $('mealSnapBtn').addEventListener('click', () => {
     if (!apiKey()) {
-      status('No API key yet — open the Sirius tile from the home screen and paste your Anthropic key there first.', true);
+      status('No API key yet, open the Sirius tile from the home screen and paste your Anthropic key there first.', true);
       return;
     }
     $('mealFileInput').click();
@@ -810,13 +811,13 @@ main {
     reader.onload = async () => {
       try {
         const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
-        if (!match) throw new Error('Could not read that image — try a different file.');
+        if (!match) throw new Error('Could not read that image, try a different file.');
         const meal = await analyzeMeal(match[1], match[2]);
         const arr = loadMeals();
         arr.push({ id: 'm' + Date.now().toString(36), ...meal, ts: Date.now() });
         saveMeals(arr);
         render();
-        status('Logged: ' + meal.name + ' — ~' + Math.round(meal.cal) + ' cal ✓');
+        status('Logged: ' + meal.name + ', ~' + Math.round(meal.cal) + ' cal ✓');
         if (meal.ingredients && meal.ingredients.length) showGrocerySuggestion(meal.ingredients);
         else hideGrocerySuggestion();
       } catch (err) {
@@ -825,7 +826,7 @@ main {
         btn.disabled = false;
       }
     };
-    reader.onerror = () => { status('Could not read that image — try a different file.', true); btn.disabled = false; };
+    reader.onerror = () => { status('Could not read that image, try a different file.', true); btn.disabled = false; };
     reader.readAsDataURL(file);
   });
 
