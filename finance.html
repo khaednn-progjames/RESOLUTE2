@@ -361,6 +361,15 @@
 .fin-ai-file-input {
   width: 100%; margin-top: 4px; font-size: 12.5px; color: var(--text-secondary); font-family: inherit;
 }
+.fin-ai-modal { position: relative; transition: border-color 0.15s, background 0.15s; }
+.fin-ai-modal.drag-over { border-color: rgba(255,255,255,0.32); background: rgba(255,255,255,0.03); }
+.fin-ai-drop-overlay {
+  position: absolute; inset: 0; z-index: 5; display: none; align-items: center; justify-content: center;
+  border-radius: 26px; background: rgba(10,10,12,0.72); backdrop-filter: blur(6px);
+  color: var(--text-primary); font-size: 15px; font-weight: 700; letter-spacing: 0.02em;
+  border: 2px dashed rgba(255,255,255,0.32); pointer-events: none;
+}
+.fin-ai-modal.drag-over .fin-ai-drop-overlay { display: flex; }
 .fin-ai-loading { display: flex; align-items: center; gap: 8px; color: var(--text-tertiary); font-size: 13px; padding: 8px 0; }
 .fin-ai-dots { display: inline-flex; gap: 5px; }
 .fin-ai-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-primary); opacity: 0.4; animation: fin-ai-d 1.2s ease-in-out infinite; }
@@ -2029,12 +2038,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 <!-- ===== Scan a bank screenshot (AI balance read + wealth plan) ===== -->
 <div class="fin-ai-modal-bg" id="finAiModalBg">
-  <div class="fin-ai-modal" role="dialog" aria-label="Scan bank screenshot">
+  <div class="fin-ai-modal" role="dialog" aria-label="Scan bank screenshot" id="finAiModal">
     <div class="fin-ai-modal-head">
       <span class="fin-ai-modal-title" id="finAiModalTitle">Scan bank screenshot</span>
       <button class="fin-ai-modal-close" id="finAiModalClose" type="button" aria-label="Close">×</button>
     </div>
     <div id="finAiModalBody"></div>
+    <div class="fin-ai-drop-overlay" id="finAiDropOverlay">Drop to scan</div>
   </div>
 </div>
 
@@ -2556,6 +2566,49 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   function closeFinAiModal() { document.getElementById('finAiModalBg').classList.remove('show'); }
   document.getElementById('finAiModalClose').addEventListener('click', closeFinAiModal);
   document.getElementById('finAiModalBg').addEventListener('click', (e) => { if (e.target.id === 'finAiModalBg') closeFinAiModal(); });
+
+  // ---------- drag and drop a screenshot straight onto whichever scan modal is open ----------
+  // The three scan modals (bank, wishlist item, receipt) share this one
+  // modal shell and just swap finAiModalBody's contents, so figure out
+  // which upload this drop is for from whichever file input is
+  // currently rendered inside it.
+  function currentFinAiDropHandler() {
+    if (document.getElementById('bankScanFileInput')) return handleBankScanFile;
+    if (document.getElementById('wishScanFileInput')) return handleWishScanFile;
+    if (document.getElementById('receiptFileInput')) return handleReceiptScanFile;
+    return null;
+  }
+  const finAiModalEl = document.getElementById('finAiModal');
+  let finAiDragDepth = 0;
+  function isFinAiFileDrag(e) {
+    return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') !== -1;
+  }
+  finAiModalEl.addEventListener('dragenter', (e) => {
+    if (!isFinAiFileDrag(e) || !currentFinAiDropHandler()) return;
+    e.preventDefault();
+    finAiDragDepth++;
+    finAiModalEl.classList.add('drag-over');
+  });
+  finAiModalEl.addEventListener('dragover', (e) => {
+    if (!isFinAiFileDrag(e) || !currentFinAiDropHandler()) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  finAiModalEl.addEventListener('dragleave', (e) => {
+    if (!isFinAiFileDrag(e)) return;
+    finAiDragDepth = Math.max(0, finAiDragDepth - 1);
+    if (finAiDragDepth === 0) finAiModalEl.classList.remove('drag-over');
+  });
+  finAiModalEl.addEventListener('drop', (e) => {
+    if (!isFinAiFileDrag(e)) return;
+    const handler = currentFinAiDropHandler();
+    finAiDragDepth = 0;
+    finAiModalEl.classList.remove('drag-over');
+    if (!handler) return;
+    e.preventDefault();
+    const file = Array.from(e.dataTransfer.files || []).find((f) => f.type.indexOf('image/') === 0);
+    if (file) handler(file);
+  });
 
   function finAiRenderKeyForm(onSaved) {
     document.getElementById('finAiModalBody').innerHTML =
@@ -4200,17 +4253,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
       '<input type="file" id="receiptFileInput" class="fin-ai-file-input" accept="image/*">';
     document.getElementById('receiptFileInput').addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      finAiRenderLoading();
-      const reader = new FileReader();
-      reader.onload = () => {
-        const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
-        if (!match) { finAiRenderError('Could not read that image, try a different file.'); return; }
-        runReceiptScan(match[1], match[2]);
-      };
-      reader.onerror = () => finAiRenderError('Could not read that image, try a different file.');
-      reader.readAsDataURL(file);
+      if (file) handleReceiptScanFile(file);
     });
+  }
+
+  function handleReceiptScanFile(file) {
+    finAiRenderLoading();
+    const reader = new FileReader();
+    reader.onload = () => {
+      const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(String(reader.result || ''));
+      if (!match) { finAiRenderError('Could not read that image, try a different file.'); return; }
+      runReceiptScan(match[1], match[2]);
+    };
+    reader.onerror = () => finAiRenderError('Could not read that image, try a different file.');
+    reader.readAsDataURL(file);
   }
 
   async function runReceiptScan(mediaType, base64) {
