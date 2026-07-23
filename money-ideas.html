@@ -12,6 +12,7 @@
 <script src="topbar.js" defer></script>
 <script src="sirius-usage.js" defer></script>
 <script src="liquid-glass.js" defer></script>
+<script src="claude-history.js" defer></script>
 
 <link rel="stylesheet" href="design-system.css">
 <style>
@@ -322,6 +323,7 @@
     const loading = addAI('<span class="dots"><i></i><i></i><i></i></span>');
 
     try {
+      const historyContext = window.SiriusHistory ? await window.SiriusHistory.getContext(userText || ($('contextInput').value || '')) : '';
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -333,7 +335,7 @@
         body: JSON.stringify({
           model: 'claude-sonnet-5',
           max_tokens: 1024,
-          system: systemPrompt(),
+          system: systemPrompt() + (historyContext ? '\n\n' + historyContext : ''),
           messages: history,
         }),
       });

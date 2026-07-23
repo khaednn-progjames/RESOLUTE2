@@ -12,6 +12,7 @@
 <script src="topbar.js" defer></script>
 <script src="sirius-usage.js" defer></script>
 <script src="liquid-glass.js" defer></script>
+<script src="claude-history.js" defer></script>
 <link rel="stylesheet" href="design-system.css">
 <style>
 :root {
@@ -2829,12 +2830,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   async function runAskSirius(question) {
     askSiriusMessages.push({ role: 'user', content: question });
     renderAskSiriusModal(true);
+    const historyContext = window.SiriusHistory ? await window.SiriusHistory.getContext(question) : '';
     const system = "You are Sirius, a financial mentor embedded in the user's net worth dashboard. " +
       "Answer their budgeting question using the real financial context below, be specific with numbers, direct, and practical. " +
       "If this is a follow-up to earlier questions in this conversation, build on what you already told them rather than repeating it. " +
       "3-6 sentences per answer, plain conversational text, no markdown headers or bullet lists. " +
       "Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.\n\n" +
-      "Their current finances:\n" + buildFinanceContext();
+      "Their current finances:\n" + buildFinanceContext() +
+      (historyContext ? '\n\n' + historyContext : '');
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',

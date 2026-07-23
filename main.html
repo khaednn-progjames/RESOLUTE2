@@ -11,6 +11,7 @@
 <script src="topbar.js" defer></script>
 <script src="sirius-usage.js" defer></script>
 <script src="liquid-glass.js" defer></script>
+<script src="claude-history.js" defer></script>
 <link rel="stylesheet" href="design-system.css">
 <style>
 :root {
@@ -1438,12 +1439,15 @@
     panel.style.display = 'block';
     panel.innerHTML = '<div class="suggest-goals-status">Sirius is looking at how today went…</div>';
 
+    const goalsCtx = suggestGoalsContext();
+    const historyContext = window.SiriusHistory ? await window.SiriusHistory.getContext(goalsCtx) : '';
     const system = "You are Sirius, the user's personal mentor helping them plan tomorrow's goals. " +
       "Using today's actual results below, suggest goals for tomorrow: carry forward anything left unfinished today (rephrased tighter if it helps), " +
       "plus 2-3 fresh extra goals worth tackling, small concrete wins, and if a 1-year goal is given, at least one suggestion should genuinely move that forward. " +
       "Respond with ONLY a JSON array of objects, no preamble, no code fences: [{\"text\": \"<goal, under 60 chars>\", \"carry\": true|false}, ...]. " +
       "\"carry\": true for a goal continued from today's unfinished list, false for a fresh suggestion. 4-6 items total. " +
-      "Never use an em dash or a double hyphen (--) in any goal text; use a comma, period, colon, or parentheses instead.";
+      "Never use an em dash or a double hyphen (--) in any goal text; use a comma, period, colon, or parentheses instead." +
+      (historyContext ? '\n\n' + historyContext : '');
 
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1458,7 +1462,7 @@
           model: 'claude-sonnet-5',
           max_tokens: 700,
           system: system,
-          messages: [{ role: 'user', content: suggestGoalsContext() }],
+          messages: [{ role: 'user', content: goalsCtx }],
         }),
       });
       const data = await res.json();

@@ -19,6 +19,7 @@
 <script src="topbar.js" defer></script>
 <script src="sirius-usage.js" defer></script>
 <script src="liquid-glass.js" defer></script>
+<script src="claude-history.js" defer></script>
 
 <style>
 /* Page-specific chrome only — base tokens, cards, tiles, and buttons
@@ -806,6 +807,7 @@
     ].filter(Boolean).join('\n');
 
     try {
+      const historyContext = window.SiriusHistory ? await window.SiriusHistory.getContext(ctx) : '';
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -821,7 +823,8 @@
             'Given the live snapshot of their day below, write a short, punchy briefing: where they stand, the single most important thing to do next, and one concrete nudge. ' +
             'If a 7-day net worth change or crypto/stock holdings are included, weave in a brief, specific comment on that movement, only when it is actually notable, otherwise skip it rather than forcing a mention. ' +
             'Direct, warm, zero fluff, no greetings, no markdown, no bullet lists, just 3-5 plain sentences. ' +
-            'Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.',
+            'Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.' +
+            (historyContext ? '\n\n' + historyContext : ''),
           messages: [{ role: 'user', content: ctx }],
         }),
       });

@@ -12,6 +12,7 @@
 <script src="topbar.js" defer></script>
 <script src="sirius-usage.js" defer></script>
 <script src="liquid-glass.js" defer></script>
+<script src="claude-history.js" defer></script>
 
 <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
@@ -1374,10 +1375,22 @@
     $('siriusModalBody').innerHTML = '<div class="sirius-err">' + siriusEsc(msg) + '</div>';
   }
 
+  // Only the genuinely advisory/reflective features pull in Claude
+  // history context, not the narrow extraction/utility ones (summarize,
+  // scripture lookup, article snapshot, auto-link, dashboard-feature
+  // brainstorming) where personal history adds cost with no real benefit.
+  const SIRIUS_HISTORY_FEATURES = ['notes-solution', 'notes-ideas'];
+
   async function callSirius(systemPrompt, userText, feature) {
     // userText is either a plain string (single-turn) or an array of
     // {role, content} messages already built by the caller (multi-turn).
     const messages = Array.isArray(userText) ? userText : [{ role: 'user', content: userText }];
+    let historyContext = '';
+    if (window.SiriusHistory && SIRIUS_HISTORY_FEATURES.indexOf(feature) !== -1) {
+      const lastUser = messages.slice().reverse().find((m) => m.role === 'user');
+      const queryText = lastUser && typeof lastUser.content === 'string' ? lastUser.content : '';
+      historyContext = await window.SiriusHistory.getContext(queryText);
+    }
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -1389,7 +1402,7 @@
       body: JSON.stringify({
         model: 'claude-sonnet-5',
         max_tokens: 1024,
-        system: systemPrompt + ' Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.',
+        system: systemPrompt + ' Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead.' + (historyContext ? '\n\n' + historyContext : ''),
         messages: messages,
       }),
     });
