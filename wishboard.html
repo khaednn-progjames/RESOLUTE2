@@ -70,6 +70,16 @@
 .wb-status { font-size: 12px; color: var(--text-tertiary); line-height: 1.5; }
 .wb-status.err { color: var(--danger); }
 
+.wb-dropzone { position: relative; transition: border-color 0.15s, background 0.15s; }
+.wb-dropzone.drag-over { border-color: rgba(227,157,208,0.55); background: rgba(227,157,208,0.05); }
+.wb-dropzone-overlay {
+  position: absolute; inset: 0; z-index: 5; display: none; align-items: center; justify-content: center;
+  border-radius: 22px; background: rgba(10,10,12,0.72); backdrop-filter: blur(6px);
+  color: var(--text-primary); font-size: 15px; font-weight: 700; letter-spacing: 0.02em;
+  border: 2px dashed rgba(227,157,208,0.55); pointer-events: none;
+}
+.wb-dropzone.drag-over .wb-dropzone-overlay { display: flex; }
+
 /* ---------- view toggle + category chips ---------- */
 .wb-view-toggle { display: flex; gap: 6px; margin-bottom: 12px; }
 .wb-view-btn {
@@ -174,14 +184,15 @@
   </div>
 
   <div class="section-eyebrow">Add Something</div>
-  <div class="gm-card">
+  <div class="gm-card wb-dropzone" id="wbDropzone">
     <div class="wb-add-row">
       <input class="gm-input" id="wbUrlInput" type="url" placeholder="Paste a product link…" autocomplete="off">
       <button class="gm-btn" id="wbAddLinkBtn" type="button">+ Add</button>
       <button class="gm-btn-secondary" id="wbUploadBtn" type="button">📷 Upload Screenshot(s)</button>
       <input type="file" id="wbFileInput" accept="image/*" multiple style="display:none">
     </div>
-    <div class="wb-status" id="wbStatus">Sirius names and categorizes whatever you add, clothes, electronics, home, anything. Upload a screenshot of a cart or product page and it'll pull out every item shown.</div>
+    <div class="wb-status" id="wbStatus">Sirius names and categorizes whatever you add, clothes, electronics, home, anything. Upload a screenshot of a cart or product page (or just drag one in) and it'll pull out every item shown.</div>
+    <div class="wb-dropzone-overlay" id="wbDropOverlay">Drop to add</div>
   </div>
 
   <div class="section-eyebrow">Your List</div>
@@ -399,6 +410,38 @@
     const files = Array.from(e.target.files || []);
     if (files.length) addFromScreenshots(files);
     e.target.value = '';
+  });
+
+  // ---------- drag and drop screenshots straight onto the Add card ----------
+  const dropzone = $('wbDropzone');
+  let dragDepth = 0; // dragenter/dragleave fire for every child element too, so count instead of using a single boolean
+  function isFileDrag(e) {
+    return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') !== -1;
+  }
+  dropzone.addEventListener('dragenter', (e) => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    dragDepth++;
+    dropzone.classList.add('drag-over');
+  });
+  dropzone.addEventListener('dragover', (e) => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  dropzone.addEventListener('dragleave', (e) => {
+    if (!isFileDrag(e)) return;
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) dropzone.classList.remove('drag-over');
+  });
+  dropzone.addEventListener('drop', (e) => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    dragDepth = 0;
+    dropzone.classList.remove('drag-over');
+    const files = Array.from(e.dataTransfer.files || []).filter((f) => f.type.indexOf('image/') === 0);
+    if (files.length === 0) { setStatus('Drop an image, a screenshot works best.', true); return; }
+    addFromScreenshots(files);
   });
 
   // ---------- view + category filter ----------
