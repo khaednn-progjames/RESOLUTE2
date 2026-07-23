@@ -2006,6 +2006,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <iframe src="iron-condor.html" class="condor-iframe" loading="lazy" title="Iron Condor Bot"></iframe>
 </div>
 
+<div class="section" data-section="wishboard" hidden>
+  <div class="section-title">
+    <span class="section-title-text">WISH BOARD</span>
+  </div>
+  <iframe src="wishboard.html" class="condor-iframe" loading="lazy" title="Wish Board"></iframe>
+</div>
+
 </div>
 
 <!-- ===== BOTTOM TAB BAR ===== -->
@@ -2013,14 +2020,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <button class="bot-tab active" data-tab="net">
     <span class="bot-tab-icon">📊</span>
     <span class="bot-tab-label">Net Worth</span>
-  </button>
-  <button class="bot-tab" data-tab="subs">
-    <span class="bot-tab-icon">🔁</span>
-    <span class="bot-tab-label">Subs</span>
-  </button>
-  <button class="bot-tab" data-tab="incoming">
-    <span class="bot-tab-icon">📦</span>
-    <span class="bot-tab-label">Orders</span>
   </button>
   <button class="bot-tab" data-tab="wish">
     <span class="bot-tab-icon">🎯</span>
@@ -2033,6 +2032,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   <button class="bot-tab" data-tab="condor">
     <span class="bot-tab-icon">🦅</span>
     <span class="bot-tab-label">Condor</span>
+  </button>
+  <button class="bot-tab" data-tab="wishboard">
+    <span class="bot-tab-icon">🛍️</span>
+    <span class="bot-tab-label">Wish Board</span>
   </button>
 </nav>
 
@@ -2096,7 +2099,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   tabs.forEach(b => b.addEventListener('click', () => setActiveTab(b.dataset.tab)));
   const hashTab = (location.hash || '').replace('#', '');
   const savedTab = storeGet(TAB_KEY);
-  const validTabs = ['net','subs','incoming','wish','spend','condor'];
+  const validTabs = ['net','wish','spend','condor','wishboard'];
   setActiveTab(validTabs.includes(hashTab) ? hashTab : (savedTab && validTabs.includes(savedTab) ? savedTab : 'net'));
 
   // ============================================================
@@ -2834,9 +2837,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     const monthlyBurn = subs.reduce((s, it) => s + monthlyEquivalent(it), 0);
     const wishlist = storeGet('wishlist') || [];
 
+    const expenses = storeGet('expenses') || [];
+    const mk = thisMonthKey();
+    const thisMonthExpenses = expenses.filter((it) => monthKeyOf(it.date) === mk);
+    const spendTotal = thisMonthExpenses.reduce((s, it) => s + (Number(it.total) || 0), 0);
+    const spendByCat = {};
+    thisMonthExpenses.forEach((it) => { const c = it.category || 'Other'; spendByCat[c] = (spendByCat[c] || 0) + (Number(it.total) || 0); });
+    const spendCatLines = Object.keys(spendByCat).sort((a, b) => spendByCat[b] - spendByCat[a]).map((c) => c + ' ' + fmtMoney(spendByCat[c]));
+
     let ctx = 'Net worth: ' + fmtMoney(grand) + ' total.\n';
     ctx += catLines.length ? catLines.join('\n') + '\n' : 'No accounts added yet.\n';
     ctx += 'Monthly subscriptions: ' + fmtMoney(monthlyBurn) + '/mo across ' + subs.length + ' active subscription' + (subs.length === 1 ? '' : 's') + '.\n';
+    ctx += thisMonthExpenses.length
+      ? 'Spending this month: ' + fmtMoney(spendTotal) + ' across ' + thisMonthExpenses.length + ' logged expense' + (thisMonthExpenses.length === 1 ? '' : 's') + (spendCatLines.length ? ' (' + spendCatLines.join(', ') + ')' : '') + '.\n'
+      : 'Spending this month: nothing logged yet.\n';
     ctx += wishlist.length
       ? 'Wishlist (' + wishlist.length + ' items): ' + wishlist.map((it) => it.name + ' ' + fmtMoney(it.amount)).join(', ') + '.\n'
       : 'Wishlist: empty.\n';

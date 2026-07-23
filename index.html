@@ -234,7 +234,7 @@
     </a>
 
     <!-- Small tile -->
-    <a class="tile" href="wishboard.html" style="--accent:#E39DD0">
+    <a class="tile" href="finance.html#wishboard" style="--accent:#E39DD0">
       <div class="tile-spacer"></div>
       <h2 class="tile-title">Wish Board</h2>
       <div class="tile-foot">
@@ -730,6 +730,12 @@
       if (it.period === 'weekly') return t + a * 4.345;
       return t + a;
     }, 0);
+
+    const expenses = loadJSON('expenses', []) || [];
+    const thisMonthKeyStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    const thisMonthExpenses = expenses.filter((it) => String(it && it.date || '').slice(0, 7) === thisMonthKeyStr);
+    s.spendMonthTotal = thisMonthExpenses.reduce((t, it) => t + (Number(it.total) || 0), 0);
+    s.spendMonthCount = thisMonthExpenses.length;
     return s;
   }
 
@@ -803,6 +809,7 @@
       s.cryptoTotal > 0 ? 'Crypto holdings: ' + fmtUsd(s.cryptoTotal) : null,
       s.stocksTotal > 0 ? 'Stocks/investments: ' + fmtUsd(s.stocksTotal) : null,
       'Subscriptions: ' + fmtUsd(s.subsMonthly) + '/mo',
+      'Spending this month: ' + (s.spendMonthCount ? fmtUsd(s.spendMonthTotal) + ' across ' + s.spendMonthCount + ' logged expense' + (s.spendMonthCount === 1 ? '' : 's') : 'nothing logged yet'),
       'Wishlist: ' + s.wishCount + ' items totaling ' + fmtUsd(s.wishTotal),
     ].filter(Boolean).join('\n');
 

@@ -48,6 +48,10 @@
   font-weight: 600; text-decoration: underline; cursor: pointer; padding: 0;
 }
 .wb-tax-edit-link:hover { color: var(--text-primary); }
+.wb-money-pct { font-weight: 700; font-variant-numeric: tabular-nums; }
+.wb-money-pct.good { color: var(--success); }
+.wb-money-pct.warn { color: var(--warning); }
+.wb-money-pct.bad { color: var(--danger); }
 
 /* ---------- add row ---------- */
 .wb-add-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -188,6 +192,7 @@
       <div class="wb-stat"><div class="wb-stat-num" id="wbStatGot">0</div><div class="wb-stat-label">Already Got</div></div>
     </div>
     <div class="wb-tax-note" id="wbTaxNote"></div>
+    <div class="wb-tax-note" id="wbMoneyNote"></div>
   </div>
 
   <div class="section-eyebrow">Add Something</div>
@@ -662,6 +667,54 @@
         '<button type="button" class="wb-tax-edit-link" id="wbEditTaxBtn">Set my tax rate</button>';
     }
     $('wbEditTaxBtn').addEventListener('click', promptTaxRate);
+    renderMoneyNote(total);
+  }
+
+  // ---------- connect to what's actually in Finance (same origin, so this
+  // reads the exact same localStorage Finance's Net Worth and Spending
+  // tabs write to, whether Wish Board is opened standalone or iframed
+  // inside Finance) ----------
+  function financeNetWorth() {
+    const cats = ['nw:bank', 'nw:stocks', 'nw:crypto', 'nw:other'];
+    let bank = 0, total = 0;
+    cats.forEach((key) => {
+      const items = loadJSON(key, []) || [];
+      const sub = items.reduce((s, it) => s + (Number(it.amount) || 0), 0);
+      total += sub;
+      if (key === 'nw:bank') bank = sub;
+    });
+    return { bank, total };
+  }
+
+  function thisMonthSpending() {
+    const expenses = loadJSON('expenses', []) || [];
+    const now = new Date();
+    const mk = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    return expenses
+      .filter((it) => String(it && it.date || '').slice(0, 7) === mk)
+      .reduce((s, it) => s + (Number(it.total) || 0), 0);
+  }
+
+  function renderMoneyNote(wantTotal) {
+    const note = $('wbMoneyNote');
+    const nw = financeNetWorth();
+    if (!wantTotal || (nw.bank <= 0 && nw.total <= 0)) {
+      note.innerHTML = nw.bank <= 0 && nw.total <= 0
+        ? 'Add your accounts in Finance\'s Net Worth tab to see how your want list compares to what you actually have.'
+        : '';
+      return;
+    }
+    const spent = thisMonthSpending();
+    const basisRaw = nw.bank > 0 ? nw.bank : nw.total;
+    const basisLabelRaw = nw.bank > 0 ? 'bank balance' : 'net worth';
+    const basis = nw.bank > 0 ? Math.max(0, nw.bank - spent) : basisRaw;
+    const basisLabel = nw.bank > 0 && spent > 0 ? 'bank balance after this month\'s spending' : basisLabelRaw;
+    const pct = basis > 0 ? (wantTotal / basis) * 100 : 999;
+    let cls = 'good';
+    if (pct > 100) cls = 'bad';
+    else if (pct > 40) cls = 'warn';
+    note.innerHTML = 'Your want list is <span class="wb-money-pct ' + cls + '">' + Math.min(pct, 999).toFixed(0) + '%</span> of your ' +
+      fmtMoney(basis) + ' ' + basisLabel + '.' + (pct > 100 ? ' That\'s more than you currently have available.' : '');
   }
 
   render();

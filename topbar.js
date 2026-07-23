@@ -677,7 +677,7 @@ body.topbar-modal-open {
     { group: 'Pages', ic: '📖', label: 'Personal Study',  sub: 'grow with Jehovah',  href: 'study.html',        kw: 'personal study bible jw jehovah witness scripture prayer ministry meeting daily text' },
     { group: 'Pages', ic: '❤️', label: 'Health',          sub: 'meals & water',      href: 'health.html',       kw: 'health meals food calories water supplements stack vitamins' },
     { group: 'Pages', ic: '🤖', label: 'Iron Condor Bot', sub: 'options bot, in Finance', href: 'finance.html#condor', kw: 'trading options bot spy tastytrade condor' },
-    { group: 'Pages', ic: '🛍️', label: 'Wish Board',    sub: 'things you want',    href: 'wishboard.html',   kw: 'wishlist wants shopping clothes gifts board categorize screenshot' },
+    { group: 'Pages', ic: '🛍️', label: 'Wish Board',    sub: 'things you want, in Finance', href: 'finance.html#wishboard', kw: 'wishlist wants shopping clothes gifts board categorize screenshot' },
     { group: 'Actions', ic: '➕', label: 'Log a drink of water', sub: 'instant', action: 'water',  kw: 'water add drink log +1' },
     { group: 'Actions', ic: '📅', label: "Open today's Daily Note", sub: 'notes', href: 'notes.html#daily', kw: 'daily note today journal write' },
     { group: 'Actions', ic: '🕸', label: 'Open the Web of notes', sub: 'graph', href: 'notes.html#web', kw: 'web graph notes connections obsidian' },
