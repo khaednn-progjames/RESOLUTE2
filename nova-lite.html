@@ -12,6 +12,7 @@
 <script src="topbar.js" defer></script>
 <script src="sirius-usage.js" defer></script>
 <script src="liquid-glass.js" defer></script>
+<script src="claude-history.js" defer></script>
 <!-- ============================================================
  * NOVA LITE, a simple, drop-in AI mentor for ANY dashboard.
  * Single self-contained file. No backend, no build step.
@@ -140,6 +141,7 @@
       <div class="top-actions">
         <button id="newChatBtn" class="new-chat-btn" aria-label="New chat" title="New chat">+</button>
         <button id="histToggle" class="hist-toggle" aria-label="Chat history" title="Chat history">🕘</button>
+        <button id="claudeHistToggle" class="hist-toggle" aria-label="Claude conversation history" title="Import your claude.ai history">📚</button>
         <button id="keyToggle" class="key-toggle" aria-label="API key settings" title="API key">🔑</button>
       </div>
     </div>
@@ -170,6 +172,27 @@
         <button class="hist-modal-close" id="histModalClose" aria-label="Close">×</button>
       </div>
       <div id="histList"></div>
+    </div>
+  </div>
+
+  <div class="hist-modal-bg" id="claudeHistModalBg">
+    <div class="hist-modal" role="dialog" aria-label="Claude conversation history">
+      <div class="hist-modal-head">
+        <span class="hist-modal-title">Your Claude History</span>
+        <button class="hist-modal-close" id="claudeHistModalClose" aria-label="Close">×</button>
+      </div>
+      <div class="hint" style="margin-bottom:14px">
+        There's no API that lets this dashboard read your claude.ai conversations live. To use them as context here (and across Notes, Personal Study, and the other Sirius features), export them once:
+        <b>claude.ai → Settings → Account → Export data</b>, unzip the file you get emailed, then upload the <code style="background:rgba(255,255,255,.06);padding:1px 5px;border-radius:4px">conversations.json</code> file below.
+        It's stored only in this browser (not synced to your other devices) and used to pull in relevant excerpts when a Sirius feature can use them.
+      </div>
+      <div id="claudeHistStats" style="font-size:13px;color:var(--fg);margin-bottom:14px"></div>
+      <div class="keybar" style="margin-bottom:8px">
+        <input type="file" id="claudeHistFileInput" accept="application/json,.json" style="flex:1;font-size:12px;color:var(--muted)">
+        <button id="claudeHistImportBtn">Import</button>
+      </div>
+      <div class="hint" id="claudeHistStatus" style="margin-bottom:0"></div>
+      <button id="claudeHistClearBtn" class="hist-toggle" style="width:100%;margin-top:14px;opacity:0.7" type="button">Clear imported history</button>
     </div>
   </div>
 
@@ -321,6 +344,7 @@
     setOrb('think');
     const loading = addCoach('<span class="dots"><i></i><i></i><i></i></span>');
     try {
+      const historyContext = window.SiriusHistory ? await window.SiriusHistory.getContext(text) : '';
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -332,7 +356,7 @@
         body: JSON.stringify({
           model: 'claude-sonnet-5',
           max_tokens: 1024,
-          system: SYS + JSON.stringify(dashboardData()),
+          system: SYS + JSON.stringify(dashboardData()) + (historyContext ? '\n\n' + historyContext : ''),
           messages: activeSession.messages.map(m => ({ role: m.role, content: m.content })),
         }),
       });
@@ -431,6 +455,48 @@
   histToggle.addEventListener('click', openHist);
   histModalClose.addEventListener('click', closeHist);
   histModalBg.addEventListener('click', (e) => { if (e.target === histModalBg) closeHist(); });
+
+  // ---- Claude conversation history import (shared across all Sirius features) ----
+  const claudeHistToggle = document.getElementById('claudeHistToggle');
+  const claudeHistModalBg = document.getElementById('claudeHistModalBg');
+  const claudeHistModalClose = document.getElementById('claudeHistModalClose');
+  const claudeHistStats = document.getElementById('claudeHistStats');
+  const claudeHistStatus = document.getElementById('claudeHistStatus');
+
+  async function renderClaudeHistStats() {
+    if (!window.SiriusHistory) { claudeHistStats.textContent = 'History storage is unavailable in this browser.'; return; }
+    const stats = await window.SiriusHistory.getStats();
+    claudeHistStats.textContent = stats.count
+      ? stats.count + ' conversations imported' + (stats.importedAt ? ', last updated ' + new Date(stats.importedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '')
+      : 'Nothing imported yet.';
+  }
+  function openClaudeHist() { renderClaudeHistStats(); claudeHistStatus.textContent = ''; claudeHistModalBg.classList.add('show'); }
+  function closeClaudeHist() { claudeHistModalBg.classList.remove('show'); }
+  claudeHistToggle.addEventListener('click', openClaudeHist);
+  claudeHistModalClose.addEventListener('click', closeClaudeHist);
+  claudeHistModalBg.addEventListener('click', (e) => { if (e.target === claudeHistModalBg) closeClaudeHist(); });
+
+  document.getElementById('claudeHistImportBtn').addEventListener('click', async () => {
+    const input = document.getElementById('claudeHistFileInput');
+    const file = input.files && input.files[0];
+    if (!file) { claudeHistStatus.textContent = 'Choose a conversations.json file first.'; return; }
+    if (!window.SiriusHistory) { claudeHistStatus.textContent = 'History storage is unavailable in this browser.'; return; }
+    claudeHistStatus.textContent = 'Importing, this can take a moment for a large export…';
+    try {
+      const result = await window.SiriusHistory.importFile(file);
+      claudeHistStatus.textContent = 'Imported ' + result.count + ' conversations.';
+      input.value = '';
+      renderClaudeHistStats();
+    } catch (e) {
+      claudeHistStatus.textContent = e.message || 'Could not import that file.';
+    }
+  });
+  document.getElementById('claudeHistClearBtn').addEventListener('click', async () => {
+    if (!confirm('Remove all imported Claude conversation history from this browser?')) return;
+    if (window.SiriusHistory) await window.SiriusHistory.clearAll();
+    claudeHistStatus.textContent = 'Cleared.';
+    renderClaudeHistStats();
+  });
 
   // ---- boot ----
   activeSession = loadActiveSession();

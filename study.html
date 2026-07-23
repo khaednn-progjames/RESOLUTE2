@@ -12,6 +12,7 @@
 <script src="topbar.js" defer></script>
 <script src="sirius-usage.js" defer></script>
 <script src="liquid-glass.js" defer></script>
+<script src="claude-history.js" defer></script>
 
 <link rel="stylesheet" href="design-system.css">
 <style>
@@ -178,6 +179,14 @@
       <a class="btn btn-secondary" href="notes.html">Monday Meeting notes →</a>
       <a class="btn btn-secondary" href="notes.html">Saturday Meeting notes →</a>
     </div>
+    <div style="height:1px;background:rgba(255,255,255,0.06);margin:14px 0"></div>
+    <div class="study-source-note" style="margin-bottom:12px">
+      Prepares comments for this week's actual meeting material, grounded the same way as everything else here, jw.org and wol.jw.org only. If you've imported your Claude conversation history from the Sirius Lite page, it also draws on how you naturally write so the suggested comments sound like you, not generic AI phrasing.
+    </div>
+    <div class="study-meeting-links">
+      <button class="btn btn-secondary" id="studyMidweekBtn" type="button">Prepare Midweek Comments</button>
+      <button class="btn btn-secondary" id="studyWeekendBtn" type="button">Prepare Weekend Comments</button>
+    </div>
   </div>
 
   <div class="section-eyebrow">Ask Sirius</div>
@@ -276,6 +285,50 @@
     $('studyNextMeeting').innerHTML = 'Next: <b>' + escHtml(info.label) + '</b> ' + escHtml(when);
   }
 
+  // ---------- meeting comment prep (midweek Life & Ministry / weekend Watchtower Study) ----------
+  async function meetingCommentsSystem(kind) {
+    const label = kind === 'midweek'
+      ? "THIS WEEK's Our Christian Life and Ministry Meeting workbook schedule"
+      : "THIS WEEK's Watchtower Study article";
+    const dateLabel = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    let voiceBlock = '';
+    if (window.SiriusHistory) {
+      const sample = await window.SiriusHistory.getVoiceSample(1200);
+      if (sample) {
+        voiceBlock = "\n\nHere are unrelated snippets of how the user writes in their own words, drawn from their past Claude conversations. Use them ONLY to match natural word choice, tone, and sentence rhythm, never their topic or content:\n" + sample;
+      }
+    }
+    return "You are Sirius, helping a Jehovah's Witness prepare comments to raise their hand and say during their upcoming Kingdom Hall meeting. " +
+      "You have a web_search tool restricted to jw.org and wol.jw.org, use it to find " + label + " (today is " + dateLabel + "). Search more than once if the first attempt doesn't turn up the specific current week's material. " +
+      "Never mention, cite, or draw from any source outside jw.org or wol.jw.org, and never invent a scripture, fact, or illustration that isn't actually in what you found. " +
+      "If you truly cannot find this week's specific material after a couple of searches, say so honestly in the ANSWER section instead of guessing or giving generic comments. " +
+      "List every section or paragraph where audience comments are natural (for the midweek meeting: the Congregation Bible Study paragraphs and any discussion questions in the other parts, not the student assignments; for the Watchtower Study: as many paragraphs as make sense). For each one, write one or two SHORT comments in first person exactly as the user could stand up and say them out loud, not a summary of the point, citing the specific paragraph or section number. " +
+      "Respond in EXACTLY this structure, with these exact plain-text labels each on their own line and nothing before ANSWER or after CATEGORY:\n" +
+      "ANSWER:\n<one sentence naming the specific article or workbook section and date range you found, or an honest note that you could not find it>\n\n" +
+      "SCRIPTURES:\n<key scriptures used across the material, each on its own line as '<Reference>, <short line of context>'; if none stood out, write 'None found.'>\n\n" +
+      "APPLY:\n<the paragraph-by-paragraph comment suggestions, each on its own line starting with '- Para <N>: ' followed by the suggested comment>\n\n" +
+      "CATEGORY: Meetings\n\n" +
+      "Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead." +
+      voiceBlock;
+  }
+
+  async function prepareMeetingComments(kind, btnEl) {
+    if (studyBusy) return;
+    if (btnEl) btnEl.disabled = true;
+    try {
+      const system = await meetingCommentsSystem(kind);
+      const label = kind === 'midweek' ? 'Midweek Meeting Comments' : 'Weekend Meeting Comments';
+      const query = kind === 'midweek'
+        ? "Find this week's Life and Ministry Meeting workbook schedule and suggest comments for it."
+        : "Find this week's Watchtower Study article and suggest comments for it.";
+      await runStudySearch(query, label + ' — ' + new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), system, 2048);
+    } finally {
+      if (btnEl) btnEl.disabled = false;
+    }
+  }
+  $('studyMidweekBtn').addEventListener('click', (e) => prepareMeetingComments('midweek', e.currentTarget));
+  $('studyWeekendBtn').addEventListener('click', (e) => prepareMeetingComments('weekend', e.currentTarget));
+
   // ---------- stats ----------
   function computeStreak(all) {
     const keyFor = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -323,7 +376,7 @@
     } catch (e) { return false; }
   }
 
-  async function callStudySirius(messages) {
+  async function callStudySirius(messages, systemOverride, maxTokens) {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -334,8 +387,8 @@
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 1536,
-        system: STUDY_SYSTEM,
+        max_tokens: maxTokens || 1536,
+        system: systemOverride || STUDY_SYSTEM,
         messages: messages,
         tools: [{
           type: 'web_search_20250305',
@@ -523,7 +576,9 @@
   }
 
   let studyBusy = false;
-  async function runStudySearch(query, displayLabel) {
+  let currentSystemOverride = null;
+  let currentMaxTokens = null;
+  async function runStudySearch(query, displayLabel, systemOverride, maxTokens) {
     query = (query || '').trim();
     if (!query || studyBusy) return;
     if (!apiKey()) { studyStatus('No API key yet, open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
@@ -535,8 +590,10 @@
     studyMessages = [{ role: 'user', content: query }];
     studyTopicLabel = displayLabel || query;
     currentJournalEntryId = null;
+    currentSystemOverride = systemOverride || null;
+    currentMaxTokens = maxTokens || null;
     try {
-      const { text, sources } = await callStudySirius(studyMessages);
+      const { text, sources } = await callStudySirius(studyMessages, currentSystemOverride, currentMaxTokens);
       const parsed = parseStudyReply(text);
       studyMessages.push({ role: 'assistant', content: text });
       studyTurns.push({ query, parsed, sources });
@@ -564,7 +621,7 @@
     studyStatus('Searching jw.org and wol.jw.org…');
     studyMessages.push({ role: 'user', content: q });
     try {
-      const { text, sources } = await callStudySirius(studyMessages);
+      const { text, sources } = await callStudySirius(studyMessages, currentSystemOverride, currentMaxTokens);
       const parsed = parseStudyReply(text);
       studyMessages.push({ role: 'assistant', content: text });
       studyTurns.push({ query: q, parsed, sources });
