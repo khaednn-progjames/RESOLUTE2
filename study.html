@@ -321,7 +321,7 @@
       const query = kind === 'midweek'
         ? "Find this week's Life and Ministry Meeting workbook schedule and suggest comments for it."
         : "Find this week's Watchtower Study article and suggest comments for it.";
-      await runStudySearch(query, label + ' — ' + new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), system, 2048);
+      await runStudySearch(query, label + ' — ' + new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), system, 2048, kind);
     } finally {
       if (btnEl) btnEl.disabled = false;
     }
@@ -465,6 +465,58 @@
   let studyTurns = [];          // rendered turns: [{query, parsed, sources}]
   let studyTopicLabel = '';
   let currentJournalEntryId = null;
+  let currentMeetingKind = null; // 'midweek' | 'weekend' | null — which meeting these results are for, if any
+
+  // ---------- insert meeting comments straight into that week's Meeting Note ----------
+  // Notes (notes.html) owns the Meeting Notes feature, but everything's
+  // same-origin, so this reads/writes its exact localStorage shape
+  // directly rather than duplicating a whole cross-page messaging setup.
+  const NOTES_DOC_PREFIX = 'notes:doc:';
+  const NOTES_INDEX_KEY = 'notes:index';
+  const NOTES_MEETING_MAP_KEY = 'notes:meetingMap';
+  function notesNewId() { return 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function weekOccurrenceDateForMeeting(weekday) {
+    const d = new Date();
+    const dow = d.getDay();
+    const mondayOffset = (dow === 0) ? -6 : 1 - dow;
+    const monday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + mondayOffset);
+    const offsetFromMonday = (weekday === 0) ? 6 : weekday - 1;
+    return new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + offsetFromMonday);
+  }
+  function insertIntoMeetingNote(kind, text) {
+    const meeting = kind === 'midweek'
+      ? { id: 'mon', label: 'Monday Meeting', weekday: 1 }
+      : { id: 'sat', label: 'Saturday Meeting', weekday: 6 };
+    const dateObj = weekOccurrenceDateForMeeting(meeting.weekday);
+    const dateKey = dateObj.getFullYear() + '-' + String(dateObj.getMonth() + 1).padStart(2, '0') + '-' + String(dateObj.getDate()).padStart(2, '0');
+    const mapKey = meeting.id + ':' + dateKey;
+
+    const map = loadJSON(NOTES_MEETING_MAP_KEY, {});
+    const idx = loadJSON(NOTES_INDEX_KEY, []);
+    let id = map[mapKey];
+    let entry = id ? idx.find((n) => n.id === id) : null;
+
+    if (!entry) {
+      id = notesNewId();
+      const dateLabel = dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+      entry = { id, title: meeting.label + ' — ' + dateLabel, category: 'Meeting Notes', updatedAt: Date.now(), pinned: false };
+      idx.unshift(entry);
+      saveJSON(NOTES_DOC_PREFIX + id, { ops: [{ insert: '\n' }] });
+      map[mapKey] = id;
+      saveJSON(NOTES_MEETING_MAP_KEY, map);
+    }
+
+    const doc = loadJSON(NOTES_DOC_PREFIX + id, { ops: [{ insert: '\n' }] });
+    const ops = Array.isArray(doc.ops) ? doc.ops.slice() : [{ insert: '\n' }];
+    ops.push({ insert: '\n' });
+    ops.push({ insert: 'Sirius comments\n', attributes: { bold: true } });
+    ops.push({ insert: text + '\n' });
+    saveJSON(NOTES_DOC_PREFIX + id, { ops });
+
+    entry.updatedAt = Date.now();
+    saveJSON(NOTES_INDEX_KEY, idx);
+    return entry.title;
+  }
 
   function renderStudyConversation() {
     const box = $('studyResult');
@@ -473,6 +525,10 @@
       if (i > 0) html += '<div class="study-followup-q">' + escHtml(turn.query) + '</div>';
       html += '<div class="study-turn">' + turnBodyHtml(turn.parsed, turn.sources) + '</div>';
     });
+    if (currentMeetingKind) {
+      html += '<button type="button" class="btn btn-secondary" id="studyInsertMeetingBtn" style="width:100%; margin-top:14px">Insert into Meeting Notes</button>' +
+        '<div class="study-status" id="studyInsertMeetingStatus" style="margin-top:6px"></div>';
+    }
     html += '<div class="study-followup-row">' +
       '<input class="input" id="studyFollowupInput" type="text" placeholder="Ask a follow-up about this…" autocomplete="off">' +
       '<button class="btn btn-secondary" id="studyFollowupBtn" type="button">Ask</button>' +
@@ -483,6 +539,14 @@
     $('studyFollowupInput').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); submitStudyFollowup(); }
     });
+    if (currentMeetingKind) {
+      $('studyInsertMeetingBtn').addEventListener('click', () => {
+        const blocks = studyTurns.map((t) => t.parsed.apply || t.parsed.answer).filter(Boolean);
+        const combined = blocks.join('\n\n');
+        const noteTitle = insertIntoMeetingNote(currentMeetingKind, combined);
+        $('studyInsertMeetingStatus').textContent = 'Inserted into "' + noteTitle + '" in Notes.';
+      });
+    }
   }
 
   function saveJournalEntry(query, parsed, sources) {
@@ -578,7 +642,7 @@
   let studyBusy = false;
   let currentSystemOverride = null;
   let currentMaxTokens = null;
-  async function runStudySearch(query, displayLabel, systemOverride, maxTokens) {
+  async function runStudySearch(query, displayLabel, systemOverride, maxTokens, meetingKind) {
     query = (query || '').trim();
     if (!query || studyBusy) return;
     if (!apiKey()) { studyStatus('No API key yet, open the Sirius tile from the home screen and paste your Anthropic key there first.', true); return; }
@@ -592,6 +656,7 @@
     currentJournalEntryId = null;
     currentSystemOverride = systemOverride || null;
     currentMaxTokens = maxTokens || null;
+    currentMeetingKind = meetingKind || null;
     try {
       const { text, sources } = await callStudySirius(studyMessages, currentSystemOverride, currentMaxTokens);
       const parsed = parseStudyReply(text);
