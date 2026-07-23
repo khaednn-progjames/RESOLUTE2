@@ -42,6 +42,12 @@
 .wb-stat { background: rgba(255,255,255,0.006); border: 1px solid rgba(255,255,255,0.10); border-radius: 12px; padding: 14px; }
 .wb-stat-num { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; color: var(--text-primary); line-height: 1; }
 .wb-stat-label { margin-top: 6px; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); }
+.wb-tax-note { margin-top: 12px; font-size: 11.5px; color: var(--text-tertiary); line-height: 1.5; }
+.wb-tax-edit-link {
+  border: 0; background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 11.5px;
+  font-weight: 600; text-decoration: underline; cursor: pointer; padding: 0;
+}
+.wb-tax-edit-link:hover { color: var(--text-primary); }
 
 /* ---------- add row ---------- */
 .wb-add-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -181,6 +187,7 @@
       <div class="wb-stat"><div class="wb-stat-num" id="wbStatValue">$0</div><div class="wb-stat-label">Est. Total</div></div>
       <div class="wb-stat"><div class="wb-stat-num" id="wbStatGot">0</div><div class="wb-stat-label">Already Got</div></div>
     </div>
+    <div class="wb-tax-note" id="wbTaxNote"></div>
   </div>
 
   <div class="section-eyebrow">Add Something</div>
@@ -219,6 +226,63 @@
     Clothing: '#FF8FA3', Shoes: '#D9A066', Accessories: '#9DE8C4', Electronics: '#5EC8F2',
     Home: '#F2C063', Books: '#8FB9FF', Beauty: '#E39DD0', Hobbies: '#B39DDB', Other: '#A9A6C4',
   };
+
+  // ---------- estimated sales tax ----------
+  // Approximate combined state + average local sales tax rates (%).
+  // These are ballpark public figures, not live data, actual tax
+  // depends on the specific retailer/city and changes over time, so
+  // this is always labeled as an estimate and fully overridable below.
+  const US_STATE_TAX_RATES = {
+    'Alabama': 9.29, 'Alaska': 1.76, 'Arizona': 8.40, 'Arkansas': 9.46, 'California': 8.85,
+    'Colorado': 7.81, 'Connecticut': 6.35, 'Delaware': 0, 'Florida': 7.02, 'Georgia': 7.38,
+    'Hawaii': 4.44, 'Idaho': 6.02, 'Illinois': 8.86, 'Indiana': 7.00, 'Iowa': 6.94,
+    'Kansas': 8.70, 'Kentucky': 6.00, 'Louisiana': 9.55, 'Maine': 5.50, 'Maryland': 6.00,
+    'Massachusetts': 6.25, 'Michigan': 6.00, 'Minnesota': 7.49, 'Mississippi': 7.07, 'Missouri': 8.29,
+    'Montana': 0, 'Nebraska': 6.94, 'Nevada': 8.23, 'New Hampshire': 0, 'New Jersey': 6.60,
+    'New Mexico': 7.72, 'New York': 8.53, 'North Carolina': 6.98, 'North Dakota': 6.96, 'Ohio': 7.24,
+    'Oklahoma': 8.98, 'Oregon': 0, 'Pennsylvania': 6.34, 'Rhode Island': 7.00, 'South Carolina': 7.46,
+    'South Dakota': 6.40, 'Tennessee': 9.55, 'Texas': 8.20, 'Utah': 7.19, 'Vermont': 6.24,
+    'Virginia': 5.75, 'Washington': 9.38, 'West Virginia': 6.50, 'Wisconsin': 5.43, 'Wyoming': 5.36,
+    'District of Columbia': 6.00,
+  };
+  const TAX_SETTING_KEY = 'wishboard:taxRate'; // { rate, source: 'auto'|'manual', label, ts }
+  const TAX_LOCATION_MAX_AGE_MS = 24 * 3600 * 1000;
+
+  function loadTaxSetting() { return loadJSON(TAX_SETTING_KEY, null); }
+  function saveTaxSetting(v) { saveJSON(TAX_SETTING_KEY, v); }
+
+  function detectTaxRate() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        const res = await fetch('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + pos.coords.latitude + '&longitude=' + pos.coords.longitude + '&localityLanguage=en');
+        const json = await res.json();
+        const state = json.principalSubdivision;
+        const rate = US_STATE_TAX_RATES[state];
+        if (rate != null) {
+          saveTaxSetting({ rate, source: 'auto', label: state, ts: Date.now() });
+          renderStats();
+        }
+      } catch (e) { /* silent, tax estimate just stays unset */ }
+    }, () => {}, { timeout: 8000, maximumAge: 3600000 });
+  }
+
+  function ensureTaxRate() {
+    const existing = loadTaxSetting();
+    if (existing && existing.source === 'manual') return; // never override an explicit manual entry
+    if (existing && Date.now() - (existing.ts || 0) < TAX_LOCATION_MAX_AGE_MS) return;
+    detectTaxRate();
+  }
+
+  function promptTaxRate() {
+    const current = loadTaxSetting();
+    const input = prompt('Sales tax rate as a percent, e.g. 8.5 (set this yourself if you know your exact local rate, or if you\'re outside the US):', current ? String(current.rate) : '');
+    if (input === null) return;
+    const num = parseFloat(input);
+    if (isNaN(num) || num < 0) return;
+    saveTaxSetting({ rate: num, source: 'manual', label: null, ts: Date.now() });
+    renderStats();
+  }
 
   function loadJSON(k, f) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? f : v; } catch (e) { return f; } }
   function saveJSON(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
@@ -578,14 +642,31 @@
     const all = load();
     const want = all.filter((it) => it.status !== 'got');
     const got = all.filter((it) => it.status === 'got');
-    const total = want.reduce((sum, it) => sum + (Number(it.price) || 0), 0);
+    const subtotal = want.reduce((sum, it) => sum + (Number(it.price) || 0), 0);
+    const taxSetting = loadTaxSetting();
+    const rate = taxSetting ? taxSetting.rate : 0;
+    const tax = subtotal * (rate / 100);
+    const total = subtotal + tax;
     $('wbStatCount').textContent = want.length;
     $('wbStatValue').textContent = total ? fmtMoney(total) : '$0';
     $('wbStatGot').textContent = got.length;
+
+    const note = $('wbTaxNote');
+    if (taxSetting && rate > 0) {
+      note.innerHTML = 'Includes an estimated ' + rate.toFixed(1) + '% sales tax' +
+        (taxSetting.label ? ' for ' + escHtml(taxSetting.label) : '') +
+        ' (' + fmtMoney(subtotal) + ' + ' + fmtMoney(tax) + ' tax). Not exact, actual tax varies by retailer. ' +
+        '<button type="button" class="wb-tax-edit-link" id="wbEditTaxBtn">Edit</button>';
+    } else {
+      note.innerHTML = 'No sales tax estimate set yet. ' +
+        '<button type="button" class="wb-tax-edit-link" id="wbEditTaxBtn">Set my tax rate</button>';
+    }
+    $('wbEditTaxBtn').addEventListener('click', promptTaxRate);
   }
 
   render();
   renderStats();
+  ensureTaxRate();
 
   document.addEventListener('DOMContentLoaded', function () {
     if (typeof initCloudSync !== 'function') return;
