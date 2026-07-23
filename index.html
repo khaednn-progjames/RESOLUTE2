@@ -53,6 +53,19 @@
 .briefing-body.placeholder { color: var(--text-tertiary); font-style: italic; }
 .briefing-body.err { color: var(--danger); }
 
+.needs-attention-card { margin-bottom: var(--sp-4); }
+.na-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 0;
+  border-top: 1px solid rgba(255,255,255,0.06); text-decoration: none; color: inherit;
+}
+.na-row:first-of-type { border-top: 0; padding-top: 10px; }
+.na-icon { font-size: 16px; flex-shrink: 0; width: 20px; text-align: center; }
+.na-text { flex: 1; min-width: 0; font-size: 13px; color: var(--text-primary); line-height: 1.4; }
+.na-text b { color: var(--warning); }
+.na-arrow { font-size: 13px; color: var(--text-tertiary); flex-shrink: 0; }
+a.na-row:hover .na-text { color: var(--text-primary); }
+a.na-row:hover .na-arrow { color: var(--text-secondary); }
+
 .gear-btn {
   width: 42px; height: 42px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
@@ -143,6 +156,11 @@
       <button class="btn btn-secondary" id="briefingBtn" type="button">Generate</button>
     </div>
     <div class="briefing-body placeholder" id="briefingBody">One tap and Sirius reads today's goals, water, notes, planner, and net worth, then tells you where you stand.</div>
+  </div>
+
+  <div class="card needs-attention-card" id="needsAttentionCard" style="display:none">
+    <span class="briefing-label">Needs Attention</span>
+    <div id="needsAttentionList"></div>
   </div>
 
   <div class="section-eyebrow">Today</div>
@@ -766,6 +784,96 @@
   window.addEventListener('storage', renderTileStats);
   window.addEventListener('focus', renderTileStats);
   setInterval(renderTileStats, 30 * 1000);
+
+  /* ---------- Needs Attention: proactive nudges the app otherwise never surfaces ---------- */
+  function maintenanceDaysUntilDue(it) {
+    if (!it.lastDone) return -Infinity;
+    const dueTs = it.lastDone + it.intervalDays * 86400000;
+    return Math.round((dueTs - Date.now()) / 86400000);
+  }
+  function subRenewalDate(isoDate, period) {
+    const isoSafe = (typeof isoDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(isoDate)) ? isoDate + 'T00:00' : isoDate;
+    let d = new Date(isoSafe);
+    if (isNaN(d)) return null;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let safety = 0;
+    while (d < today && safety++ < 600) {
+      if (period === 'weekly') d.setDate(d.getDate() + 7);
+      else if (period === 'yearly') d.setFullYear(d.getFullYear() + 1);
+      else d.setMonth(d.getMonth() + 1);
+    }
+    return d;
+  }
+  const NA_MEETINGS_SCHEDULE = [
+    { label: 'Monday Meeting', weekday: 1, hour: 19, minute: 0 },
+    { label: 'Saturday Meeting', weekday: 6, hour: 13, minute: 0 },
+  ];
+  function nextMeetingWithin(hoursAhead) {
+    const now = new Date();
+    let best = null;
+    NA_MEETINGS_SCHEDULE.forEach((m) => {
+      for (let add = 0; add <= 7; add++) {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + add, m.hour, m.minute, 0, 0);
+        if (d.getDay() !== m.weekday || d < now) continue;
+        if (!best || d < best.date) best = { date: d, label: m.label };
+        break;
+      }
+    });
+    if (best && (best.date - now) / 3600000 <= hoursAhead) return best;
+    return null;
+  }
+  function meetingsPreppedThisWeek() {
+    const journal = loadJSON('study:journal', []) || [];
+    const now = new Date();
+    const dow = now.getDay();
+    const mondayOffset = (dow === 0) ? -6 : 1 - dow;
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + mondayOffset).getTime();
+    return journal.some((e) => e && e.category === 'Meetings' && (e.ts || 0) >= weekStart);
+  }
+
+  function renderNeedsAttention() {
+    const rows = [];
+
+    const maint = loadJSON('maintenance:items', []) || [];
+    maint.forEach((it) => {
+      const days = maintenanceDaysUntilDue(it);
+      if (days <= 3) {
+        const text = days <= 0 ? '<b>' + escHtmlNA(it.name) + '</b> is overdue' : '<b>' + escHtmlNA(it.name) + '</b> is due in ' + days + 'd';
+        rows.push({ icon: '🔧', text, href: 'maintenance.html' });
+      }
+    });
+
+    const subs = loadJSON('subs', []) || [];
+    subs.forEach((it) => {
+      if (!it.renewal) return;
+      const next = subRenewalDate(it.renewal, it.period);
+      if (!next) return;
+      const days = Math.round((next - new Date()) / 86400000);
+      if (days >= 0 && days <= 5) {
+        const text = '<b>' + escHtmlNA(it.name) + '</b> renews in ' + days + (days === 1 ? ' day' : ' days');
+        rows.push({ icon: '🔁', text, href: 'finance.html' });
+      }
+    });
+
+    const meeting = nextMeetingWithin(30);
+    if (meeting && !meetingsPreppedThisWeek()) {
+      rows.push({ icon: '📖', text: '<b>' + escHtmlNA(meeting.label) + '</b> is coming up, comments not prepped yet', href: 'study.html' });
+    }
+
+    const card = $('needsAttentionCard');
+    const list = $('needsAttentionList');
+    if (rows.length === 0) { card.style.display = 'none'; return; }
+    list.innerHTML = rows.map((r) =>
+      '<a class="na-row" href="' + r.href + '"><span class="na-icon">' + r.icon + '</span><span class="na-text">' + r.text + '</span><span class="na-arrow">→</span></a>'
+    ).join('');
+    card.style.display = '';
+  }
+  function escHtmlNA(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  renderNeedsAttention();
+  window.addEventListener('storage', renderNeedsAttention);
+  window.addEventListener('focus', renderNeedsAttention);
+  setInterval(renderNeedsAttention, 60 * 1000);
 
   /* ---------- Sirius Daily Briefing ---------- */
   const BRIEFING_CACHE_KEY = 'hub:briefing';
