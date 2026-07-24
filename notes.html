@@ -1216,7 +1216,8 @@
       "You have a web_search tool restricted to jw.org and wol.jw.org, use it to find " + label + " (today is " + dateLabel + "). Search more than once if the first attempt doesn't turn up the specific current week's material. " +
       "Never mention, cite, or draw from any source outside jw.org or wol.jw.org, and never invent a scripture, fact, or illustration that isn't actually in what you found. " +
       "If you truly cannot find this week's specific material after a couple of searches, say so honestly instead of guessing or giving generic content. " +
-      "List every section or paragraph where audience comments are natural (for the midweek meeting: the Congregation Bible Study paragraphs and any discussion questions in the other parts, not the student assignments; for the Watchtower Study: as many paragraphs as make sense). For each one, write one or two SHORT comments in first person exactly as the user could stand up and say them out loud, not a summary of the point, citing the specific paragraph or section number. " +
+      "Cover EVERY paragraph, do not skip any and do not curate a subset: for the midweek meeting, every single Congregation Bible Study paragraph plus any discussion questions in the other parts (not the student assignments, those aren't audience comments), for the Watchtower Study, every single paragraph in the article from start to finish, all of them. " +
+      "Do not simply restate or rephrase what the paragraph says in different words, a comment like that is not something a real person would actually stand up and say and is not useful. Instead, for EACH paragraph write ONE genuinely developed comment, 3 to 5 sentences, in first person exactly as the user could stand up and say it out loud: explain what the point means to them personally, why it actually matters, how it connects to their own life, ministry, family, or an experience, or how it strengthens their faith, going beyond the paragraph's own wording rather than echoing it. Cite the specific paragraph number for every single one. " +
       "Respond in EXACTLY this structure, with these exact plain-text labels each on their own line and nothing before ANSWER or after the last line:\n" +
       "ANSWER:\n<one sentence naming the specific article or workbook section and date range you found, or an honest note that you could not find it>\n\n" +
       "SCRIPTURES:\n<key scriptures used across the material, each on its own line as '<Reference>, <short line of context>'; if none stood out, write 'None found.'>\n\n" +
@@ -1236,7 +1237,7 @@
       },
       body: JSON.stringify({
         model: 'claude-sonnet-5',
-        max_tokens: 2048,
+        max_tokens: 8192,
         system: system,
         messages: [{ role: 'user', content: userText }],
         tools: [{
