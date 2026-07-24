@@ -1199,12 +1199,132 @@
     return !!(id && docText(id).trim().length > 0);
   }
 
+  // ---------- auto-research: find this week's material the moment a fresh meeting note is created ----------
+  async function meetingResearchSystem(meeting) {
+    const label = meeting.id === 'mon'
+      ? "THIS WEEK's Our Christian Life and Ministry Meeting workbook schedule"
+      : "THIS WEEK's Watchtower Study article";
+    const dateLabel = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    let voiceBlock = '';
+    if (window.SiriusHistory) {
+      const sample = await window.SiriusHistory.getVoiceSample(1200);
+      if (sample) {
+        voiceBlock = "\n\nHere are unrelated snippets of how the user writes in their own words, drawn from their past Claude conversations. Use them ONLY to match natural word choice, tone, and sentence rhythm, never their topic or content:\n" + sample;
+      }
+    }
+    return "You are Sirius, automatically researching this week's meeting material the moment the user opens a fresh note for their upcoming Kingdom Hall meeting. " +
+      "You have a web_search tool restricted to jw.org and wol.jw.org, use it to find " + label + " (today is " + dateLabel + "). Search more than once if the first attempt doesn't turn up the specific current week's material. " +
+      "Never mention, cite, or draw from any source outside jw.org or wol.jw.org, and never invent a scripture, fact, or illustration that isn't actually in what you found. " +
+      "If you truly cannot find this week's specific material after a couple of searches, say so honestly instead of guessing or giving generic content. " +
+      "List every section or paragraph where audience comments are natural (for the midweek meeting: the Congregation Bible Study paragraphs and any discussion questions in the other parts, not the student assignments; for the Watchtower Study: as many paragraphs as make sense). For each one, write one or two SHORT comments in first person exactly as the user could stand up and say them out loud, not a summary of the point, citing the specific paragraph or section number. " +
+      "Respond in EXACTLY this structure, with these exact plain-text labels each on their own line and nothing before ANSWER or after the last line:\n" +
+      "ANSWER:\n<one sentence naming the specific article or workbook section and date range you found, or an honest note that you could not find it>\n\n" +
+      "SCRIPTURES:\n<key scriptures used across the material, each on its own line as '<Reference>, <short line of context>'; if none stood out, write 'None found.'>\n\n" +
+      "APPLY:\n<the paragraph-by-paragraph comment suggestions, each on its own line starting with '- Para <N>: ' followed by the suggested comment>\n\n" +
+      "Never use an em dash or a double hyphen (--) anywhere in your reply; use a comma, period, colon, or parentheses instead." +
+      voiceBlock;
+  }
+
+  async function callSiriusGrounded(system, userText) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': siriusKey(),
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-5',
+        max_tokens: 2048,
+        system: system,
+        messages: [{ role: 'user', content: userText }],
+        tools: [{
+          type: 'web_search_20250305',
+          name: 'web_search',
+          max_uses: 5,
+          allowed_domains: ['jw.org', 'wol.jw.org'],
+        }],
+      }),
+    });
+    const json = await res.json();
+    if (typeof logSiriusUsage === 'function') logSiriusUsage('notes-meeting-research', json.usage);
+    if (json.error) throw new Error(json.error.message || 'Something went wrong.');
+    let text = '';
+    (json.content || []).forEach((block) => { if (block.type === 'text') text += block.text; });
+    return text.trim();
+  }
+
+  function parseMeetingResearchReply(raw) {
+    const text = raw || '';
+    function grab(label, stopLabels) {
+      const re = new RegExp(label + ':\\s*([\\s\\S]*?)(?=\\n(?:' + stopLabels.join('|') + '):|$)', 'i');
+      const m = text.match(re);
+      return m ? m[1].trim() : '';
+    }
+    const answer = grab('ANSWER', ['SCRIPTURES', 'APPLY']);
+    const scriptures = grab('SCRIPTURES', ['APPLY']);
+    const apply = grab('APPLY', []);
+    return { answer: answer || text, scriptures, apply };
+  }
+
+  function meetingResearchDelta(parsed) {
+    const ops = [];
+    if (parsed.answer) ops.push({ insert: parsed.answer + '\n\n' });
+    if (parsed.scriptures) {
+      ops.push({ insert: 'Scriptures\n', attributes: { bold: true } });
+      ops.push({ insert: parsed.scriptures + '\n\n' });
+    }
+    if (parsed.apply) {
+      ops.push({ insert: 'Comments\n', attributes: { bold: true } });
+      ops.push({ insert: parsed.apply + '\n' });
+    }
+    if (ops.length === 0) ops.push({ insert: '\n' });
+    return { ops };
+  }
+
+  async function populateMeetingNote(meeting, noteId) {
+    function resetMetaIfActive() {
+      if (activeId !== noteId) return;
+      const idx2 = loadIndex();
+      const e2 = idx2.find((n) => n.id === noteId);
+      $('notesMeta').textContent = e2 && e2.updatedAt ? 'Edited ' + relTime(e2.updatedAt) : '';
+    }
+    if (!siriusKey()) { resetMetaIfActive(); return; } // quiet no-op, same passive-convenience pattern as scripture lookup
+    try {
+      const system = await meetingResearchSystem(meeting);
+      const query = meeting.id === 'mon'
+        ? "Find this week's Life and Ministry Meeting workbook schedule and suggest comments for it."
+        : "Find this week's Watchtower Study article and suggest comments for it.";
+      const reply = await callSiriusGrounded(system, query);
+      const parsed = parseMeetingResearchReply(reply);
+      const delta = meetingResearchDelta(parsed);
+      saveJSON(DOC_PREFIX + noteId, delta);
+      const idx = loadIndex();
+      const entry = idx.find((n) => n.id === noteId);
+      if (entry) { entry.updatedAt = Date.now(); saveIndex(idx); }
+      if (activeId === noteId && quill.getText().trim() === '') {
+        suppressAutosave = true;
+        quill.setContents(delta);
+        suppressAutosave = false;
+        updateWordCount();
+      }
+      resetMetaIfActive();
+      renderMeetingButtons();
+      renderSidebar($('notesSearch').value);
+    } catch (e) {
+      resetMetaIfActive();
+    }
+  }
+
   function openMeetingNote(meeting) {
     const key = meeting.id + ':' + weekOccurrenceKey(meeting.weekday);
     const map = loadMeetingMap();
     const idx = loadIndex();
     let id = map[key];
+    let isNew = false;
     if (!id || !idx.find((n) => n.id === id)) {
+      isNew = true;
       id = newId();
       const dateLabel = weekOccurrenceDate(meeting.weekday).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
       const title = meeting.label + ', ' + dateLabel;
@@ -1216,6 +1336,10 @@
     }
     selectNote(id);
     closeDrawer();
+    if (isNew) {
+      $('notesMeta').textContent = 'Sirius is researching this week\'s material…';
+      populateMeetingNote(meeting, id);
+    }
   }
 
   function renderMeetingButtons() {
