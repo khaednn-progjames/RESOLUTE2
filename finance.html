@@ -2021,14 +2021,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     <span class="bot-tab-icon">📊</span>
     <span class="bot-tab-label">Net Worth</span>
   </button>
-  <button class="bot-tab" data-tab="wish">
-    <span class="bot-tab-icon">🎯</span>
-    <span class="bot-tab-label">Wishlist</span>
-  </button>
-  <button class="bot-tab" data-tab="spend">
-    <span class="bot-tab-icon">🧾</span>
-    <span class="bot-tab-label">Spending</span>
-  </button>
   <button class="bot-tab" data-tab="condor">
     <span class="bot-tab-icon">🦅</span>
     <span class="bot-tab-label">Condor</span>
@@ -2099,7 +2091,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   tabs.forEach(b => b.addEventListener('click', () => setActiveTab(b.dataset.tab)));
   const hashTab = (location.hash || '').replace('#', '');
   const savedTab = storeGet(TAB_KEY);
-  const validTabs = ['net','wish','spend','condor','wishboard'];
+  const validTabs = ['net','condor','wishboard'];
   setActiveTab(validTabs.includes(hashTab) ? hashTab : (savedTab && validTabs.includes(savedTab) ? savedTab : 'net'));
 
   // ============================================================
